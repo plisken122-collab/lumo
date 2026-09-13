@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E4E5E9">
+<title>lumo</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E;
+    --line:#D2D4DB; --mine:#384C9E; --danger:#9B2C25;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body {
+    margin:0; background:var(--canvas); color:var(--ink);
+    font-family:'DM Sans', system-ui, sans-serif; font-size:16px;
+  }
+  .wrap {
+    max-width:520px; margin:0 auto; height:100dvh;
+    display:flex; flex-direction:column;
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+  .brand { font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:30px; letter-spacing:-.03em; line-height:1; }
+  .sub { margin:6px 0 0; font-size:14px; color:var(--muted); }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:14px 0 5px; }
+  input, select, textarea {
+    width:100%; font-family:inherit; font-size:16px; color:var(--ink);
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px;
+  }
+  textarea { resize:none; }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--ink); outline-offset:1px; }
+  button { font-family:inherit; border:none; cursor:pointer; }
+  .primary {
+    width:100%; margin-top:20px; background:var(--mine); color:#fff;
+    border-radius:12px; padding:14px; font-size:16px; font-weight:500;
+  }
+  .primary:disabled { background:var(--line); cursor:default; }
+
+  .bar { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .bar .room { font-size:13px; color:var(--muted); flex:1; }
+  .bar select { width:auto; padding:7px 9px; font-size:13px; border-radius:9px; }
+
+  #log {
+    flex:1; overflow-y:auto; background:var(--surface); border:1px solid var(--line);
+    border-radius:18px; padding:14px; display:flex; flex-direction:column; gap:12px;
+  }
+  .row { max-width:85%; display:flex; flex-direction:column; gap:4px; }
+  .row.mine { align-self:flex-end; align-items:flex-end; }
+  .row.theirs { align-self:flex-start; align-items:flex-start; }
+  .bubble { border-radius:16px; padding:10px 13px; font-size:15px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
+  .mine .bubble { background:var(--mine); color:#fff; border-bottom-right-radius:5px; }
+  .theirs .bubble { background:#F1F2F5; border-bottom-left-radius:5px; }
+  .meta { font-size:11.5px; color:var(--muted); display:flex; gap:8px; align-items:center; }
+  .meta button { background:none; padding:0; color:var(--muted); font-size:11.5px; text-decoration:underline; }
+  .orig { margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:14px; opacity:.85; }
+  .mine .orig { border-top-color:rgba(255,255,255,.28); }
+  .waiting { opacity:.45; animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.85} }
+  @media (prefers-reduced-motion:reduce) { .waiting { animation:none; } }
+  .system { align-self:center; font-size:12px; color:var(--muted); }
+
+  .composer { display:flex; gap:8px; margin-top:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:6px; }
+  .composer textarea { border:none; background:transparent; padding:11px 10px; }
+  .composer textarea:focus { outline:none; }
+  .composer button { border-radius:10px; padding:0 18px; background:var(--mine); color:#fff; font-size:14px; font-weight:500; }
+  .composer button:disabled { background:var(--line); cursor:default; }
+  .err { color:var(--danger); font-size:13px; margin:8px 2px 0; }
+  .hide { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Start -->
+  <section id="setup">
+    <div class="brand">lumo</div>
+    <p class="sub">Jeder schreibt in seiner Sprache. Jeder liest in seiner eigenen.</p>
+
+    <div class="card" style="margin-top:18px">
+      <label for="name">Dein Name</label>
+      <input id="name" placeholder="Carsten" autocomplete="nickname">
+
+      <label for="lang">Deine Sprache</label>
+      <select id="lang"></select>
+
+      <label for="room">Chat-Code</label>
+      <input id="room" placeholder="algarve" autocapitalize="none" autocorrect="off">
+      <p class="sub" style="font-size:12.5px;margin-top:6px">
+        Wer denselben Code eingibt, landet im selben Chat. Teil ihn mit der Person, mit der du schreiben willst.
+      </p>
+
+      <button class="primary" id="enter">Chat betreten</button>
+    </div>
+  </section>
+
+  <!-- Chat -->
+  <section id="chat" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <div class="bar">
+      <div class="brand" style="font-size:20px">lumo</div>
+      <div class="room" id="roomLabel"></div>
+      <select id="langSwitch"></select>
+    </div>
+    <div id="log"></div>
+    <div id="err" class="err hide"></div>
+    <div class="composer">
+      <textarea id="draft" rows="1" placeholder="Nachricht schreiben …"></textarea>
+      <button id="send" disabled>Senden</button>
+    </div>
+  </section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const LANGS = [
+  ["de","Deutsch"],["de-CH","Deutsch (Schweiz)"],
+  ["pt-PT","Português (Portugal)"],["pt-BR","Português (Brasil)"],
+  ["en","English (UK)"],["en-US","English (US)"],
+  ["es","Español (España)"],["es-419","Español (Latinoamérica)"],
+  ["fr","Français"],["it","Italiano"],["nl","Nederlands"],["pl","Polski"],
+  ["ru","Русский"],["uk","Українська"],["tr","Türkçe"],["ar","العربية"],
+  ["zh","中文 (简体)"],["zh-TW","中文 (繁體)"],["ja","日本語"],["ko","한국어"],
+  ["hi","हिन्दी"],["sv","Svenska"],["ro","Română"],["da","Dansk"],["no","Norsk"],
+  ["fi","Suomi"],["cs","Čeština"],["hu","Magyar"],["el","Ελληνικά"],["he","עברית"],
+  ["th","ไทย"],["vi","Tiếng Việt"],["id","Bahasa Indonesia"]
+];
+const RTL = new Set(["ar","he","fa","ur"]);
+const $ = (id) => document.getElementById(id);
+
+// Sprachauswahl fuellen
+for (const sel of [$("lang"), $("langSwitch")]) {
+  sel.innerHTML = LANGS.map(([c,l]) => `<option value="${c}">${l}</option>`).join("");
+}
+
+// Browsersprache und letzte Eingaben vorbelegen
+const saved = JSON.parse(localStorage.getItem("lumo") || "{}");
+function guessLang() {
+  const full = (navigator.language || "de");
+  const norm = full.replace("_", "-");
+  const codes = LANGS.map(([c]) => c);
+  // Erst die volle Kennung (pt-BR), dann die Basissprache, dann die erste passende Variante.
+  if (codes.includes(norm)) return norm;
+  const base = norm.slice(0, 2);
+  if (codes.includes(base)) return base;
+  const variant = codes.find((c) => c.startsWith(base + "-"));
+  return variant || "de";
+}
+$("name").value = saved.name || "";
+$("room").value = saved.room || "";
+$("lang").value = saved.lang || guessLang();
+
+let socket, me = {}, myId = null;
+const msgs = new Map();
+const asked = new Set();
+
+$("enter").onclick = () => {
+  const name = $("name").value.trim() || "Gast";
+  const lang = $("lang").value;
+  const room = ($("room").value.trim() || "lobby").toLowerCase();
+  localStorage.setItem("lumo", JSON.stringify({ name, lang, room }));
+  me = { name, lang, room };
+  start();
+};
+
+function start() {
+  $("setup").classList.add("hide");
+  $("chat").classList.remove("hide");
+  $("roomLabel").textContent = "#" + me.room;
+  $("langSwitch").value = me.lang;
+
+  socket = io();
+  socket.on("connect", () => {
+    myId = socket.id;
+    socket.emit("join", { roomCode: me.room, name: me.name, lang: me.lang });
+  });
+
+  socket.on("history", (list) => { list.forEach(add); });
+  socket.on("message", add);
+  socket.on("system", (t) => {
+    const d = document.createElement("div");
+    d.className = "system"; d.textContent = t;
+    $("log").appendChild(d); scrollDown();
+  });
+  socket.on("lang", ({ id, lang }) => {
+    const m = msgs.get(id); if (!m) return;
+    m.lang = lang; render(m);
+  });
+  socket.on("translated", ({ id, lang, text }) => {
+    const m = msgs.get(id); if (!m) return;
+    m.tr[lang] = text; render(m);
+  });
+  socket.on("translationError", ({ id }) => {
+    showErr("Eine Nachricht konnte nicht übersetzt werden. Original wird angezeigt.");
+    const m = msgs.get(id); if (m) { m.failed = true; render(m); }
+  });
+}
+
+$("langSwitch").onchange = (e) => {
+  me.lang = e.target.value;
+  localStorage.setItem("lumo", JSON.stringify(me));
+  socket.emit("setLang", { lang: me.lang });
+  msgs.forEach(render);
+};
+
+function add(m) {
+  if (msgs.has(m.id)) return;
+  msgs.set(m.id, m);
+  const row = document.createElement("div");
+  row.id = "m" + m.id;
+  row.className = "row " + (m.from === myId ? "mine" : "theirs");
+  row.innerHTML = '<div class="bubble"></div><div class="meta"></div>';
+  $("log").appendChild(row);
+  render(m);
+  scrollDown();
+}
+
+function render(m) {
+  const row = $("m" + m.id); if (!row) return;
+  const bubble = row.querySelector(".bubble");
+  const meta = row.querySelector(".meta");
+  const needs = m.lang !== me.lang;
+  const shown = needs ? m.tr[me.lang] : m.text;
+
+  if (needs && !shown && !m.failed) {
+    const key = m.id + ":" + me.lang;
+    if (!asked.has(key)) { asked.add(key); socket.emit("need", { id: m.id, lang: me.lang }); }
+    bubble.innerHTML = '<span class="waiting">übersetzt …</span>';
+  } else {
+    const text = shown || m.text;
+    bubble.textContent = "";
+    const span = document.createElement("span");
+    span.dir = RTL.has(me.lang) ? "rtl" : "auto";
+    span.textContent = text;
+    bubble.appendChild(span);
+    if (m.open) {
+      const o = document.createElement("div");
+      o.className = "orig";
+      o.dir = RTL.has(m.lang) ? "rtl" : "auto";
+      o.textContent = m.text;
+      bubble.appendChild(o);
+    }
+  }
+
+  meta.textContent = "";
+  const who = document.createElement("span");
+  who.textContent = m.name;
+  meta.appendChild(who);
+  if (needs && shown) {
+    const b = document.createElement("button");
+    const nice = (LANGS.find(([c]) => c === m.lang) || [])[1] || m.lang.toUpperCase();
+    b.textContent = m.open ? "Original ausblenden" : "Original: " + nice;
+    b.onclick = () => { m.open = !m.open; render(m); };
+    meta.appendChild(b);
+  }
+}
+
+const draft = $("draft");
+draft.addEventListener("input", () => {
+  $("send").disabled = !draft.value.trim();
+  draft.style.height = "auto";
+  draft.style.height = Math.min(draft.scrollHeight, 120) + "px";
+});
+draft.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+$("send").onclick = sendMsg;
+
+function sendMsg() {
+  const text = draft.value.trim();
+  if (!text) return;
+  socket.emit("send", { text });
+  draft.value = ""; draft.style.height = "auto"; $("send").disabled = true;
+}
+
+function scrollDown() { $("log").scrollTop = $("log").scrollHeight; }
+function showErr(t) {
+  const e = $("err"); e.textContent = t; e.classList.remove("hide");
+  setTimeout(() => e.classList.add("hide"), 5000);
+}
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+</script>
+</body>
+</html>
