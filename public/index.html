@@ -100,26 +100,21 @@
   <!-- Start -->
   <section id="setup">
     <img class="brand" src="/brand/logo-horizontal.svg" alt="lumo">
-    <p class="sub">Jeder schreibt in seiner Sprache. Jeder liest in seiner eigenen.</p>
+    <p class="sub" id="t-tagline"></p>
 
     <div class="card" style="margin-top:18px">
-      <label for="name">Dein Name</label>
-      <input id="name" placeholder="Carsten" autocomplete="nickname">
+      <label for="name" id="t-nameLabel"></label>
+      <input id="name" autocomplete="nickname">
 
-      <label for="lang">Deine Sprache</label>
+      <label for="lang" id="t-langLabel"></label>
       <select id="lang"></select>
 
-      <label for="room">Chat-Code</label>
-      <input id="room" placeholder="algarve" autocapitalize="none" autocorrect="off">
-      <p class="sub" style="font-size:12.5px;margin-top:6px">
-        Wer denselben Code eingibt, landet im selben Chat. Teil ihn mit der Person, mit der du schreiben willst.
-      </p>
-      <p class="note">
-        Zum Übersetzen wird jede Nachricht an einen Server geschickt und ist dort lesbar — anders als bei WhatsApp.
-        Schreib nichts hinein, was niemand sonst sehen soll. Nach 30 Tagen wird alles gelöscht.
-      </p>
+      <label for="room" id="t-roomLabel"></label>
+      <input id="room" autocapitalize="none" autocorrect="off">
+      <p class="sub" id="t-roomHint" style="font-size:12.5px;margin-top:6px"></p>
+      <p class="note" id="t-privacy"></p>
 
-      <button class="primary" id="enter">Chat betreten</button>
+      <button class="primary" id="enter"></button>
     </div>
   </section>
 
@@ -131,19 +126,20 @@
         <span id="count" class="count">0</span>
       </span>
       <div class="room" id="roomLabel"></div>
-      <button id="bell" class="bell" title="Benachrichtigungen einschalten">Ton an</button>
+      <button id="bell" class="bell"></button>
       <select id="langSwitch"></select>
     </div>
     <div id="log"></div>
     <div id="err" class="err hide"></div>
     <div class="composer">
-      <textarea id="draft" rows="1" placeholder="Nachricht schreiben …"></textarea>
-      <button id="send" disabled>Senden</button>
+      <textarea id="draft" rows="1"></textarea>
+      <button id="send" disabled></button>
     </div>
   </section>
 
 </div>
 
+<script src="/i18n.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const LANGS = [
@@ -160,6 +156,7 @@ const LANGS = [
 ];
 const RTL = new Set(["ar","he","fa","ur"]);
 const $ = (id) => document.getElementById(id);
+const T = (k, v) => window.LUMO_T.t(k, v);
 
 // Sprachauswahl fuellen
 for (const sel of [$("lang"), $("langSwitch")]) {
@@ -192,6 +189,31 @@ if (!deviceId) {
 const msgs = new Map();
 const asked = new Set();
 
+
+/* ------------------------------------------------------------------
+   Oberflaeche in der Sprache, die jemand fuer seine Nachrichten waehlt.
+------------------------------------------------------------------- */
+function applyLanguage(code) {
+  const T = window.LUMO_T;
+  T.set(code);
+  document.documentElement.lang = code;
+  document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
+
+  for (const key of ["tagline", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy"]) {
+    const el = $("t-" + key);
+    if (el) el.textContent = T.t(key);
+  }
+  $("name").placeholder = T.t("namePlaceholder");
+  $("room").placeholder = T.t("roomPlaceholder");
+  $("enter").textContent = T.t("enter");
+  $("draft").placeholder = T.t("write");
+  $("send").textContent = T.t("send");
+  updateBell();
+  msgs.forEach(render);
+}
+
+$("lang").onchange = (e) => applyLanguage(e.target.value);
+
 $("enter").onclick = () => {
   const name = $("name").value.trim() || "Gast";
   const lang = $("lang").value;
@@ -218,9 +240,10 @@ function start() {
 
   socket.on("history", (list) => { list.forEach((m) => add(m, false)); });
   socket.on("message", (m) => add(m, true));
-  socket.on("system", (t) => {
+  socket.on("system", (ev) => {
     const d = document.createElement("div");
-    d.className = "system"; d.textContent = t;
+    d.className = "system";
+    d.textContent = typeof ev === "string" ? ev : T(ev.type, { name: ev.name });
     $("log").appendChild(d); scrollDown();
   });
   socket.on("lang", ({ id, lang }) => {
@@ -232,7 +255,7 @@ function start() {
     m.tr[lang] = text; render(m);
   });
   socket.on("translationError", ({ id }) => {
-    showErr("Eine Nachricht konnte nicht übersetzt werden. Original wird angezeigt.");
+    showErr(T("errTranslate"));
     const m = msgs.get(id); if (m) { m.failed = true; render(m); }
   });
 }
@@ -241,7 +264,7 @@ $("langSwitch").onchange = (e) => {
   me.lang = e.target.value;
   localStorage.setItem("lumo", JSON.stringify(me));
   socket.emit("setLang", { lang: me.lang });
-  msgs.forEach(render);
+  applyLanguage(me.lang);
   if (soundOn()) registerPush().catch(() => {});
 };
 
@@ -268,7 +291,8 @@ function render(m) {
   if (needs && !shown && !m.failed) {
     const key = m.id + ":" + me.lang;
     if (!asked.has(key)) { asked.add(key); socket.emit("need", { id: m.id, lang: me.lang }); }
-    bubble.innerHTML = '<span class="waiting">übersetzt …</span>';
+    bubble.innerHTML = '<span class="waiting"></span>';
+    bubble.firstChild.textContent = T("translating");
   } else {
     const text = shown || m.text;
     bubble.textContent = "";
@@ -293,7 +317,7 @@ function render(m) {
   if (needs && shown) {
     const b = document.createElement("button");
     const nice = (LANGS.find(([c]) => c === m.lang) || [])[1] || m.lang.toUpperCase();
-    b.textContent = m.open ? "Original ausblenden" : "Original: " + nice;
+    b.textContent = m.open ? T("hideOriginal") : T("original", { lang: nice });
     b.onclick = () => { m.open = !m.open; render(m); };
     meta.appendChild(b);
   }
@@ -342,12 +366,12 @@ function updateBell() {
   const granted = ("Notification" in window) && Notification.permission === "granted";
   const on = granted && soundOn();
   b.classList.toggle("on", on);
-  b.textContent = on ? "Ton an" : "Ton aus";
+  b.textContent = on ? T("soundOn") : T("soundOff");
 }
 
 $("bell").onclick = async () => {
   if (!("Notification" in window)) {
-    showErr("Dieser Browser kann keine Benachrichtigungen anzeigen.");
+    showErr(T("errNoNotif"));
     return;
   }
   if (soundOn() && Notification.permission === "granted") {
@@ -363,11 +387,11 @@ $("bell").onclick = async () => {
     beep();
     registerPush()
       .then((ok) => {
-        if (!ok) showErr("Ton und Anzeige laufen. Bei komplett geschlossener App bleibt es still.");
+        if (!ok) showErr(T("errPushPartial"));
       })
       .catch(() => {});
   } else {
-    showErr("Benachrichtigungen wurden im Browser blockiert. In den Website-Einstellungen erlauben.");
+    showErr(T("errBlocked"));
   }
   updateBell();
 };
@@ -508,7 +532,7 @@ async function unregisterPush() {
   await sub.unsubscribe().catch(() => {});
 }
 
-updateBell();
+applyLanguage($("lang").value);
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 </script>

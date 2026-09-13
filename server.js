@@ -54,7 +54,7 @@ function passedGate(req) {
 
 /* Diese Pfade muessen ohne Zugangswort erreichbar sein, sonst laesst sich
    die Eingabeseite nicht darstellen. */
-const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json"]);
+const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json", "/i18n.js"]);
 const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWith("/icons/");
 
 app.post("/api/gate", (req, res) => {
@@ -352,7 +352,7 @@ io.on("connection", (socket) => {
       console.error("Verlauf nicht ladbar:", err.message);
       socket.emit("history", []);
     }
-    socket.to(room).emit("system", `${me.name} ist dazugekommen`);
+    socket.to(room).emit("system", { type: "joined", name: me.name });
   });
 
   socket.on("setLang", ({ lang }) => {
@@ -388,7 +388,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    if (room) socket.to(room).emit("system", `${me.name} hat den Chat verlassen`);
+    if (room) socket.to(room).emit("system", { type: "left", name: me.name });
   });
 });
 

@@ -39,18 +39,27 @@
 <body>
   <div class="card">
     <img class="logo" src="/brand/logo-horizontal.svg" alt="lumo">
-    <p>Diese App ist noch im Test. Gib das Wort ein, das du bekommen hast.</p>
+    <p id="t-lead"></p>
 
-    <label for="code">Zugangswort</label>
+    <label for="code" id="t-label"></label>
     <input id="code" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off">
-    <button id="go">Weiter</button>
+    <button id="go"></button>
     <div class="err" id="err"></div>
   </div>
 
+<script src="/i18n.js"></script>
 <script>
+const T = window.LUMO_T;
+T.set((navigator.language || "en").replace("_", "-"));
+document.documentElement.lang = T.get();
+document.documentElement.dir = T.get().startsWith("ar") || T.get().startsWith("he") ? "rtl" : "ltr";
+document.getElementById("t-lead").textContent = T.t("gateLead");
+document.getElementById("t-label").textContent = T.t("gateLabel");
+
 const code = document.getElementById("code");
 const go = document.getElementById("go");
 const err = document.getElementById("err");
+go.textContent = T.t("gateGo");
 
 async function submit() {
   const value = code.value.trim();
@@ -68,9 +77,9 @@ async function submit() {
       return;
     }
     const data = await res.json().catch(() => ({}));
-    err.textContent = data.error || "Das hat nicht geklappt.";
+    err.textContent = T.t("gateWrong");
   } catch {
-    err.textContent = "Keine Verbindung. Nochmal versuchen.";
+    err.textContent = T.t("gateOffline");
   }
   go.disabled = false;
   code.select();

@@ -227,3 +227,17 @@ Die Seite liegt hinter dem Zugangswort. Vor einer Veröffentlichung solltest du 
 **Modell:** Standard ist jetzt `claude-sonnet-5` mit 2 $/10 $ je Million Tokens. Vorher lief die App auf Sonnet 4.6 mit 3 $/15 $ — das neuere Modell ist also ein Drittel günstiger. Die Preise für die Rechnung stehen in `PRICE_IN_PER_MTOK` und `PRICE_OUT_PER_MTOK`; ändern sich die Tarife, passt du sie dort an, ohne den Code anzufassen.
 
 Die Verbrauchszahlen bleiben ein Jahr liegen, nicht nur 30 Tage — sie enthalten keinen Nachrichtentext.
+
+---
+
+## Sprache der Oberfläche
+
+Die Oberfläche folgt der Sprache, die jemand für seine Nachrichten wählt — keine zweite Einstellung. Wer Português (Brasil) auswählt, sieht auch Knöpfe und Hinweise auf brasilianischem Portugiesisch.
+
+Beim ersten Aufruf schlägt lumo die Browsersprache vor. Ein Brasilianer, der den Link bekommt, landet also sofort auf einer portugiesischen Startseite.
+
+Fertig übersetzt sind 13 Oberflächensprachen: Deutsch, Englisch, Português (Portugal), Português (Brasil), Spanisch, Französisch, Italienisch, Niederländisch, Polnisch, Russisch, Ukrainisch, Türkisch, Arabisch. Bei Arabisch dreht sich das Layout auf rechts-nach-links.
+
+Für die übrigen der 33 Nachrichtensprachen bleibt die Oberfläche auf Englisch — übersetzt wird trotzdem in alle. Eine Sprache ergänzen heißt: in `public/i18n.js` einen Block kopieren und die Texte übersetzen. Mehr ist es nicht.
+
+Auch die Systemmeldungen im Chat („X ist dazugekommen") kommen jetzt als Code vom Server und werden erst im Browser in die jeweilige Sprache gesetzt — jeder liest sie in seiner eigenen.
