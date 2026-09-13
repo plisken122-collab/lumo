@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#E4E5E9">
 <title>lumo</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <style>
   :root {
     --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E;
@@ -24,7 +25,16 @@
     display:flex; flex-direction:column;
     padding:14px 14px calc(14px + env(safe-area-inset-bottom));
   }
-  .brand { font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:30px; letter-spacing:-.03em; line-height:1; }
+  .brand { display:block; height:42px; width:auto; }
+  .brand-small { display:block; height:26px; width:auto; }
+  .logo-wrap { position:relative; flex-shrink:0; }
+  .count {
+    position:absolute; top:-7px; right:-9px; min-width:19px; height:19px;
+    padding:0 5px; border-radius:10px; background:#C0392B; color:#fff;
+    font-size:11px; font-weight:500; line-height:19px; text-align:center;
+    box-shadow:0 0 0 2px var(--canvas); display:none;
+  }
+  .count.show { display:block; }
   .sub { margin:6px 0 0; font-size:14px; color:var(--muted); }
   .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px; }
   label { display:block; font-size:13px; color:var(--muted); margin:14px 0 5px; }
@@ -83,7 +93,7 @@
 
   <!-- Start -->
   <section id="setup">
-    <div class="brand">lumo</div>
+    <img class="brand" src="/brand/logo-horizontal.svg" alt="lumo">
     <p class="sub">Jeder schreibt in seiner Sprache. Jeder liest in seiner eigenen.</p>
 
     <div class="card" style="margin-top:18px">
@@ -106,7 +116,10 @@
   <!-- Chat -->
   <section id="chat" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="bar">
-      <div class="brand" style="font-size:20px">lumo</div>
+      <span class="logo-wrap">
+        <img class="brand-small" src="/brand/logo-mark.svg" alt="lumo">
+        <span id="count" class="count">0</span>
+      </span>
       <div class="room" id="roomLabel"></div>
       <button id="bell" class="bell" title="Benachrichtigungen einschalten">Ton an</button>
       <select id="langSwitch"></select>
@@ -160,7 +173,12 @@ $("name").value = saved.name || "";
 $("room").value = saved.room || "";
 $("lang").value = saved.lang || guessLang();
 
-let socket, me = {}, myId = null;
+let socket, me = {};
+let deviceId = localStorage.getItem("lumo-device");
+if (!deviceId) {
+  deviceId = "d-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  localStorage.setItem("lumo-device", deviceId);
+}
 const msgs = new Map();
 const asked = new Set();
 
@@ -181,8 +199,11 @@ function start() {
 
   socket = io();
   socket.on("connect", () => {
-    myId = socket.id;
-    socket.emit("join", { roomCode: me.room, name: me.name, lang: me.lang });
+    socket.emit("join", { roomCode: me.room, name: me.name, lang: me.lang, device: deviceId });
+    /* Beim Start erneut anmelden, damit Raum, Name und Sprache aktuell bleiben. */
+    if (soundOn() && "Notification" in window && Notification.permission === "granted") {
+      registerPush().catch(() => {});
+    }
   });
 
   socket.on("history", (list) => { list.forEach((m) => add(m, false)); });
@@ -211,15 +232,16 @@ $("langSwitch").onchange = (e) => {
   localStorage.setItem("lumo", JSON.stringify(me));
   socket.emit("setLang", { lang: me.lang });
   msgs.forEach(render);
+  if (soundOn()) registerPush().catch(() => {});
 };
 
 function add(m, live) {
   if (msgs.has(m.id)) return;
-  m.live = Boolean(live) && m.from !== myId;   // eigene Nachrichten nie melden
+  m.live = Boolean(live) && m.device !== deviceId;   // eigene Nachrichten nie melden
   msgs.set(m.id, m);
   const row = document.createElement("div");
   row.id = "m" + m.id;
-  row.className = "row " + (m.from === myId ? "mine" : "theirs");
+  row.className = "row " + (m.device === deviceId ? "mine" : "theirs");
   row.innerHTML = '<div class="bubble"></div><div class="meta"></div>';
   $("log").appendChild(row);
   render(m);
@@ -321,6 +343,7 @@ $("bell").onclick = async () => {
   if (soundOn() && Notification.permission === "granted") {
     localStorage.setItem("lumo-sound", "0");
     updateBell();
+    unregisterPush().catch(() => {});
     return;
   }
   let perm = Notification.permission;
@@ -328,6 +351,11 @@ $("bell").onclick = async () => {
   if (perm === "granted") {
     localStorage.setItem("lumo-sound", "1");
     beep();
+    registerPush()
+      .then((ok) => {
+        if (!ok) showErr("Ton und Anzeige laufen. Bei komplett geschlossener App bleibt es still.");
+      })
+      .catch(() => {});
   } else {
     showErr("Benachrichtigungen wurden im Browser blockiert. In den Website-Einstellungen erlauben.");
   }
@@ -355,14 +383,32 @@ function beep() {
   } catch {}
 }
 
+/* Zahl am App-Symbol auf dem Startbildschirm, wie bei WhatsApp. */
+function setBadge(n) {
+  try {
+    if (n > 0 && navigator.setAppBadge) navigator.setAppBadge(n);
+    else if (navigator.clearAppBadge) navigator.clearAppBadge();
+  } catch {}
+}
+
+function showCount() {
+  const el = $("count");
+  if (!el) return;
+  el.textContent = unread > 99 ? "99+" : String(unread);
+  el.classList.toggle("show", unread > 0);
+  document.title = unread > 0 ? `(${unread}) ${baseTitle}` : baseTitle;
+  setBadge(unread);
+}
+
 function notify(m, text) {
   if (notified.has(m.id)) return;
   notified.add(m.id);
   if (!document.hidden) return;          // App ist im Vordergrund, kein Alarm noetig
-  if (!soundOn()) return;
 
   unread++;
-  document.title = `(${unread}) ${baseTitle}`;
+  showCount();
+  if (!soundOn()) return;
+
   beep();
   if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
 
@@ -384,12 +430,73 @@ function notify(m, text) {
   } catch {}
 }
 
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) {
-    unread = 0;
-    document.title = baseTitle;
+function clearUnread() {
+  unread = 0;
+  showCount();
+  if (navigator.serviceWorker?.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: "clear-badge" });
   }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) clearUnread();
 });
+window.addEventListener("focus", clearUnread);
+
+/* ------------------------------------------------------------------
+   Push: Benachrichtigungen auch bei geschlossener App.
+   Braucht VAPID-Schluessel auf dem Server. Fehlen sie, passiert hier
+   nichts und die App laeuft unveraendert weiter.
+------------------------------------------------------------------- */
+function b64ToUint8(base64) {
+  const pad = "=".repeat((4 - (base64.length % 4)) % 4);
+  const raw = atob((base64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function registerPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  if (Notification.permission !== "granted") return false;
+
+  const info = await fetch("/api/push-key").then((r) => r.json()).catch(() => null);
+  if (!info || !info.enabled || !info.key) return false;
+
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: b64ToUint8(info.key),
+    });
+  }
+
+  await fetch("/api/subscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      subscription: sub,
+      room: me.room,
+      device: deviceId,
+      name: me.name,
+      lang: me.lang,
+    }),
+  });
+  return true;
+}
+
+async function unregisterPush() {
+  if (!("serviceWorker" in navigator)) return;
+  const reg = await navigator.serviceWorker.ready.catch(() => null);
+  if (!reg) return;
+  const sub = await reg.pushManager.getSubscription();
+  if (!sub) return;
+  await fetch("/api/unsubscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint: sub.endpoint }),
+  }).catch(() => {});
+  await sub.unsubscribe().catch(() => {});
+}
 
 updateBell();
 

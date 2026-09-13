@@ -112,15 +112,76 @@ Adresse im Handy-Browser öffnen → Teilen → „Zum Home-Bildschirm hinzufüg
 
 ## Benachrichtigungen
 
-Oben in der Leiste sitzt ein Knopf `Ton aus` / `Ton an`. Beim ersten Antippen fragt der Browser um Erlaubnis. Danach gibt es bei jeder eingehenden Nachricht:
+Oben in der Chat-Leiste sitzt der Knopf `Ton aus` / `Ton an`. Beim ersten Antippen fragt der Browser um Erlaubnis. Danach gibt es bei jeder eingehenden Nachricht einen Ton, eine Vibration und eine Systembenachrichtigung mit dem bereits übersetzten Text. Eigene Nachrichten lösen nie etwas aus.
 
-- einen kurzen Ton
-- eine Vibration auf dem Handy
-- eine Systembenachrichtigung mit dem bereits übersetzten Text
-- eine Zahl im Tab-Titel für ungelesene Nachrichten
+Es gibt zwei Stufen, und der Unterschied ist wichtig:
 
-Es klingelt nur, wenn lumo gerade **nicht** im Vordergrund ist, und nie bei eigenen Nachrichten. Die Einstellung merkt sich das Gerät.
+**Stufe 1 — App im Hintergrund.** Läuft ohne weitere Einrichtung. Solange lumo geöffnet ist, auch hinter anderen Apps, klingelt es.
 
-**Grenze:** Das funktioniert, solange lumo im Hintergrund geöffnet ist. Wird die App komplett weggewischt, kommt nichts mehr an. Für Benachrichtigungen bei geschlossener App braucht es echtes Web Push mit VAPID-Schlüsseln und eine Datenbank für die Abos — das ist der nächste Ausbauschritt.
+**Stufe 2 — App komplett geschlossen.** Braucht VAPID-Schlüssel und eine Datenbank. Dann verschickt der Server die Benachrichtigung selbst, unabhängig davon, ob lumo läuft.
 
-Auf dem iPhone gehen Benachrichtigungen nur, wenn lumo vorher über Teilen → „Zum Home-Bildschirm" installiert wurde. Im normalen Safari-Tab unterdrückt iOS sie.
+### Stufe 2 einrichten
+
+Schlüssel einmalig erzeugen:
+
+```bash
+npm run vapid
+```
+
+Das druckt drei Zeilen. Die bei Render unter Environment eintragen: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_CONTACT`. Der private Schlüssel gehört ausschließlich dorthin — nicht ins Repo, nicht in einen Chat.
+
+Dazu braucht es eine Postgres-Datenbank. In Render: New → Postgres, Region Frankfurt, danach beim Web Service unter Environment die Variable `DATABASE_URL` mit der Internal Database URL setzen. Die `render.yaml` legt beides automatisch an, wenn du den Service über eine Blueprint-Bereitstellung erzeugst.
+
+Und der Web Service muss auf **Starter** laufen (7 $/Monat). Auf dem kostenlosen Plan schläft er nach 15 Minuten ein und kann nichts verschicken.
+
+Ob alles steht, zeigt `/health`:
+
+```
+{"ok":true,"key":true,"push":true,"database":true,"langs":33}
+```
+
+Stehen dort `push` und `database` auf `true`, ist Stufe 2 aktiv.
+
+### Ungelesen-Zähler
+
+Drei Stellen zeigen an, wie viele Nachrichten offen sind:
+
+- ein roter Punkt am Blasen-Logo in der Chat-Leiste
+- die Zahl im Tab-Titel, etwa `(3) lumo`
+- die Zahl am App-Symbol auf dem Startbildschirm, wie bei WhatsApp
+
+Der Zähler springt auf null, sobald du die App wieder in den Vordergrund holst. Die Zahl am App-Symbol setzt auch der Service Worker, wenn lumo geschlossen ist — gezählt wird, wie viele Benachrichtigungen offen sind.
+
+Das App-Symbol trägt die Zahl nur, wenn lumo über „Zum Startbildschirm" installiert wurde. Im normalen Browser-Tab gibt es kein Symbol, das eine Zahl tragen könnte; dort bleiben Punkt und Titel. Auf dem iPhone unterstützt Safari das noch nicht zuverlässig.
+
+### iPhone
+
+Push funktioniert nur, wenn lumo vorher über Teilen → „Zum Home-Bildschirm" installiert wurde. Im normalen Safari-Tab unterdrückt iOS es. Auf Android reicht der Browser.
+
+---
+
+## Was die Datenbank sonst noch ändert
+
+Nachrichten überleben jetzt jeden Neustart. Wer den Chat neu öffnet, sieht die letzten 200 Nachrichten des Raums. Vorher war nach jedem Server-Neustart alles weg.
+
+Außerdem erkennt lumo Geräte jetzt an einer festen Kennung statt an der Verbindung. Deine eigenen Nachrichten bleiben dadurch auch nach einem Verbindungsabbruch korrekt als deine markiert.
+
+---
+
+## Kosten im Betrieb
+
+| Posten | Preis |
+|---|---|
+| Render Web Service, Starter | 7 $/Monat |
+| Render Postgres, Basic 256 MB | ca. 6 $/Monat |
+| Anthropic API | nach Verbrauch, bei normalem Chatvolumen wenige Euro |
+
+Web Push selbst kostet nichts — das läuft über die Dienste von Google und Apple.
+
+---
+
+## Logo
+
+Liegt in `public/brand/` als SVG und in `brand/export/` als PNG. Der Leitfaden mit Farben und Regeln steht in `brand/LOGO.md`.
+
+Die Wortmarke ist gezeichnet, keine Schriftart — sie sieht deshalb überall gleich aus, ohne dass eine Schriftdatei mitgeliefert werden muss. Fehlt dir eine PNG-Größe, erzeugt `python3 brand/render.py` alle neu.

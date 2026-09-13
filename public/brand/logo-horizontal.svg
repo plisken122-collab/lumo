@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 160" role="img" aria-label="lumo">
+  <title>lumo</title>
+  <clipPath id="lumo-h-bubble">
+    <rect x="20" y="26" width="120" height="88" rx="26"/>
+    <polygon points="42,108 74,108 34,146"/>
+  </clipPath>
+  <g clip-path="url(#lumo-h-bubble)">
+    <polygon points="0,0 115,0 55,160 0,160" fill="#384C9E"/>
+    <polygon points="121,0 160,0 160,160 61,160" fill="#1E6F58"/>
+  </g>
+  <g transform="translate(186 26) scale(0.6)" fill="none" stroke="#20222B"
+     stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 18V120"/>
+    <path d="M60 60v30a30 30 0 0 0 60 0"/>
+    <path d="M120 60v60"/>
+    <path d="M158 120V88a28 28 0 0 1 56 0v32"/>
+    <path d="M214 88a28 28 0 0 1 56 0v32"/>
+    <circle cx="330" cy="90" r="30"/>
+  </g>
+</svg>

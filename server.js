@@ -5,6 +5,8 @@ import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import os from "os";
+import webpush from "web-push";
+import * as store from "./store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -12,26 +14,24 @@ const app = express();
 const http = createServer(app);
 const io = new Server(http);
 
-app.use(express.json());
+app.use(express.json({ limit: "64kb" }));
 app.use(express.static(join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
-/* ---------------------------------------------------------------
-   Speicher im Arbeitsspeicher. Reicht fuer den Test.
-   Fuer die echte App spaeter durch Postgres ersetzen.
----------------------------------------------------------------- */
-const rooms = new Map(); // code -> { messages: [] }
-const inFlight = new Set(); // verhindert doppelte Uebersetzungsanfragen
+/* ------------------------- Web Push einrichten ------------------------- */
+const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+const VAPID_MAIL = process.env.VAPID_CONTACT || "mailto:admin@example.com";
+const pushReady = Boolean(VAPID_PUBLIC && VAPID_PRIVATE);
 
-function room(code) {
-  if (!rooms.has(code)) rooms.set(code, { messages: [] });
-  return rooms.get(code);
+if (pushReady) {
+  webpush.setVapidDetails(VAPID_MAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 
-/* Sprachen inklusive regionaler Varianten. Muss zur Liste in public/index.html passen. */
+/* ----------------------------- Sprachen ----------------------------- */
 const LANG_NAMES = {
   de: "Deutsch",
   "de-CH": "Schweizer Hochdeutsch",
@@ -49,12 +49,11 @@ const LANG_NAMES = {
   fi: "Finnisch", cs: "Tschechisch", hu: "Ungarisch", el: "Griechisch",
   he: "Hebraeisch", th: "Thai", vi: "Vietnamesisch", id: "Indonesisch",
 };
-
 const CODES = Object.keys(LANG_NAMES);
+const clean = (l) => (CODES.includes(l) ? l : "de");
 
-/* Regionale Eigenheiten, die eine reine Uebersetzung sonst verfehlt. */
 const HINTS = {
-  "pt-BR": "Brasilianisch: 'voce' statt 'tu', Gerundium ('estou fazendo', nicht 'estou a fazer'), brasilianischer Wortschatz (onibus, trem, celular, legal, cara, a gente, bacana). Keine Mesoklise, kein europaeischer Satzbau.",
+  "pt-BR": "Brasilianisch: 'voce' statt 'tu', Gerundium ('estou fazendo', nicht 'estou a fazer'), brasilianischer Wortschatz (onibus, trem, celular, legal, cara, a gente, bacana). Keine Mesoklise.",
   "pt-PT": "Europaeisch: informelles 'tu', Infinitivkonstruktion ('estou a fazer'), portugiesischer Wortschatz (autocarro, comboio, telemovel, fixe, pa, se calhar).",
   "es-419": "Lateinamerikanisch: kein 'vosotros', neutraler Wortschatz ohne Regionalismen aus Spanien.",
   es: "Spanien: 'vosotros' erlaubt, Wortschatz aus Spanien (coche, movil, vale, guay).",
@@ -63,6 +62,9 @@ const HINTS = {
   "de-CH": "Schweizer Hochdeutsch: kein Eszett, Schweizer Wortschatz (Velo, Natel, parkieren, Znueni).",
   "zh-TW": "Traditionelle Schriftzeichen, taiwanischer Sprachgebrauch.",
 };
+
+/* ---------------------------- Uebersetzung ---------------------------- */
+const inFlight = new Map(); // key -> Promise, verhindert doppelte Anfragen
 
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
@@ -95,60 +97,155 @@ Antworte NUR mit JSON, ohne Markdown: {"detected":"<Sprachcode>","translation":"
   return claude(prompt);
 }
 
-/* Uebersetzt eine Nachricht in eine Zielsprache und meldet das Ergebnis an den Raum. */
-async function ensure(code, msgId, target) {
-  const r = rooms.get(code);
-  if (!r) return;
-  const msg = r.messages.find((m) => m.id === msgId);
-  if (!msg) return;
-  if (msg.lang === target || msg.tr[target]) return;
+/* Sorgt dafuer, dass eine Uebersetzung existiert. Gibt den Text zurueck. */
+async function ensure(room, msgId, target) {
+  const msg = await store.getMessage(msgId);
+  if (!msg) return null;
+  if (msg.lang === target) return msg.text;
+  if (msg.tr[target]) return msg.tr[target];
 
-  const key = `${code}:${msgId}:${target}`;
-  if (inFlight.has(key)) return;
-  inFlight.add(key);
+  const key = `${msgId}:${target}`;
+  if (inFlight.has(key)) return inFlight.get(key);
 
+  const job = (async () => {
+    try {
+      const out = await translate(msg.text, target);
+      if (out.detected && !msg.detected && CODES.includes(out.detected)) {
+        await store.setDetectedLang(msgId, out.detected);
+        msg.lang = out.detected;
+        io.to(room).emit("lang", { id: msgId, lang: out.detected });
+      }
+      if (msg.lang === target) return msg.text;
+      await store.setTranslation(msgId, target, out.translation);
+      io.to(room).emit("translated", { id: msgId, lang: target, text: out.translation });
+      return out.translation;
+    } catch (err) {
+      console.error("Uebersetzung fehlgeschlagen:", err.message);
+      io.to(room).emit("translationError", { id: msgId, lang: target });
+      return null;
+    } finally {
+      inFlight.delete(key);
+    }
+  })();
+
+  inFlight.set(key, job);
+  return job;
+}
+
+/* ------------------------------- Push ------------------------------- */
+/* Schickt jedem angemeldeten Geraet im Raum die Nachricht in seiner Sprache. */
+async function pushToRoom(room, msg) {
+  if (!pushReady) return;
+  let subs = [];
   try {
-    const out = await translate(msg.text, target);
-    if (out.detected && !msg.detected && CODES.includes(out.detected)) {
-      msg.lang = out.detected;
-      msg.detected = true;
-      io.to(code).emit("lang", { id: msgId, lang: out.detected });
-    }
-    if (msg.lang !== target) {
-      msg.tr[target] = out.translation;
-      io.to(code).emit("translated", { id: msgId, lang: target, text: out.translation });
-    }
+    subs = await store.getSubscriptions(room);
   } catch (err) {
-    console.error("Uebersetzung fehlgeschlagen:", err.message);
-    io.to(code).emit("translationError", { id: msgId, lang: target });
-  } finally {
-    inFlight.delete(key);
+    console.error("Push-Anmeldungen nicht lesbar:", err.message);
+    return;
+  }
+
+  for (const sub of subs) {
+    if (sub.device === msg.device) continue; // nicht an den Absender
+    try {
+      const body = await ensure(room, msg.id, clean(sub.lang));
+      const payload = JSON.stringify({
+        title: msg.name,
+        body: body || msg.text,
+        room,
+        id: msg.id,
+      });
+      await webpush.sendNotification(sub.data, payload);
+    } catch (err) {
+      /* 404 und 410 heissen: Anmeldung ist tot, Geraet abgemeldet. */
+      if (err.statusCode === 404 || err.statusCode === 410) {
+        await store.deleteSubscription(sub.endpoint).catch(() => {});
+      } else {
+        console.error("Push fehlgeschlagen:", err.statusCode || err.message);
+      }
+    }
   }
 }
 
+/* ------------------------------ HTTP API ------------------------------ */
+app.get("/api/push-key", (_req, res) => {
+  res.json({ enabled: pushReady, key: VAPID_PUBLIC || null });
+});
+
+app.post("/api/subscribe", async (req, res) => {
+  const { subscription, room, device, name, lang } = req.body || {};
+  if (!pushReady) return res.status(503).json({ error: "Push ist nicht eingerichtet" });
+  if (!subscription?.endpoint || !room || !device) {
+    return res.status(400).json({ error: "Angaben unvollstaendig" });
+  }
+  try {
+    await store.saveSubscription({
+      endpoint: subscription.endpoint,
+      room: String(room).toLowerCase().slice(0, 60),
+      device: String(device).slice(0, 60),
+      name: String(name || "Gast").slice(0, 40),
+      lang: clean(lang),
+      data: subscription,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Anmeldung fehlgeschlagen:", err.message);
+    res.status(500).json({ error: "Anmeldung fehlgeschlagen" });
+  }
+});
+
+app.post("/api/unsubscribe", async (req, res) => {
+  const { endpoint } = req.body || {};
+  if (!endpoint) return res.status(400).json({ error: "endpoint fehlt" });
+  try {
+    await store.deleteSubscription(endpoint);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Abmeldung fehlgeschlagen" });
+  }
+});
+
+app.get("/health", (_req, res) =>
+  res.json({
+    ok: true,
+    key: Boolean(API_KEY),
+    push: pushReady,
+    database: store.usingDatabase,
+    langs: CODES.length,
+  })
+);
+
+/* ------------------------------ Sockets ------------------------------ */
 io.on("connection", (socket) => {
-  let code = null;
-  let me = { name: "Gast", lang: "de" };
+  let room = null;
+  let me = { name: "Gast", lang: "de", device: null };
 
-  const clean = (l) => (CODES.includes(l) ? l : "de");
-
-  socket.on("join", ({ roomCode, name, lang }) => {
-    code = (roomCode || "lobby").trim().toLowerCase();
-    me = { name: (name || "Gast").slice(0, 40), lang: clean(lang) };
-    socket.join(code);
-    socket.emit("history", room(code).messages);
-    socket.to(code).emit("system", `${me.name} ist dazugekommen`);
+  socket.on("join", async ({ roomCode, name, lang, device }) => {
+    room = String(roomCode || "lobby").trim().toLowerCase().slice(0, 60);
+    me = {
+      name: String(name || "Gast").slice(0, 40),
+      lang: clean(lang),
+      device: String(device || socket.id).slice(0, 60),
+    };
+    socket.join(room);
+    try {
+      socket.emit("history", await store.getHistory(room));
+    } catch (err) {
+      console.error("Verlauf nicht ladbar:", err.message);
+      socket.emit("history", []);
+    }
+    socket.to(room).emit("system", `${me.name} ist dazugekommen`);
   });
 
   socket.on("setLang", ({ lang }) => {
     me.lang = clean(lang);
   });
 
-  socket.on("send", ({ text }) => {
-    if (!code || !text?.trim()) return;
+  socket.on("send", async ({ text }) => {
+    if (!room || !text?.trim()) return;
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      from: socket.id,
+      room,
+      device: me.device,
       name: me.name,
       text: text.trim().slice(0, 4000),
       lang: me.lang,
@@ -156,28 +253,37 @@ io.on("connection", (socket) => {
       tr: {},
       at: Date.now(),
     };
-    room(code).messages.push(msg);
-    io.to(code).emit("message", msg);
+    try {
+      await store.addMessage(msg);
+    } catch (err) {
+      console.error("Nachricht nicht speicherbar:", err.message);
+      socket.emit("translationError", { id: msg.id, lang: me.lang });
+      return;
+    }
+    io.to(room).emit("message", msg);
+    pushToRoom(room, msg).catch((e) => console.error("Push-Lauf:", e.message));
   });
 
   socket.on("need", ({ id, lang }) => {
-    if (code) ensure(code, id, clean(lang));
+    if (room) ensure(room, id, clean(lang)).catch(() => {});
   });
 
   socket.on("disconnect", () => {
-    if (code) socket.to(code).emit("system", `${me.name} hat den Chat verlassen`);
+    if (room) socket.to(room).emit("system", `${me.name} hat den Chat verlassen`);
   });
 });
 
-app.get("/health", (_req, res) => res.json({ ok: true, key: Boolean(API_KEY), langs: CODES.length }));
-
-/* Beim Start die Adresse im lokalen Netz ausgeben - damit findet das Handy den Server. */
+/* ------------------------------- Start ------------------------------- */
 function lanAddress() {
   for (const iface of Object.values(os.networkInterfaces()).flat()) {
     if (iface && iface.family === "IPv4" && !iface.internal) return iface.address;
   }
   return null;
 }
+
+await store.init().catch((err) => {
+  console.error("  Datenbank nicht erreichbar:", err.message);
+});
 
 http.listen(PORT, "0.0.0.0", async () => {
   const lan = lanAddress();
@@ -193,8 +299,9 @@ http.listen(PORT, "0.0.0.0", async () => {
     } catch {
       console.log(`  Diese Adresse auf beiden Handys im Browser oeffnen.\n`);
     }
-  } else {
-    console.log(`  Keine Netzwerkadresse gefunden - bist du mit dem WLAN verbunden?\n`);
   }
-  if (!API_KEY) console.log("  WARNUNG: ANTHROPIC_API_KEY fehlt in .env - es wird nicht uebersetzt.\n");
+  if (!API_KEY) console.log("  WARNUNG: ANTHROPIC_API_KEY fehlt - es wird nicht uebersetzt.");
+  if (!pushReady) console.log("  Hinweis: VAPID-Schluessel fehlen - Push bei geschlossener App ist aus.");
+  if (!store.usingDatabase) console.log("  Hinweis: keine Datenbank - Nachrichten sind nach Neustart weg.");
+  console.log("");
 });

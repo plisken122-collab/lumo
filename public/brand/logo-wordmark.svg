@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 392 150" role="img" aria-label="lumo">
+  <title>lumo</title>
+  <g fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 18V120"/>
+    <path d="M60 60v30a30 30 0 0 0 60 0"/>
+    <path d="M120 60v60"/>
+    <path d="M158 120V88a28 28 0 0 1 56 0v32"/>
+    <path d="M214 88a28 28 0 0 1 56 0v32"/>
+    <circle cx="330" cy="90" r="30"/>
+  </g>
+</svg>
