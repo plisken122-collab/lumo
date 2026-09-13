@@ -44,6 +44,11 @@
   .bar { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .bar .room { font-size:13px; color:var(--muted); flex:1; }
   .bar select { width:auto; padding:7px 9px; font-size:13px; border-radius:9px; }
+  .bell {
+    background:var(--surface); border:1px solid var(--line); color:var(--muted);
+    border-radius:9px; padding:7px 10px; font-size:13px; white-space:nowrap;
+  }
+  .bell.on { background:var(--mine); border-color:var(--mine); color:#fff; }
 
   #log {
     flex:1; overflow-y:auto; background:var(--surface); border:1px solid var(--line);
@@ -103,6 +108,7 @@
     <div class="bar">
       <div class="brand" style="font-size:20px">lumo</div>
       <div class="room" id="roomLabel"></div>
+      <button id="bell" class="bell" title="Benachrichtigungen einschalten">Ton an</button>
       <select id="langSwitch"></select>
     </div>
     <div id="log"></div>
@@ -179,8 +185,8 @@ function start() {
     socket.emit("join", { roomCode: me.room, name: me.name, lang: me.lang });
   });
 
-  socket.on("history", (list) => { list.forEach(add); });
-  socket.on("message", add);
+  socket.on("history", (list) => { list.forEach((m) => add(m, false)); });
+  socket.on("message", (m) => add(m, true));
   socket.on("system", (t) => {
     const d = document.createElement("div");
     d.className = "system"; d.textContent = t;
@@ -207,8 +213,9 @@ $("langSwitch").onchange = (e) => {
   msgs.forEach(render);
 };
 
-function add(m) {
+function add(m, live) {
   if (msgs.has(m.id)) return;
+  m.live = Boolean(live) && m.from !== myId;   // eigene Nachrichten nie melden
   msgs.set(m.id, m);
   const row = document.createElement("div");
   row.id = "m" + m.id;
@@ -244,6 +251,7 @@ function render(m) {
       o.textContent = m.text;
       bubble.appendChild(o);
     }
+    if (m.live) notify(m, text);
   }
 
   meta.textContent = "";
@@ -282,6 +290,108 @@ function showErr(t) {
   const e = $("err"); e.textContent = t; e.classList.remove("hide");
   setTimeout(() => e.classList.add("hide"), 5000);
 }
+
+
+/* ------------------------------------------------------------------
+   Benachrichtigungen
+   Klingelt, wenn eine Nachricht ankommt, waehrend die App nicht im
+   Vordergrund ist. Der Text erscheint bereits uebersetzt.
+------------------------------------------------------------------- */
+const notified = new Set();
+let unread = 0;
+const baseTitle = document.title;
+
+function soundOn() {
+  return localStorage.getItem("lumo-sound") === "1";
+}
+
+function updateBell() {
+  const b = $("bell");
+  const granted = ("Notification" in window) && Notification.permission === "granted";
+  const on = granted && soundOn();
+  b.classList.toggle("on", on);
+  b.textContent = on ? "Ton an" : "Ton aus";
+}
+
+$("bell").onclick = async () => {
+  if (!("Notification" in window)) {
+    showErr("Dieser Browser kann keine Benachrichtigungen anzeigen.");
+    return;
+  }
+  if (soundOn() && Notification.permission === "granted") {
+    localStorage.setItem("lumo-sound", "0");
+    updateBell();
+    return;
+  }
+  let perm = Notification.permission;
+  if (perm !== "granted") perm = await Notification.requestPermission();
+  if (perm === "granted") {
+    localStorage.setItem("lumo-sound", "1");
+    beep();
+  } else {
+    showErr("Benachrichtigungen wurden im Browser blockiert. In den Website-Einstellungen erlauben.");
+  }
+  updateBell();
+};
+
+/* Kurzer Ton, ohne Audiodatei. */
+let audioCtx = null;
+function beep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, t);
+    osc.frequency.setValueAtTime(1175, t + 0.09);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.36);
+  } catch {}
+}
+
+function notify(m, text) {
+  if (notified.has(m.id)) return;
+  notified.add(m.id);
+  if (!document.hidden) return;          // App ist im Vordergrund, kein Alarm noetig
+  if (!soundOn()) return;
+
+  unread++;
+  document.title = `(${unread}) ${baseTitle}`;
+  beep();
+  if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+
+  const opts = {
+    body: text,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: "lumo-" + m.id,
+    lang: me.lang,
+  };
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready
+        .then((reg) => reg.showNotification(m.name, opts))
+        .catch(() => new Notification(m.name, opts));
+    } else {
+      new Notification(m.name, opts);
+    }
+  } catch {}
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    unread = 0;
+    document.title = baseTitle;
+  }
+});
+
+updateBell();
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 </script>

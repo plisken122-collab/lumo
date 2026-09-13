@@ -107,3 +107,20 @@ Auf dem Free-Plan schläft der Server nach 15 Minuten Leerlauf ein. Der erste Au
 ### Als App auf den Home-Bildschirm
 
 Adresse im Handy-Browser öffnen → Teilen → „Zum Home-Bildschirm hinzufügen". Danach startet lumo ohne Adressleiste wie eine normale App. Funktioniert bei Variante B sauber; bei Variante A nur solange dein Rechner läuft.
+
+---
+
+## Benachrichtigungen
+
+Oben in der Leiste sitzt ein Knopf `Ton aus` / `Ton an`. Beim ersten Antippen fragt der Browser um Erlaubnis. Danach gibt es bei jeder eingehenden Nachricht:
+
+- einen kurzen Ton
+- eine Vibration auf dem Handy
+- eine Systembenachrichtigung mit dem bereits übersetzten Text
+- eine Zahl im Tab-Titel für ungelesene Nachrichten
+
+Es klingelt nur, wenn lumo gerade **nicht** im Vordergrund ist, und nie bei eigenen Nachrichten. Die Einstellung merkt sich das Gerät.
+
+**Grenze:** Das funktioniert, solange lumo im Hintergrund geöffnet ist. Wird die App komplett weggewischt, kommt nichts mehr an. Für Benachrichtigungen bei geschlossener App braucht es echtes Web Push mit VAPID-Schlüsseln und eine Datenbank für die Abos — das ist der nächste Ausbauschritt.
+
+Auf dem iPhone gehen Benachrichtigungen nur, wenn lumo vorher über Teilen → „Zum Home-Bildschirm" installiert wurde. Im normalen Safari-Tab unterdrückt iOS sie.
