@@ -185,3 +185,17 @@ Web Push selbst kostet nichts — das läuft über die Dienste von Google und Ap
 Liegt in `public/brand/` als SVG und in `brand/export/` als PNG. Der Leitfaden mit Farben und Regeln steht in `brand/LOGO.md`.
 
 Die Wortmarke ist gezeichnet, keine Schriftart — sie sieht deshalb überall gleich aus, ohne dass eine Schriftdatei mitgeliefert werden muss. Fehlt dir eine PNG-Größe, erzeugt `python3 brand/render.py` alle neu.
+
+---
+
+## Zugangswort
+
+Setz die Umgebungsvariable `ACCESS_CODE` auf ein Wort deiner Wahl, und niemand kommt ohne dieses Wort in die App — weder über die Seite noch über die Echtzeitverbindung.
+
+Wer das Wort richtig eingibt, bekommt ein Cookie und wird ein Jahr lang nicht mehr gefragt. Das Wort selbst verlässt den Server nie; im Browser liegt nur ein daraus abgeleiteter Wert.
+
+Bleibt `ACCESS_CODE` leer, ist die App öffentlich erreichbar. Ob es aktiv ist, zeigt `/health` im Feld `gate`.
+
+Dazu kommt eine `robots.txt`, die Suchmaschinen aussperrt, und `noindex` auf beiden Seiten. Vor einer echten Veröffentlichung beides wieder entfernen.
+
+Das ersetzt keine Anmeldung mit Benutzerkonten — alle teilen sich dasselbe Wort, und wer es weitergibt, gibt den Zugang weiter. Für eine Testphase im kleinen Kreis reicht es.

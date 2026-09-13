@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import os from "os";
+import crypto from "crypto";
 import webpush from "web-push";
 import * as store from "./store.js";
 
@@ -15,6 +16,71 @@ const http = createServer(app);
 const io = new Server(http);
 
 app.use(express.json({ limit: "64kb" }));
+
+/* --------------------------------------------------------------------
+   Zugangswort
+
+   Ist ACCESS_CODE gesetzt, kommt niemand ohne das Wort in die App.
+   Fehlt die Variable, ist die App offen wie vorher.
+
+   Im Browser landet kein Klartext: Wer das Wort richtig eingibt,
+   bekommt ein Cookie mit einem abgeleiteten Wert. Das Wort selbst
+   bleibt auf dem Server.
+-------------------------------------------------------------------- */
+const ACCESS_CODE = process.env.ACCESS_CODE || "";
+const gateOn = Boolean(ACCESS_CODE);
+const COOKIE = "lumo_gate";
+
+const gateToken = () =>
+  crypto.createHmac("sha256", ACCESS_CODE).update("lumo-gate-v1").digest("hex");
+
+function cookieValue(req, name) {
+  const raw = req.headers.cookie || "";
+  for (const part of raw.split(";")) {
+    const [k, ...v] = part.trim().split("=");
+    if (k === name) return v.join("=");
+  }
+  return null;
+}
+
+function passedGate(req) {
+  if (!gateOn) return true;
+  const got = cookieValue(req, COOKIE);
+  if (!got) return false;
+  const want = gateToken();
+  if (got.length !== want.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));
+}
+
+/* Diese Pfade muessen ohne Zugangswort erreichbar sein, sonst laesst sich
+   die Eingabeseite nicht darstellen. */
+const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json"]);
+const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWith("/icons/");
+
+app.post("/api/gate", (req, res) => {
+  if (!gateOn) return res.json({ ok: true });
+  const given = String(req.body?.code || "");
+  const a = crypto.createHash("sha256").update(given).digest();
+  const b = crypto.createHash("sha256").update(ACCESS_CODE).digest();
+  if (!crypto.timingSafeEqual(a, b)) {
+    return res.status(401).json({ error: "Das Wort stimmt nicht." });
+  }
+  const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
+  res.setHeader(
+    "Set-Cookie",
+    `${COOKIE}=${gateToken()}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`
+  );
+  res.json({ ok: true });
+});
+
+app.use((req, res, next) => {
+  if (!gateOn || isOpen(req.path) || passedGate(req)) return next();
+  if ((req.headers.accept || "").includes("text/html")) {
+    return res.status(401).sendFile(join(__dirname, "public", "gate.html"));
+  }
+  res.status(401).json({ error: "Zugang gesperrt" });
+});
+
 app.use(express.static(join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
@@ -210,11 +276,19 @@ app.get("/health", (_req, res) =>
     key: Boolean(API_KEY),
     push: pushReady,
     database: store.usingDatabase,
+    gate: gateOn,
     langs: CODES.length,
   })
 );
 
 /* ------------------------------ Sockets ------------------------------ */
+io.use((socket, next) => {
+  if (!gateOn) return next();
+  const fake = { headers: { cookie: socket.handshake.headers.cookie || "" } };
+  if (passedGate(fake)) return next();
+  next(new Error("Zugang gesperrt"));
+});
+
 io.on("connection", (socket) => {
   let room = null;
   let me = { name: "Gast", lang: "de", device: null };
@@ -303,5 +377,6 @@ http.listen(PORT, "0.0.0.0", async () => {
   if (!API_KEY) console.log("  WARNUNG: ANTHROPIC_API_KEY fehlt - es wird nicht uebersetzt.");
   if (!pushReady) console.log("  Hinweis: VAPID-Schluessel fehlen - Push bei geschlossener App ist aus.");
   if (!store.usingDatabase) console.log("  Hinweis: keine Datenbank - Nachrichten sind nach Neustart weg.");
+  console.log(gateOn ? "  Zugangswort ist aktiv." : "  Hinweis: kein ACCESS_CODE - die App ist oeffentlich erreichbar.");
   console.log("");
 });

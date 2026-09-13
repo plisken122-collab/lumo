@@ -16,6 +16,8 @@ services:
         sync: false
       - key: VAPID_CONTACT
         sync: false
+      - key: ACCESS_CODE
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: lumo-db

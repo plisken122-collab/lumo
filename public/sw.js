@@ -5,7 +5,7 @@
    1. Die App offline-faehig machen, damit sie installierbar ist.
    2. Push-Nachrichten annehmen, auch wenn lumo geschlossen ist.
 -------------------------------------------------------------------- */
-const CACHE = "lumo-v5";
+const CACHE = "lumo-v7";
 const SHELL = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
@@ -59,8 +59,8 @@ self.addEventListener("push", (e) => {
     self.registration
       .showNotification(payload.title, {
         body: payload.body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
+        icon: "/icons/icon-192-v2.png",
+        badge: "/icons/icon-192-v2.png",
         tag: "lumo-" + (payload.id || Date.now()),
         vibrate: [120, 60, 120],
         data: { url: "/" },
