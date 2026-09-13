@@ -27,6 +27,7 @@ const mem = {
   messages: new Map(), // id -> msg
   rooms: new Map(),    // room -> [id]
   subs: new Map(),     // endpoint -> sub
+  usage: [],           // Verbrauch pro Uebersetzung
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -65,6 +66,17 @@ export async function init() {
       at       BIGINT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS subscriptions_room ON subscriptions (room);
+
+    CREATE TABLE IF NOT EXISTS usage_log (
+      id         BIGSERIAL PRIMARY KEY,
+      at         BIGINT NOT NULL,
+      room       TEXT,
+      target     TEXT,
+      chars      INTEGER NOT NULL DEFAULT 0,
+      in_tokens  INTEGER NOT NULL DEFAULT 0,
+      out_tokens INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS usage_at ON usage_log (at);
   `);
   console.log("  Datenbank bereit.");
 }
@@ -148,6 +160,113 @@ function rowToMsg(r, translations) {
     id: r.id, room: r.room, device: r.device, name: r.name,
     text: r.body, lang: r.lang, detected: r.detected, at: Number(r.at), tr,
   };
+}
+
+/* ------------------------- Verbrauch zaehlen -------------------------
+   Eine Zeile pro Uebersetzung. Damit laesst sich spaeter ausrechnen,
+   was eine Nachricht wirklich kostet - statt zu schaetzen.
+------------------------------------------------------------------- */
+export async function logUsage({ room, target, chars, inTokens, outTokens }) {
+  const row = { at: Date.now(), room, target, chars, in_tokens: inTokens, out_tokens: outTokens };
+  if (!usingDatabase) {
+    mem.usage.push(row);
+    if (mem.usage.length > 20000) mem.usage.shift();
+    return;
+  }
+  await pool.query(
+    `INSERT INTO usage_log (at, room, target, chars, in_tokens, out_tokens)
+     VALUES ($1,$2,$3,$4,$5,$6)`,
+    [row.at, room, target, chars, inTokens, outTokens]
+  );
+}
+
+/* Summen fuer die letzten n Tage, plus Tagesverlauf. */
+export async function getUsage(days = 30) {
+  const since = Date.now() - days * 24 * 60 * 60 * 1000;
+
+  if (!usingDatabase) {
+    const rows = mem.usage.filter((r) => r.at >= since);
+    const total = rows.reduce(
+      (a, r) => ({
+        count: a.count + 1,
+        chars: a.chars + r.chars,
+        inTokens: a.inTokens + r.in_tokens,
+        outTokens: a.outTokens + r.out_tokens,
+      }),
+      { count: 0, chars: 0, inTokens: 0, outTokens: 0 }
+    );
+    const byDay = {};
+    for (const r of rows) {
+      const d = new Date(r.at).toISOString().slice(0, 10);
+      byDay[d] = byDay[d] || { day: d, count: 0, inTokens: 0, outTokens: 0 };
+      byDay[d].count++;
+      byDay[d].inTokens += r.in_tokens;
+      byDay[d].outTokens += r.out_tokens;
+    }
+    return { total, byDay: Object.values(byDay).sort((a, b) => a.day.localeCompare(b.day)) };
+  }
+
+  const t = await pool.query(
+    `SELECT COUNT(*)::int AS count,
+            COALESCE(SUM(chars),0)::int AS chars,
+            COALESCE(SUM(in_tokens),0)::bigint AS in_tokens,
+            COALESCE(SUM(out_tokens),0)::bigint AS out_tokens
+       FROM usage_log WHERE at >= $1`, [since]);
+
+  const d = await pool.query(
+    `SELECT to_char(to_timestamp(at/1000), 'YYYY-MM-DD') AS day,
+            COUNT(*)::int AS count,
+            COALESCE(SUM(in_tokens),0)::bigint AS in_tokens,
+            COALESCE(SUM(out_tokens),0)::bigint AS out_tokens
+       FROM usage_log WHERE at >= $1
+      GROUP BY day ORDER BY day`, [since]);
+
+  const r = t.rows[0];
+  return {
+    total: {
+      count: r.count, chars: r.chars,
+      inTokens: Number(r.in_tokens), outTokens: Number(r.out_tokens),
+    },
+    byDay: d.rows.map((x) => ({
+      day: x.day, count: x.count,
+      inTokens: Number(x.in_tokens), outTokens: Number(x.out_tokens),
+    })),
+  };
+}
+
+/* --------------------------- Aufraeumen ---------------------------
+   Nachrichten aelter als die Aufbewahrungsfrist verschwinden. Was
+   geloescht ist, kann niemand mehr lesen und niemand herausverlangen.
+   Uebersetzungen gehen per ON DELETE CASCADE gleich mit.
+------------------------------------------------------------------- */
+export async function purgeOlderThan(days) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+
+  if (!usingDatabase) {
+    let removed = 0;
+    for (const [id, m] of [...mem.messages]) {
+      if (m.at < cutoff) {
+        mem.messages.delete(id);
+        removed++;
+      }
+    }
+    for (const [room, ids] of [...mem.rooms]) {
+      const keep = ids.filter((id) => mem.messages.has(id));
+      if (keep.length) mem.rooms.set(room, keep);
+      else mem.rooms.delete(room);
+    }
+    return removed;
+  }
+
+  const { rowCount } = await pool.query(`DELETE FROM messages WHERE at < $1`, [cutoff]);
+  /* Verbrauchszahlen bleiben ein Jahr - sie enthalten keinen Nachrichtentext. */
+  await pool.query(`DELETE FROM usage_log WHERE at < $1`,
+                   [Date.now() - 365 * 24 * 60 * 60 * 1000]);
+  /* Push-Anmeldungen, die seit einem halben Jahr nichts mehr getan haben,
+     sind mit hoher Wahrscheinlichkeit tote Geraete. */
+  await pool.query(`DELETE FROM subscriptions WHERE at < $1`,
+                   [Date.now() - 180 * 24 * 60 * 60 * 1000]);
+  return rowCount;
 }
 
 /* ------------------------ Push-Anmeldungen ------------------------ */

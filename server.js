@@ -85,7 +85,14 @@ app.use(express.static(join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+
+/* Preise in US-Dollar je eine Million Tokens. Stand September 2026 fuer
+   Sonnet 5. Aendern sich die Preise, hier anpassen - oder per
+   Umgebungsvariable, ohne den Code anzufassen. */
+const PRICE_IN = Number(process.env.PRICE_IN_PER_MTOK || 2);
+const PRICE_OUT = Number(process.env.PRICE_OUT_PER_MTOK || 10);
+const RETENTION_DAYS = Number(process.env.RETENTION_DAYS || 30);
 
 /* ------------------------- Web Push einrichten ------------------------- */
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
@@ -150,7 +157,13 @@ async function claude(prompt) {
   if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
   const data = await res.json();
   const text = (data.content || []).map((c) => (c.type === "text" ? c.text : "")).join("");
-  return JSON.parse(text.replace(/```json|```/g, "").trim());
+  return {
+    result: JSON.parse(text.replace(/```json|```/g, "").trim()),
+    usage: {
+      inTokens: data.usage?.input_tokens || 0,
+      outTokens: data.usage?.output_tokens || 0,
+    },
+  };
 }
 
 async function translate(text, target) {
@@ -162,6 +175,8 @@ Text: """${text}"""
 Antworte NUR mit JSON, ohne Markdown: {"detected":"<Sprachcode>","translation":"<Uebersetzung>"}`;
   return claude(prompt);
 }
+
+const costOf = (u) => (u.inTokens / 1e6) * PRICE_IN + (u.outTokens / 1e6) * PRICE_OUT;
 
 /* Sorgt dafuer, dass eine Uebersetzung existiert. Gibt den Text zurueck. */
 async function ensure(room, msgId, target) {
@@ -175,7 +190,11 @@ async function ensure(room, msgId, target) {
 
   const job = (async () => {
     try {
-      const out = await translate(msg.text, target);
+      const { result: out, usage } = await translate(msg.text, target);
+      store.logUsage({
+        room, target, chars: msg.text.length,
+        inTokens: usage.inTokens, outTokens: usage.outTokens,
+      }).catch((e) => console.error("Verbrauch nicht speicherbar:", e.message));
       if (out.detected && !msg.detected && CODES.includes(out.detected)) {
         await store.setDetectedLang(msgId, out.detected);
         msg.lang = out.detected;
@@ -270,6 +289,31 @@ app.post("/api/unsubscribe", async (req, res) => {
   }
 });
 
+app.get("/api/stats", async (req, res) => {
+  const days = Math.min(365, Math.max(1, Number(req.query.days) || 30));
+  try {
+    const u = await store.getUsage(days);
+    const cost = costOf(u.total);
+    res.json({
+      days,
+      model: MODEL,
+      prices: { inputPerMTok: PRICE_IN, outputPerMTok: PRICE_OUT },
+      total: {
+        ...u.total,
+        costUsd: Number(cost.toFixed(4)),
+        costPerTranslationUsd: u.total.count ? Number((cost / u.total.count).toFixed(6)) : 0,
+      },
+      byDay: u.byDay.map((d) => ({
+        ...d,
+        costUsd: Number(costOf(d).toFixed(4)),
+      })),
+    });
+  } catch (err) {
+    console.error("Auswertung fehlgeschlagen:", err.message);
+    res.status(500).json({ error: "Auswertung fehlgeschlagen" });
+  }
+});
+
 app.get("/health", (_req, res) =>
   res.json({
     ok: true,
@@ -277,6 +321,7 @@ app.get("/health", (_req, res) =>
     push: pushReady,
     database: store.usingDatabase,
     gate: gateOn,
+    retentionDays: RETENTION_DAYS > 0 ? RETENTION_DAYS : null,
     langs: CODES.length,
   })
 );
@@ -359,6 +404,19 @@ await store.init().catch((err) => {
   console.error("  Datenbank nicht erreichbar:", err.message);
 });
 
+/* Aufbewahrungsfrist durchsetzen: beim Start und danach stuendlich. */
+async function purge() {
+  if (!(RETENTION_DAYS > 0)) return;
+  try {
+    const n = await store.purgeOlderThan(RETENTION_DAYS);
+    if (n) console.log(`  ${n} Nachricht(en) aelter als ${RETENTION_DAYS} Tage geloescht.`);
+  } catch (err) {
+    console.error("  Aufraeumen fehlgeschlagen:", err.message);
+  }
+}
+purge();
+setInterval(purge, 60 * 60 * 1000).unref();
+
 http.listen(PORT, "0.0.0.0", async () => {
   const lan = lanAddress();
   console.log(`\n  lumo laeuft.\n`);
@@ -378,5 +436,8 @@ http.listen(PORT, "0.0.0.0", async () => {
   if (!pushReady) console.log("  Hinweis: VAPID-Schluessel fehlen - Push bei geschlossener App ist aus.");
   if (!store.usingDatabase) console.log("  Hinweis: keine Datenbank - Nachrichten sind nach Neustart weg.");
   console.log(gateOn ? "  Zugangswort ist aktiv." : "  Hinweis: kein ACCESS_CODE - die App ist oeffentlich erreichbar.");
+  console.log(RETENTION_DAYS > 0
+    ? `  Nachrichten werden nach ${RETENTION_DAYS} Tagen geloescht.`
+    : "  Hinweis: RETENTION_DAYS=0 - Nachrichten bleiben unbegrenzt liegen.");
   console.log("");
 });

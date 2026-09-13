@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>lumo — Verbrauch</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root { --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E; --line:#D2D4DB; --mine:#384C9E; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--canvas); color:var(--ink); padding:22px 16px 40px;
+    font-family:'DM Sans', system-ui, sans-serif; font-size:16px;
+  }
+  .wrap { max-width:660px; margin:0 auto; }
+  img.logo { display:block; height:34px; width:auto; margin-bottom:6px; }
+  h1 { font-size:19px; font-weight:500; margin:14px 0 4px; }
+  .lead { margin:0 0 18px; font-size:14px; color:var(--muted); }
+  .range { display:flex; gap:7px; margin-bottom:16px; flex-wrap:wrap; }
+  .range button {
+    font-family:inherit; font-size:13px; cursor:pointer; border-radius:9px;
+    padding:8px 13px; border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  }
+  .range button.on { background:var(--mine); border-color:var(--mine); color:#fff; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; }
+  .tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:15px; }
+  .tile .k { font-size:12.5px; color:var(--muted); }
+  .tile .v { font-size:25px; font-weight:500; margin-top:3px; letter-spacing:-0.02em; }
+  .tile .s { font-size:12px; color:var(--muted); margin-top:3px; }
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:16px; }
+  .panel h2 { font-size:14px; font-weight:500; margin:0 0 12px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { text-align:left; font-weight:500; color:var(--muted); font-size:12.5px; padding-bottom:7px; }
+  td { padding:6px 0; border-top:1px solid var(--line); }
+  td.num, th.num { text-align:right; }
+  .note { font-size:12.5px; color:var(--muted); line-height:1.55; margin-top:16px; }
+  .err { color:#9B2C25; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="logo" src="/brand/logo-horizontal.svg" alt="lumo">
+  <h1>Was eine Nachricht wirklich kostet</h1>
+  <p class="lead" id="lead">Wird geladen …</p>
+
+  <div class="range">
+    <button data-d="7">7 Tage</button>
+    <button data-d="30" class="on">30 Tage</button>
+    <button data-d="90">90 Tage</button>
+    <button data-d="365">1 Jahr</button>
+  </div>
+
+  <div class="grid" id="tiles"></div>
+
+  <div class="panel">
+    <h2>Tagesverlauf</h2>
+    <div id="days"></div>
+  </div>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+const eur = 0.92; // grober Umrechnungskurs, nur zur Orientierung
+let days = 30;
+
+const fmt = (n, d = 0) => n.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+async function load() {
+  const lead = document.getElementById("lead");
+  try {
+    const r = await fetch("/api/stats?days=" + days);
+    if (!r.ok) throw new Error();
+    const s = await r.json();
+    render(s);
+  } catch {
+    lead.innerHTML = '<span class="err">Zahlen nicht abrufbar. Läuft der Server mit Datenbank?</span>';
+  }
+}
+
+function render(s) {
+  const t = s.total;
+  const perMsg = t.costPerTranslationUsd;
+  const perDay = s.byDay.length ? t.costUsd / s.byDay.length : 0;
+
+  document.getElementById("lead").textContent =
+    `${fmt(t.count)} Übersetzungen in ${s.days} Tagen, Modell ${s.model}.`;
+
+  document.getElementById("tiles").innerHTML = [
+    ["Kosten gesamt", "$" + fmt(t.costUsd, 2), "≈ " + fmt(t.costUsd * eur, 2) + " €"],
+    ["Pro Übersetzung", "$" + fmt(perMsg, 5), "≈ " + fmt(perMsg * eur * 100, 3) + " Cent"],
+    ["Pro Tag", "$" + fmt(perDay, 3), "im Schnitt"],
+    ["Übersetzungen", fmt(t.count), fmt(t.chars) + " Zeichen"],
+  ].map(([k, v, sub]) =>
+    `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`
+  ).join("");
+
+  const rows = s.byDay.slice(-14).reverse();
+  document.getElementById("days").innerHTML = rows.length
+    ? `<table><thead><tr><th>Tag</th><th class="num">Übersetzungen</th><th class="num">Kosten</th></tr></thead><tbody>`
+      + rows.map((d) => `<tr><td>${d.day}</td><td class="num">${fmt(d.count)}</td><td class="num">$${fmt(d.costUsd, 4)}</td></tr>`).join("")
+      + `</tbody></table>`
+    : '<p class="lead" style="margin:0">Noch keine Daten. Schreib ein paar Nachrichten.</p>';
+
+  // Was trägt sich bei welchem Preis?
+  const monat = perMsg > 0 ? Math.floor(1.65 / perMsg) : 0;
+  document.getElementById("note").textContent = perMsg > 0
+    ? `Bei 1,99 € im Monat bleiben nach Zahlungsgebühren etwa 1,65 € übrig. Das deckt rund ${fmt(monat)} Übersetzungen — etwa ${fmt(Math.floor(monat / 30))} am Tag. Über App Store oder Play Store wären es wegen der 30 % Provision rund ${fmt(Math.floor(monat * 0.84))}. Server und Datenbank mit etwa 13 $ im Monat sind dabei noch nicht eingerechnet.`
+    : "Sobald Übersetzungen anfallen, steht hier, wie viele Nachrichten ein Abo von 1,99 € abdeckt.";
+}
+
+document.querySelectorAll(".range button").forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll(".range button").forEach((x) => x.classList.remove("on"));
+    b.classList.add("on");
+    days = Number(b.dataset.d);
+    load();
+  };
+});
+
+load();
+</script>
+</body>
+</html>

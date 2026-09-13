@@ -199,3 +199,31 @@ Bleibt `ACCESS_CODE` leer, ist die App öffentlich erreichbar. Ob es aktiv ist, 
 Dazu kommt eine `robots.txt`, die Suchmaschinen aussperrt, und `noindex` auf beiden Seiten. Vor einer echten Veröffentlichung beides wieder entfernen.
 
 Das ersetzt keine Anmeldung mit Benutzerkonten — alle teilen sich dasselbe Wort, und wer es weitergibt, gibt den Zugang weiter. Für eine Testphase im kleinen Kreis reicht es.
+
+---
+
+## Aufbewahrung
+
+Nachrichten werden nach 30 Tagen automatisch gelöscht, samt ihrer Übersetzungen. Der Aufräumlauf startet beim Serverstart und wiederholt sich stündlich. Push-Anmeldungen, die ein halbes Jahr nichts mehr getan haben, fliegen ebenfalls raus.
+
+Die Frist steht in `RETENTION_DAYS`, Standard 30. `0` schaltet das Löschen ab — davon würde ich abraten: Was gelöscht ist, kann niemand lesen und niemand herausverlangen. Das ist der wirksamste Datenschutz, den diese App haben kann.
+
+Auf der Startseite steht ein sichtbarer Hinweis, dass Nachrichten zum Übersetzen an einen Server gehen und dort lesbar sind. Das gehört dorthin und nicht ins Kleingedruckte — Leute vergleichen mit WhatsApp und nehmen sonst Ende-zu-Ende-Verschlüsselung an, die hier technisch nicht möglich ist.
+
+---
+
+## Was eine Nachricht kostet
+
+Jede Übersetzung schreibt eine Zeile mit Tokenverbrauch mit — ohne Nachrichtentext, nur Zahlen. Die Auswertung liegt auf:
+
+```
+https://deine-adresse/stats.html
+```
+
+Dort steht, was eine einzelne Übersetzung tatsächlich kostet, wie viel pro Tag zusammenkommt, und wie viele Nachrichten ein Abo von 1,99 € im Monat decken würde. Nach einer Woche echter Nutzung sind das belastbare Zahlen statt Schätzungen.
+
+Die Seite liegt hinter dem Zugangswort. Vor einer Veröffentlichung solltest du sie zusätzlich absichern oder entfernen — sie verrät sonst deine Betriebskosten.
+
+**Modell:** Standard ist jetzt `claude-sonnet-5` mit 2 $/10 $ je Million Tokens. Vorher lief die App auf Sonnet 4.6 mit 3 $/15 $ — das neuere Modell ist also ein Drittel günstiger. Die Preise für die Rechnung stehen in `PRICE_IN_PER_MTOK` und `PRICE_OUT_PER_MTOK`; ändern sich die Tarife, passt du sie dort an, ohne den Code anzufassen.
+
+Die Verbrauchszahlen bleiben ein Jahr liegen, nicht nur 30 Tage — sie enthalten keinen Nachrichtentext.
