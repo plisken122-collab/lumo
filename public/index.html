@@ -293,7 +293,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v23";
+const BUILD = "v24";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -557,6 +557,10 @@ $("send").onclick = sendMsg;
 let lastSent = "";
 
 function sendMsg() {
+  /* Erst das Diktat beenden - sonst hoert es nach dem Senden weiter zu
+     und schreibt in das gerade geleerte Feld. Das Beenden traegt auch
+     das letzte Wort noch ein, deshalb steht es vor dem Auslesen. */
+  if (diktiert) stoppeDiktat();
   const text = draft.value.trim();
   if (!text) return;
   lastSent = text;
