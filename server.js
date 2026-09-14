@@ -541,7 +541,15 @@ io.on("connection", (socket) => {
       speech: Boolean(speech),
       at: new Date().toISOString(),
     };
+    /* Wer schon in einem Raum sitzt und neu beitritt - etwa ueber einen
+       Einladungslink - muss den alten verlassen. Sonst bekaeme er die
+       Nachrichten beider Raeume. */
+    const vorher = room;
     room = String(roomCode || "lobby").trim().toLowerCase().slice(0, 60);
+    if (vorher && vorher !== room) {
+      socket.leave(vorher);
+      socket.to(vorher).emit("system", { type: "left", name: me.name });
+    }
     me = {
       name: String(name || "Gast").slice(0, 40),
       lang: clean(lang),
@@ -574,6 +582,8 @@ io.on("connection", (socket) => {
       zeichen: Number(info?.zeichen) || vorher.zeichen || 0,
       laeufe: Number(info?.laeufe) || vorher.laeufe || 0,
       ergebnisse: Number(info?.ergebnisse) || vorher.ergebnisse || 0,
+      form: info?.form ? String(info.form).slice(0, 100) : (vorher.form || null),
+      feld: Number(info?.feld) || vorher.feld || 0,
       at: new Date().toISOString(),
     };
   });

@@ -52,14 +52,32 @@
   }
   .primary:disabled { background:var(--line); cursor:default; }
 
-  .bar { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  .bar .room { font-size:13px; color:var(--muted); flex:1; }
-  .bar select { width:auto; padding:7px 9px; font-size:13px; border-radius:9px; }
+  .bar { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
+  /* Der Chat-Code muss schrumpfen duerfen, sonst schiebt er die Knoepfe
+     auf einem schmalen Handy aus der Zeile. */
+  .bar .room {
+    font-size:13px; color:var(--muted); flex:1 1 auto; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .bar select {
+    width:auto; padding:7px 8px; font-size:13px; border-radius:9px;
+    flex:0 1 auto; min-width:0; max-width:34vw;
+  }
+  .bar .bell { flex-shrink:0; padding:7px 9px; }
   .bell {
     background:var(--surface); border:1px solid var(--line); color:var(--muted);
     border-radius:9px; padding:7px 10px; font-size:13px; white-space:nowrap;
   }
   .bell.on { background:var(--mine); border-color:var(--mine); color:#fff; }
+  .linkish {
+    background:none; color:var(--mine); padding:8px 0 0;
+    font-size:13.5px; text-decoration:underline;
+  }
+  /* Hinweis auf der Startseite, wenn jemand ueber einen Link kommt. */
+  .invited {
+    margin:10px 0 0; padding:9px 12px; border-radius:10px;
+    background:#EAEEF9; color:var(--mine); font-size:13px;
+  }
 
   #log {
     flex:1; overflow-y:auto; background:var(--surface); border:1px solid var(--line);
@@ -205,6 +223,8 @@
       <label for="room" id="t-roomLabel"></label>
       <input id="room" autocapitalize="none" autocorrect="off">
       <p class="sub" id="t-roomHint" style="font-size:12.5px;margin-top:6px"></p>
+      <button id="newChat" class="linkish" type="button"></button>
+      <p class="invited hide" id="invitedNote"></p>
       <p class="note" id="t-privacy"></p>
 
       <button class="primary" id="enter"></button>
@@ -219,6 +239,7 @@
         <span id="count" class="count">0</span>
       </span>
       <div class="room" id="roomLabel"></div>
+      <button id="inviteBtn" class="bell"></button>
       <button id="bell" class="bell"></button>
       <select id="langSwitch"></select>
     </div>
@@ -289,11 +310,26 @@ $("name").value = saved.name || "";
 $("room").value = saved.room || "";
 $("lang").value = saved.lang || guessLang();
 
+/* Ueber einen Einladungslink gekommen? Dann steht der Chat schon fest.
+   Das Feld bleibt sichtbar, damit man sieht, wo man landet - aber es
+   ist gesetzt und muss nicht abgetippt werden. */
+const eingeladen = codeAusLink();
+if (eingeladen) {
+  $("room").value = eingeladen;
+  $("invitedNote").classList.remove("hide");
+  $("newChat").classList.add("hide");
+}
+
+$("newChat").onclick = () => {
+  $("room").value = neuerCode();
+  $("room").focus();
+};
+
 let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v25";
+const BUILD = "v28";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -326,6 +362,9 @@ function applyLanguage(code) {
   $("dictBtn").title = L.t("dictateTitle");
   $("recSend").textContent = L.t("send");
   $("recCancel").textContent = L.t("cancel");
+  $("newChat").textContent = L.t("newChat");
+  $("inviteBtn").textContent = L.t("invite");
+  $("invitedNote").textContent = L.t("invitedTo");
   updateBell();
   msgs.forEach(render);
 }
@@ -914,6 +953,8 @@ let diktatLauf = "";   // Ergebnis des laufenden Durchlaufs
 let diktatSitzung = 0;     // laufende Nummer, sperrt Nachzuegler aus
 let diktatLaeufe = 0;      // wie oft die Erkennung neu startete
 let diktatErgebnisse = 0;  // wie viele Ergebnisse ankamen
+let letzteForm = "";       // Form der letzten Ergebnisliste, nur Laengen
+let festLaenge = 0;        // Zeichenzahl von diktatFest beim Beenden
 
 /* Schneidet vom Anfang von "neu" weg, was am Ende von "alt" schon
    steht. Beim Neustart spielt Chrome den gepufferten Ton noch einmal
@@ -998,6 +1039,14 @@ function starteDiktat(SR) {
           if (neu) lose = (lose + " " + neu).trim();
         }
       }
+      /* Nur die Form zur Fehlersuche: je Eintrag "F" oder "i" und die
+         Zeichenzahl. Daran laesst sich ablesen, ob die Eintraege
+         aufeinander aufbauen oder getrennt sind - ohne je zu
+         uebertragen, was gesprochen wurde. */
+      letzteForm = [...e.results]
+        .map((r) => (r.isFinal ? "F" : "i") + (((r[0] && r[0].transcript) || "").trim().length))
+        .join(",").slice(0, 90);
+
       diktatLauf = fest;
       draft.value = diktatText(lose);
       /* Loest Hoehenanpassung und den Senden-Knopf mit aus. */
@@ -1041,7 +1090,8 @@ function stoppeDiktat() {
   draft.value = diktatText("");
   draft.dispatchEvent(new Event("input"));
   meldeSprache({ diktat: true, ende: true, zeichen: diktatFest.length,
-                 laeufe: diktatLaeufe, ergebnisse: diktatErgebnisse });
+                 laeufe: diktatLaeufe, ergebnisse: diktatErgebnisse,
+                 form: letzteForm, feld: draft.value.length });
 }
 
 function toggleDiktat() {
@@ -1052,7 +1102,7 @@ function toggleDiktat() {
   diktatBasis = draft.value.trim() ? draft.value.replace(/\s*$/, "") + " " : "";
   diktatFest = "";
   diktatLauf = "";
-  diktatLaeufe = 0; diktatErgebnisse = 0;
+  diktatLaeufe = 0; diktatErgebnisse = 0; letzteForm = "";
   diktiert = true;
   dictBtn.classList.add("on");
   draft.placeholder = T("dictating");
@@ -1140,6 +1190,54 @@ function zeigeMenue(m) {
 
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") schliesseSheet(); });
 
+/* ------------------------------------------------------------------
+   Einladen
+
+   Der Chat-Code steht im Link hinter der Raute. Das ist Absicht: Was
+   hinter der Raute steht, schickt der Browser nie an den Server - der
+   Code taucht also in keinem Zugriffsprotokoll auf, weder bei uns noch
+   bei Cloudflare.
+
+   Zum Verschicken nimmt das Handy seinen eigenen Teilen-Dialog, damit
+   der Link direkt nach WhatsApp, SMS oder wohin auch immer geht. Wo es
+   den nicht gibt, landet er in der Zwischenablage.
+------------------------------------------------------------------ */
+function neuerCode() {
+  /* Ohne i, l, o, 0, 1 - die verwechselt man beim Vorlesen. */
+  const zeichen = "abcdefghjkmnpqrstuvwxyz23456789";
+  const feld = new Uint32Array(10);
+  crypto.getRandomValues(feld);
+  return [...feld].map((n) => zeichen[n % zeichen.length]).join("");
+}
+
+function einladungsLink(code) {
+  return location.origin + "/#c=" + encodeURIComponent(code);
+}
+
+async function einladen() {
+  const link = einladungsLink(me.room);
+  const text = T("inviteText");
+  if (navigator.share) {
+    try { await navigator.share({ text: text + " " + link }); return; } catch { /* abgebrochen */ }
+  }
+  try {
+    await navigator.clipboard.writeText(link);
+    showErr(T("inviteCopied"));   /* dieselbe Leiste, nur als Bestaetigung */
+  } catch {
+    /* Letzte Rettung: zum Abschreiben anzeigen. */
+    prompt(text, link);
+  }
+}
+
+/* Kommt jemand ueber einen Link, steht der Code schon fest - dann muss
+   er nur noch Namen und Sprache waehlen. */
+function codeAusLink() {
+  const treffer = /[#&]c=([^&]+)/.exec(location.hash || "");
+  if (!treffer) return null;
+  try { return decodeURIComponent(treffer[1]).trim().toLowerCase().slice(0, 60); }
+  catch { return null; }
+}
+
 function scrollDown() { $("log").scrollTop = $("log").scrollHeight; }
 function showErr(t) {
   const e = $("err"); e.textContent = t; e.classList.remove("hide");
@@ -1167,6 +1265,28 @@ function updateBell() {
   b.classList.toggle("on", on);
   b.textContent = on ? T("soundOn") : T("soundOff");
 }
+
+$("inviteBtn").onclick = einladen;
+
+/* Tippt jemand einen Einladungslink an, waehrend lumo schon offen ist,
+   aendert sich nur die Adresse hinter der Raute - die Seite laedt nicht
+   neu, und ohne das hier passierte gar nichts. */
+window.addEventListener("hashchange", () => {
+  const code = codeAusLink();
+  if (!code || !me.room || code === me.room) return;
+  me.room = code;
+  try { localStorage.setItem("lumo", JSON.stringify(me)); } catch {}
+  $("log").textContent = "";
+  msgs.clear();
+  asked.clear();
+  $("roomLabel").textContent = "#" + code;
+  schliesseSheet();
+  socket.emit("join", {
+    roomCode: code, name: me.name, lang: me.lang, device: deviceId,
+    build: BUILD,
+    speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+  });
+});
 
 $("bell").onclick = async () => {
   if (!("Notification" in window)) {

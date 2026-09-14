@@ -100,6 +100,18 @@ Die Aufnahmen liegen in der Datenbank, nicht in einem Dateispeicher — eine hal
 
 Für Bilder gilt das nicht — die sind hundertmal größer und gehören in einen Objektspeicher wie Cloudflare R2. Das ist noch nicht gebaut.
 
+## Jemanden einladen
+
+In der Chat-Leiste sitzt **Einladen**. Auf dem Handy öffnet das den Teilen-Dialog des Geräts, der Link geht also direkt nach WhatsApp, SMS oder wohin du willst. Am Rechner landet er in der Zwischenablage.
+
+Auf der Startseite erzeugt **Neuen Chat starten** einen zufälligen Code aus zehn Zeichen — ohne `i`, `l`, `o`, `0` und `1`, die verwechselt man beim Vorlesen. Wer über einen Link kommt, findet den Code schon eingetragen und muss nur Namen und Sprache wählen.
+
+**Der Code steht hinter der Raute**, also `…/#c=burcx75fmv`. Das ist Absicht: Was hinter der Raute steht, schickt der Browser nie an den Server. Der Code taucht damit in keinem Zugriffsprotokoll auf — weder bei Render noch bei Cloudflare. Stünde er als `?c=` davor, läge er in jeder Logdatei.
+
+Tippt jemand einen Einladungslink an, während lumo schon offen ist, wechselt die App den Raum, statt nichts zu tun. Der Server lässt das Gerät den alten Raum dabei verlassen — sonst bekäme es die Nachrichten beider.
+
+Eine Warnung zur Ehrlichkeit: **Der Link ist das Geheimnis.** Wer ihn hat, ist im Chat. Weitergeleitet ist weitergeleitet — es gibt keine Einladung, die nur für eine Person gilt, und keine Möglichkeit, jemanden wieder hinauszuwerfen.
+
 ## Nachrichten löschen
 
 Unter jeder Nachricht steht `⋯`. Dahinter liegen zwei Möglichkeiten, wie bei WhatsApp:
