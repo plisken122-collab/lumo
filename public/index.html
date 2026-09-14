@@ -293,7 +293,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v21";
+const BUILD = "v22";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -916,12 +916,20 @@ let diktatErgebnisse = 0;  // wie viele Ergebnisse ankamen
    "das Sofa" faelschlich etwas abgeschnitten. */
 function ohneUeberlappung(alt, neu) {
   if (!alt || !neu) return neu;
-  const max = Math.min(alt.length, neu.length);
-  for (let n = max; n >= 3; n--) {
-    if (alt.slice(-n) !== neu.slice(0, n)) continue;
-    const rest = neu.slice(n);
-    if (rest && !/^\s/.test(rest)) continue;   // mitten im Wort - nicht schneiden
-    return rest.trim();
+  /* Wortweise vergleichen, nicht zeichenweise: Chrome schreibt das
+     erste Wort eines Ergebnisses gross und setzt Satzzeichen - "Hallo"
+     und "hallo" sind sonst zwei verschiedene Texte, und das Doppelte
+     rutscht durch. */
+  const putzen = (w) => w.toLowerCase().replace(/[.,!?;:„“”"»«]/g, "");
+  const a = alt.trim().split(/\s+/);
+  const b = neu.trim().split(/\s+/);
+  const max = Math.min(a.length, b.length);
+  for (let n = max; n >= 1; n--) {
+    let gleich = true;
+    for (let i = 0; i < n; i++) {
+      if (putzen(a[a.length - n + i]) !== putzen(b[i])) { gleich = false; break; }
+    }
+    if (gleich) return b.slice(n).join(" ");
   }
   return neu;
 }
