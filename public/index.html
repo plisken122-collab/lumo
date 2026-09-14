@@ -329,7 +329,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v28";
+const BUILD = "v29";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -1025,10 +1025,19 @@ function starteDiktat(SR) {
          "Hallo ich liebe dich" - alle als endgueltig. Einfach
          aneinanderhaengen ergaebe alles dreimal. Deshalb wird auch hier
          abgeschnitten, was schon dasteht. */
-      let fest = "", lose = "";
+      let fest = "", lose = "", form = "";
       for (let i = 0; i < e.results.length; i++) {
         const r = e.results[i];
         const t = ((r[0] && r[0].transcript) || "").trim();
+        /* Nur die Form zur Fehlersuche: je Eintrag "F" oder "i" und die
+           Zeichenzahl. Daran laesst sich ablesen, ob die Eintraege
+           aufeinander aufbauen oder getrennt sind - ohne je zu
+           uebertragen, was gesprochen wurde.
+
+           Bewusst in dieser Schleife und ueber den Index: e.results ist
+           nicht in jedem Browser durchlaufbar, ein Spread wirft dort
+           eine Ausnahme - und die haette das Diktat mitgerissen. */
+        form += (form ? "," : "") + (r.isFinal ? "F" : "i") + t.length;
         if (!t) continue;
         if (r.isFinal) {
           const neu = ohneUeberlappung(fest, t);
@@ -1039,18 +1048,21 @@ function starteDiktat(SR) {
           if (neu) lose = (lose + " " + neu).trim();
         }
       }
-      /* Nur die Form zur Fehlersuche: je Eintrag "F" oder "i" und die
-         Zeichenzahl. Daran laesst sich ablesen, ob die Eintraege
-         aufeinander aufbauen oder getrennt sind - ohne je zu
-         uebertragen, was gesprochen wurde. */
-      letzteForm = [...e.results]
-        .map((r) => (r.isFinal ? "F" : "i") + (((r[0] && r[0].transcript) || "").trim().length))
-        .join(",").slice(0, 90);
+      letzteForm = form.slice(0, 90);
 
       diktatLauf = fest;
       draft.value = diktatText(lose);
       /* Loest Hoehenanpassung und den Senden-Knopf mit aus. */
       draft.dispatchEvent(new Event("input"));
+    };
+
+    /* Wirft hier irgendetwas, bricht das Diktat sonst ab, ohne sich zu
+       beschweren - genau das ist mit einem Spread ueber e.results
+       passiert. Jetzt wird der Grund wenigstens gemeldet. */
+    const rohesOnresult = diktator.onresult;
+    diktator.onresult = (e) => {
+      try { rohesOnresult(e); }
+      catch (err) { meldeSprache({ diktat: true, error: "result:" + (err.name || "?") }); }
     };
 
     /* Auf Android endet die Erkennung nach jeder Pause von selbst. Was
