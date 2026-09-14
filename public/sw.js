@@ -5,7 +5,11 @@
    1. Die App offline-faehig machen, damit sie installierbar ist.
    2. Push-Nachrichten annehmen, auch wenn lumo geschlossen ist.
 -------------------------------------------------------------------- */
-const CACHE = "lumo-v10";
+/* Diese Nummer bei jeder Aenderung an index.html hochzaehlen. Nur wenn
+   sich sw.js selbst aendert, installiert der Browser ihn neu - und nur
+   dann wird die alte Seite aus dem Zwischenspeicher geworfen. Sonst
+   startet eine installierte App weiter mit der alten Fassung. */
+const CACHE = "lumo-v11";
 const SHELL = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
