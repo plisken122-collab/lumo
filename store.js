@@ -28,6 +28,7 @@ const mem = {
   rooms: new Map(),    // room -> [id]
   subs: new Map(),     // endpoint -> sub
   usage: [],           // Verbrauch pro Uebersetzung
+  media: new Map(),    // message_id -> { mime, bytes }
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -54,6 +55,22 @@ export async function init() {
       lang       TEXT NOT NULL,
       body       TEXT NOT NULL,
       PRIMARY KEY (message_id, lang)
+    );
+
+    /* Spaeter dazugekommen: Dauer einer Sprachnachricht in Sekunden.
+       NULL heisst: gewoehnliche Textnachricht. */
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_seconds INTEGER;
+
+    /* Die Aufnahme selbst. Opus ist klein - eine halbe Minute sind rund
+       40 KB, das traegt die Datenbank ohne Muehe. Bilder gehoeren spaeter
+       nicht hierher, die sind hundertmal groesser.
+
+       ON DELETE CASCADE ist wichtig: Loescht die Aufbewahrungsfrist eine
+       Nachricht, verschwindet die Aufnahme von selbst mit. */
+    CREATE TABLE IF NOT EXISTS media (
+      message_id TEXT PRIMARY KEY REFERENCES messages(id) ON DELETE CASCADE,
+      mime       TEXT NOT NULL,
+      bytes      BYTEA NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -90,11 +107,33 @@ export async function addMessage(msg) {
     return msg;
   }
   await pool.query(
-    `INSERT INTO messages (id, room, device, name, body, lang, detected, at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
-    [msg.id, msg.room, msg.device, msg.name, msg.text, msg.lang, msg.detected, msg.at]
+    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING`,
+    [msg.id, msg.room, msg.device, msg.name, msg.text, msg.lang, msg.detected, msg.at,
+     msg.audioSeconds ?? null]
   );
   return msg;
+}
+
+/* ------------------------ Sprachnachrichten ------------------------ */
+export async function addMedia(messageId, { mime, bytes }) {
+  if (!usingDatabase) {
+    mem.media.set(messageId, { mime, bytes });
+    return;
+  }
+  await pool.query(
+    `INSERT INTO media (message_id, mime, bytes) VALUES ($1,$2,$3)
+     ON CONFLICT (message_id) DO NOTHING`,
+    [messageId, mime, bytes]
+  );
+}
+
+export async function getMedia(messageId) {
+  if (!usingDatabase) return mem.media.get(messageId) || null;
+  const { rows } = await pool.query(
+    `SELECT mime, bytes FROM media WHERE message_id = $1`, [messageId]
+  );
+  return rows.length ? { mime: rows[0].mime, bytes: rows[0].bytes } : null;
 }
 
 export async function getMessage(id) {
@@ -159,6 +198,7 @@ function rowToMsg(r, translations) {
   return {
     id: r.id, room: r.room, device: r.device, name: r.name,
     text: r.body, lang: r.lang, detected: r.detected, at: Number(r.at), tr,
+    audioSeconds: r.audio_seconds ?? null,
   };
 }
 
@@ -247,6 +287,7 @@ export async function purgeOlderThan(days) {
     for (const [id, m] of [...mem.messages]) {
       if (m.at < cutoff) {
         mem.messages.delete(id);
+        mem.media.delete(id);
         removed++;
       }
     }

@@ -76,13 +76,26 @@ Wie viel vom Tageskontingent noch übrig ist, steht unter `/health`. Was tatsäc
 
 Die Zähler liegen im Arbeitsspeicher. Bei mehreren Instanzen zählt jede für sich — bei einem Dienst auf Render ist das genau eine.
 
+## Sprachnachrichten
+
+Der Knopf mit dem Mikrofon sitzt rechts neben dem Eingabefeld. Antippen startet die Aufnahme, ein zweiter Tipp schickt sie ab, *Abbrechen* verwirft sie. Nach zwei Minuten endet die Aufnahme von selbst (`VOICE_MAX_SECONDS`).
+
+**Übersetzt werden sie auch.** Während du sprichst, schreibt der Browser mit — über die Spracherkennung, die er selbst mitbringt. Diese Mitschrift reist als gewöhnlicher Nachrichtentext mit und läuft danach durch dieselbe Übersetzung wie jede getippte Nachricht. Der Empfänger hört die Aufnahme und liest den Text in seiner Sprache darunter. Das kostet keinen Aufruf mehr als eine Textnachricht, weil der Server nie Audio zu Gesicht bekommt.
+
+Der Haken: **Auf dem iPhone gibt es diese Spracherkennung praktisch nicht.** Dort geht die Aufnahme trotzdem raus, nur ohne Mitschrift — dann steht unter dem Abspieler „ohne Mitschrift", und es gibt nichts zu übersetzen. In Chrome und auf Android läuft es.
+
+Die Aufnahmen liegen in der Datenbank, nicht in einem Dateispeicher — eine halbe Minute Opus sind rund 40 KB. Sie hängen per Fremdschlüssel an der Nachricht: Löscht die Aufbewahrungsfrist die Nachricht, verschwindet die Aufnahme mit. Ausgeliefert werden sie unter `/medien/<kennung>` und liegen damit hinter dem Zugangswort wie alles andere.
+
+Für Bilder gilt das nicht — die sind hundertmal größer und gehören in einen Objektspeicher wie Cloudflare R2. Das ist noch nicht gebaut.
+
 ## Was noch fehlt für den Produktivbetrieb
 
 - **Login.** Aktuell reicht der Chat-Code. Wer ihn kennt, liest mit.
-- **Ende-zu-Ende-Verschlüsselung.** Geht nicht zusammen mit Server-Übersetzung — entweder der Server liest mit, oder die Übersetzung läuft auf dem Gerät.
-- **Bilder und Sprachnachrichten.**
+- **Bilder.** Brauchen einen Objektspeicher, siehe oben.
 
-Erledigt sind inzwischen: Datenbank (Postgres, siehe `store.js`), Push über VAPID, Zugangswort, Aufbewahrungsfrist und die Grenzen oben.
+**Ende-zu-Ende-Verschlüsselung wird es nicht geben.** Sie schließt sich mit der Übersetzung auf dem Server aus: Entweder der Server kann den Text lesen, oder er kann ihn nicht übersetzen. Das ist keine offene Aufgabe, sondern eine Entscheidung — und der Hinweis auf der Startseite sagt es den Leuten auch offen.
+
+Erledigt sind inzwischen: Datenbank (Postgres, siehe `store.js`), Push über VAPID, Zugangswort, Aufbewahrungsfrist, die Grenzen oben, Smileys und Sprachnachrichten.
 
 Was der Betrieb kostet, steht weiter unten unter [Kosten im Betrieb](#kosten-im-betrieb).
 

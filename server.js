@@ -15,7 +15,14 @@ const app = express();
 const http = createServer(app);
 const io = new Server(http);
 
-app.use(express.json({ limit: "64kb" }));
+/* 64 KB reichen fuer alles Normale. Sprachnachrichten sind die einzige
+   Ausnahme und bringen ihre eigene, groessere Grenze mit - deshalb laeuft
+   dieser eine Pfad hier vorbei, statt das Limit fuer alles anzuheben. */
+const kleinesJson = express.json({ limit: "64kb" });
+app.use((req, res, next) => {
+  if (req.path === "/api/voice") return next();
+  return kleinesJson(req, res, next);
+});
 
 /* --------------------------------------------------------------------
    Zugangswort
@@ -371,6 +378,97 @@ app.post("/api/unsubscribe", async (req, res) => {
   } catch {
     res.status(500).json({ error: "Abmeldung fehlgeschlagen" });
   }
+});
+
+/* ------------------------ Sprachnachrichten ------------------------
+   Die Aufnahme kommt als base64 in JSON. Das blaeht sie um ein Drittel
+   auf, spart dafuer eine Zusatzbibliothek fuer mehrteilige Formulare -
+   bei zwei Minuten Opus geht es um wenige hundert Kilobyte.
+
+   Die Mitschrift macht der Browser des Absenders. Sie landet als
+   gewoehnlicher Nachrichtentext in der Datenbank und laeuft danach durch
+   dieselbe Uebersetzung wie alles andere. Deshalb braucht es hier keinen
+   eigenen Weg fuer "Sprachnachricht uebersetzen".
+------------------------------------------------------------------- */
+const VOICE_MAX_SECONDS = Number(process.env.VOICE_MAX_SECONDS || 120);
+const VOICE_MAX_BYTES = Number(process.env.VOICE_MAX_BYTES || 1_500_000);
+
+/* Nur diese Formate, und der Typ wird nie aus dem Dateinamen
+   uebernommen - sonst laesst sich Beliebiges als Audio ausliefern. */
+const VOICE_MIME = {
+  "audio/webm": "audio/webm",
+  "audio/ogg": "audio/ogg",
+  "audio/mp4": "audio/mp4",
+  "audio/mpeg": "audio/mpeg",
+};
+
+app.post("/api/voice", express.json({ limit: "3mb" }), async (req, res) => {
+  const { room, device, name, lang, seconds, transcript, mime, audio } = req.body || {};
+  if (!room || !device || !audio) {
+    return res.status(400).json({ error: "Angaben unvollstaendig" });
+  }
+  const type = VOICE_MIME[String(mime || "").split(";")[0].trim()];
+  if (!type) return res.status(415).json({ error: "Format nicht unterstuetzt" });
+
+  const dauer = Math.min(VOICE_MAX_SECONDS, Math.max(1, Math.round(Number(seconds) || 1)));
+  let bytes;
+  try {
+    bytes = Buffer.from(String(audio), "base64");
+  } catch {
+    return res.status(400).json({ error: "Aufnahme unlesbar" });
+  }
+  if (!bytes.length || bytes.length > VOICE_MAX_BYTES) {
+    return res.status(413).json({ error: "Aufnahme zu gross" });
+  }
+
+  const raum = String(room).trim().toLowerCase().slice(0, 60);
+  const geraet = String(device).slice(0, 60);
+  if (!take(`msg:${geraet}`, MSG_PER_MIN, 60 * 1000)) {
+    return res.status(429).json({ error: "Zu schnell" });
+  }
+
+  const msg = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    room: raum,
+    device: geraet,
+    name: String(name || "Gast").slice(0, 40),
+    text: String(transcript || "").trim().slice(0, 4000),
+    lang: clean(lang),
+    detected: false,
+    tr: {},
+    at: Date.now(),
+    audioSeconds: dauer,
+  };
+
+  try {
+    await store.addMessage(msg);
+    await store.addMedia(msg.id, { mime: type, bytes });
+  } catch (err) {
+    console.error("Sprachnachricht nicht speicherbar:", err.message);
+    return res.status(500).json({ error: "Nicht speicherbar" });
+  }
+
+  io.to(raum).emit("message", msg);
+  pushToRoom(raum, msg).catch((e) => console.error("Push-Lauf:", e.message));
+  res.json({ ok: true, id: msg.id });
+});
+
+/* Ausliefern. Liegt hinter dem Zugangswort wie alles andere - die
+   Aufnahmen sind damit nicht oeffentlich abrufbar. */
+app.get("/medien/:id", async (req, res) => {
+  let m = null;
+  try {
+    m = await store.getMedia(String(req.params.id));
+  } catch (err) {
+    console.error("Aufnahme nicht lesbar:", err.message);
+    return res.sendStatus(500);
+  }
+  if (!m) return res.sendStatus(404);
+  res.setHeader("Content-Type", m.mime);
+  res.setHeader("Content-Length", m.bytes.length);
+  res.setHeader("Cache-Control", "private, max-age=86400");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.end(m.bytes);
 });
 
 app.get("/api/stats", async (req, res) => {
