@@ -362,7 +362,10 @@ function render(m) {
   const who = document.createElement("span");
   who.textContent = m.name;
   meta.appendChild(who);
-  if (needs && shown) {
+  /* Nur anbieten, wenn das Original ueberhaupt anders aussieht. Bei
+     reinen Smiley-Nachrichten gibt der Server den Text unveraendert
+     zurueck - da waere "Original: ..." ein Verweis auf dasselbe. */
+  if (needs && shown && shown !== m.text) {
     const b = document.createElement("button");
     const nice = (LANGS.find(([c]) => c === m.lang) || [])[1] || m.lang.toUpperCase();
     b.textContent = m.open ? T("hideOriginal") : T("original", { lang: nice });
