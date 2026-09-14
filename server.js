@@ -208,6 +208,7 @@ const HINTS = {
 /* ---------------------------- Uebersetzung ---------------------------- */
 const inFlight = new Map(); // key -> Promise, verhindert doppelte Anfragen
 let quotaWarnedUntil = 0; // damit die Tagesgrenze nur einmal gemeldet wird
+let lastClient = null;   // letzte Meldung eines Geraets, siehe /health
 
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
@@ -508,6 +509,7 @@ app.get("/health", (_req, res) =>
     gate: gateOn,
     retentionDays: RETENTION_DAYS > 0 ? RETENTION_DAYS : null,
     langs: CODES.length,
+    lastClient,
     limits: {
       msgPerMin: MSG_PER_MIN,
       translationsPerDay: TRANSLATIONS_PER_DAY > 0 ? TRANSLATIONS_PER_DAY : null,
@@ -528,7 +530,15 @@ io.on("connection", (socket) => {
   let room = null;
   let me = { name: "Gast", lang: "de", device: null };
 
-  socket.on("join", async ({ roomCode, name, lang, device }) => {
+  socket.on("join", async ({ roomCode, name, lang, device, build, speech }) => {
+    /* Zur Fehlersuche: Welche Fassung hat das Geraet geladen, und kann
+       sein Browser mitschreiben? Nur diese zwei Angaben, nichts, woran
+       sich jemand erkennen liesse. */
+    lastClient = {
+      build: String(build || "unbekannt").slice(0, 20),
+      speech: Boolean(speech),
+      at: new Date().toISOString(),
+    };
     room = String(roomCode || "lobby").trim().toLowerCase().slice(0, 60);
     me = {
       name: String(name || "Gast").slice(0, 40),

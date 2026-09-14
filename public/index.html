@@ -259,6 +259,11 @@ $("room").value = saved.room || "";
 $("lang").value = saved.lang || guessLang();
 
 let socket, me = {};
+/* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
+   laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
+   geladen hat. */
+const BUILD = "v14";
+
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
   deviceId = "d-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -312,7 +317,14 @@ function start() {
 
   socket = io();
   socket.on("connect", () => {
-    socket.emit("join", { roomCode: me.room, name: me.name, lang: me.lang, device: deviceId });
+    socket.emit("join", {
+      roomCode: me.room, name: me.name, lang: me.lang, device: deviceId,
+      /* Nur zwei Angaben zur Fehlersuche: welche Fassung der Seite hier
+         laeuft, und ob der Browser ueberhaupt mitschreiben kann. Kein
+         Geraetename, keine Kennung - das steht sonst gleich in /health. */
+      build: BUILD,
+      speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    });
     /* Beim Start erneut anmelden, damit Raum, Name und Sprache aktuell bleiben. */
     if (soundOn() && "Notification" in window && Notification.permission === "granted") {
       registerPush().catch(() => {});
