@@ -293,7 +293,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v19";
+const BUILD = "v20";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -693,6 +693,8 @@ function tickTime() {
 let hoertZu = false;
 let neustarts = 0;        // wie oft die Erkennung sich neu starten musste
 let letzteVorschau = "";  // letzter Zwischenstand, falls kein endgueltiger kommt
+let festText = "";        // Mitschrift aus abgeschlossenen Durchlaeufen
+let laufText = "";        // Mitschrift des laufenden Durchlaufs
 
 /* Beendet die Erkennung und wartet kurz auf ihr letztes Wort. Ohne diese
    Wartezeit liest der Aufrufer den Text in derselben Millisekunde aus,
@@ -733,6 +735,7 @@ function startListening() {
   hoertZu = true;
   neustarts = 0;
   letzteVorschau = "";
+  festText = ""; laufText = "";
   meldeSprache({ neu: true });
   starteErkennung(SR);
 }
@@ -745,14 +748,17 @@ function starteErkennung(SR) {
     recognizer.interimResults = true;
 
     recognizer.onresult = (e) => {
-      let neu = "", lose = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      /* Wie beim Diktat: neu zusammensetzen, nicht anhaengen. Sonst
+         steht jedes fertige Wort mehrfach da. */
+      let fest = "", lose = "";
+      for (let i = 0; i < e.results.length; i++) {
         const r = e.results[i];
-        if (r.isFinal) neu += r[0].transcript;
-        else lose += r[0].transcript;
+        if (r.isFinal) fest += r[0].transcript + " ";
+        else lose += r[0].transcript + " ";
       }
-      if (neu) transcript = (transcript + " " + neu).trim();
-      const zeigen = (transcript + " " + lose).trim();
+      laufText = fest.trim();
+      transcript = (festText + " " + laufText).trim();
+      const zeigen = (transcript + " " + lose.trim()).trim();
       /* Den Zwischenstand aufheben: Wird die Aufnahme beendet, bevor
          Chrome das Ergebnis endgueltig macht, ist er alles, was wir
          haben - und ungenauer Text schlaegt gar keinen. */
@@ -764,6 +770,8 @@ function starteErkennung(SR) {
     recognizer.onend = () => {
       if (!hoertZu) return;
       neustarts++;
+      if (laufText) festText = (festText + " " + laufText).trim();
+      laufText = "";
       setTimeout(() => { if (hoertZu) starteErkennung(SR); }, 120);
     };
 
@@ -891,7 +899,22 @@ async function sendVoice(blob, sekunden) {
    gewoehnliche Nachricht raus, wird also uebersetzt wie jede andere.
 ------------------------------------------------------------------ */
 const dictBtn = $("dictBtn");
-let diktiert = false, diktator = null, diktatBasis = "", diktatFest = "";
+let diktiert = false, diktator = null;
+let diktatBasis = "";  // was vor dem Diktat schon im Feld stand
+let diktatFest = "";   // Ergebnis abgeschlossener Durchlaeufe
+let diktatLauf = "";   // Ergebnis des laufenden Durchlaufs
+
+/* Setzt das Feld aus den drei Teilen zusammen. Mehrfache Leerzeichen
+   fallen weg, damit an den Nahtstellen keine Luecken entstehen. */
+function diktatText(lose) {
+  const teile = [diktatFest, diktatLauf, lose || ""].filter((t) => t);
+  return (diktatBasis + teile.join(" ")).replace(/\s{2,}/g, " ").trimStart();
+}
+
+function schreibeDiktatFest() {
+  if (diktatLauf) diktatFest = (diktatFest + " " + diktatLauf).trim();
+  diktatLauf = "";
+}
 
 const kannErkennen = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 
@@ -902,22 +925,29 @@ function starteDiktat(SR) {
     diktator.continuous = true;
     diktator.interimResults = true;
 
+    /* Der ganze Durchlauf wird jedes Mal neu zusammengesetzt, nie
+       angehaengt. Chrome liefert bei jedem Ereignis auch schon fertige
+       Woerter erneut mit - wer die anhaengt, bekommt aus einem "Hallo"
+       drei. */
     diktator.onresult = (e) => {
-      let neu = "", lose = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      let fest = "", lose = "";
+      for (let i = 0; i < e.results.length; i++) {
         const r = e.results[i];
-        if (r.isFinal) neu += r[0].transcript;
-        else lose += r[0].transcript;
+        if (r.isFinal) fest += r[0].transcript + " ";
+        else lose += r[0].transcript + " ";
       }
-      if (neu) diktatFest = (diktatFest + " " + neu).trim();
-      draft.value = (diktatBasis + diktatFest + (lose ? " " + lose : "")).trim();
+      diktatLauf = fest.trim();
+      draft.value = diktatText(lose.trim());
       /* Loest Hoehenanpassung und den Senden-Knopf mit aus. */
       draft.dispatchEvent(new Event("input"));
     };
 
-    /* Auf Android endet die Erkennung nach jeder Pause von selbst. */
+    /* Auf Android endet die Erkennung nach jeder Pause von selbst. Was
+       dieser Durchlauf ergeben hat, wird dabei festgeschrieben - der
+       naechste faengt mit leerer Ergebnisliste an. */
     diktator.onend = () => {
       if (!diktiert) return;
+      schreibeDiktatFest();
       setTimeout(() => { if (diktiert) starteDiktat(SR); }, 120);
     };
 
@@ -943,6 +973,10 @@ function stoppeDiktat() {
   draft.placeholder = T("write");
   composerButtons();
   if (diktator) { try { diktator.stop(); } catch {} diktator = null; }
+  /* Was der letzte Durchlauf ergeben hat, gehoert noch dazu. */
+  schreibeDiktatFest();
+  draft.value = diktatText("");
+  draft.dispatchEvent(new Event("input"));
   meldeSprache({ diktat: true, ende: true, zeichen: diktatFest.length });
 }
 
@@ -953,6 +987,7 @@ function toggleDiktat() {
   /* Schon Getipptes bleibt stehen, das Diktat haengt sich dahinter. */
   diktatBasis = draft.value.trim() ? draft.value.replace(/\s*$/, "") + " " : "";
   diktatFest = "";
+  diktatLauf = "";
   diktiert = true;
   dictBtn.classList.add("on");
   draft.placeholder = T("dictating");
