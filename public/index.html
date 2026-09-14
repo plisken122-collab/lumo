@@ -189,7 +189,6 @@
     background:transparent; color:var(--muted); padding:0 8px;
     font-size:13px; text-decoration:underline; flex-shrink:0;
   }
-  .composer #recSend { flex-shrink:0; }
 
   /* Abgeschickte Sprachnachricht */
   .voice { display:flex; align-items:center; gap:9px; }
@@ -253,17 +252,8 @@
       <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
       <textarea id="draft" rows="1"></textarea>
       <button id="dictBtn" class="mic-btn" type="button">🗣️</button>
-      <button id="micBtn" class="mic-btn" type="button">🎤</button>
       <button id="send" disabled></button>
     </div>
-    <div class="composer hide" id="recBar">
-      <div class="rec">
-        <span class="rec-dot"></span>
-        <span class="rec-time" id="recTime">0:00</span>
-        <span class="rec-hint" id="recHint"></span>
-        <button class="rec-cancel" id="recCancel" type="button"></button>
-      </div>
-      <button id="recSend"></button>
     </div>
   </section>
 
@@ -329,7 +319,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v30";
+const BUILD = "v31";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -358,10 +348,7 @@ function applyLanguage(code) {
   $("enter").textContent = L.t("enter");
   $("draft").placeholder = L.t("write");
   $("send").textContent = L.t("send");
-  $("micBtn").title = L.t("recordTitle");
   $("dictBtn").title = L.t("dictateTitle");
-  $("recSend").textContent = L.t("send");
-  $("recCancel").textContent = L.t("cancel");
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
   $("invitedNote").textContent = L.t("invitedTo");
@@ -572,15 +559,13 @@ function menueKnopf(m) {
 
 const draft = $("draft");
 
-/* Wie bei WhatsApp: Bei leerem Feld stehen Sprechen und Aufnehmen da,
-   sobald Text drin ist, weicht beides dem Senden-Knopf. Vier Knoepfe
-   nebeneinander passen auf ein schmales Handy nicht. Waehrend eines
-   laufenden Diktats bleibt sein Knopf stehen - man muss es ja
-   beenden koennen. */
+/* Wie bei WhatsApp: Bei leerem Feld steht der Sprechen-Knopf da,
+   sobald Text drin ist, weicht er dem Senden-Knopf. Waehrend eines
+   laufenden Diktats bleibt er stehen - man muss es ja beenden
+   koennen. */
 function composerButtons() {
   const hatText = Boolean(draft.value.trim());
   $("send").classList.toggle("hide", !hatText);
-  $("micBtn").classList.toggle("hide", hatText || !canRecord);
   $("dictBtn").classList.toggle("hide", (hatText && !diktiert) || !kannErkennen);
 }
 
@@ -697,243 +682,12 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleEmoji(false); });
 
-/* ------------------------------------------------------------------
-   Sprachnachrichten
-
-   Zwei Dinge laufen gleichzeitig: Der MediaRecorder nimmt auf, und die
-   Spracherkennung des Browsers schreibt nebenher mit. Die Mitschrift
-   reist als gewoehnlicher Nachrichtentext mit und wird danach uebersetzt
-   wie jede getippte Nachricht - so muss der Server nichts von Audio
-   verstehen.
-
-   Die Erkennung gibt es nicht ueberall: In Chrome und auf Android laeuft
-   sie, auf dem iPhone praktisch nicht. Dort geht die Aufnahme trotzdem
-   raus, nur eben ohne mitlesbaren Text.
------------------------------------------------------------------- */
-const MAX_SECONDS = 120;
-const micBtn = $("micBtn"), recBar = $("recBar"), composer = $("composer");
-const recTime = $("recTime"), recHint = $("recHint");
-
-let recorder = null, chunks = [], recStart = 0, recTimer = null;
-let recognizer = null, transcript = "", recCancelled = false;
-
-const canRecord = Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
-
-/* Das erste Format, das der Browser wirklich kann. Chrome und Firefox
-   nehmen webm/opus, Safari mp4. */
-function pickMime() {
-  for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"]) {
-    if (MediaRecorder.isTypeSupported(t)) return t;
-  }
-  return "";
-}
-
-function tickTime() {
-  const s = Math.floor((Date.now() - recStart) / 1000);
-  recTime.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-  if (s >= MAX_SECONDS) stopRecording(false);
-}
-
-/* Chrome auf Android ignoriert continuous: Die Erkennung hoert nach der
-   ersten Sprechpause von selbst auf. Deshalb sammeln wir das Ergebnis
-   ausserhalb und starten nach jedem Ende neu, solange noch aufgenommen
-   wird. Ohne das kommt bei einem ganzen Satz fast nichts an. */
-let hoertZu = false;
-let neustarts = 0;        // wie oft die Erkennung sich neu starten musste
-let letzteVorschau = "";  // letzter Zwischenstand, falls kein endgueltiger kommt
-let festText = "";        // Mitschrift aus abgeschlossenen Durchlaeufen
-let laufText = "";        // Mitschrift des laufenden Durchlaufs
-
-/* Beendet die Erkennung und wartet kurz auf ihr letztes Wort. Ohne diese
-   Wartezeit liest der Aufrufer den Text in derselben Millisekunde aus,
-   in der gestoppt wird - und bekommt nichts. */
-function beendeErkennung(fertig) {
-  if (!recognizer) { fertig(); return; }
-  const r = recognizer;
-  recognizer = null;
-  let erledigt = false;
-  const einmal = () => {
-    if (erledigt) return;
-    erledigt = true;
-    if (!transcript && letzteVorschau) transcript = letzteVorschau.trim();
-    fertig();
-  };
-  r.onend = einmal;
-  r.onerror = einmal;
-  setTimeout(einmal, 1500);
-  try { r.stop(); } catch { einmal(); }
-}
-
-/* Meldet nur, WIE es ausging - nie, was gesprochen wurde. Fehlerkuerzel
-   und Zeichenzahl reichen zur Fehlersuche und verraten nichts. */
-function meldeSprache(info) {
-  try { socket.emit("speechInfo", info); } catch {}
-}
-
-function startListening() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  transcript = "";
-  /* Das Kuerzel steht hier bewusst dran: Nur so laesst sich von aussen
-     unterscheiden, ob der Browser die Erkennung nicht kennt oder ob eine
-     veraltete Fassung der Seite laeuft. */
-  if (!SR) { recHint.textContent = T("noTranscript") + " (unsupported)"; return; }
-  /* Sofort sichtbar machen, dass mitgeschrieben wird - sonst sieht ein
-     stiller Anfang genauso aus wie ein Fehlschlag. */
-  recHint.textContent = T("listening");
-  hoertZu = true;
-  neustarts = 0;
-  letzteVorschau = "";
-  festText = ""; laufText = "";
-  meldeSprache({ neu: true });
-  starteErkennung(SR);
-}
-
-function starteErkennung(SR) {
-  try {
-    recognizer = new SR();
-    recognizer.lang = me.lang;
-    recognizer.continuous = true;
-    recognizer.interimResults = true;
-
-    recognizer.onresult = (e) => {
-      /* Wie beim Diktat: neu zusammensetzen, nicht anhaengen. Sonst
-         steht jedes fertige Wort mehrfach da. */
-      let fest = "", lose = "";
-      for (let i = 0; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) fest += r[0].transcript + " ";
-        else lose += r[0].transcript + " ";
-      }
-      laufText = fest.trim();
-      transcript = (festText + " " + laufText).trim();
-      const zeigen = (transcript + " " + lose.trim()).trim();
-      /* Den Zwischenstand aufheben: Wird die Aufnahme beendet, bevor
-         Chrome das Ergebnis endgueltig macht, ist er alles, was wir
-         haben - und ungenauer Text schlaegt gar keinen. */
-      if (zeigen) letzteVorschau = zeigen;
-      if (zeigen) recHint.textContent = zeigen.slice(-60);
-    };
-
-    /* Vorzeitiges Ende ist auf Android der Normalfall, kein Fehler. */
-    recognizer.onend = () => {
-      if (!hoertZu) return;
-      neustarts++;
-      if (laufText) festText = (festText + " " + laufText).trim();
-      laufText = "";
-      setTimeout(() => { if (hoertZu) starteErkennung(SR); }, 120);
-    };
-
-    recognizer.onerror = (e) => {
-      meldeSprache({ error: e.error });
-      /* "no-speech" heisst nur: gerade war Stille. Weiterlaufen lassen. */
-      if (e.error === "no-speech" || e.error === "aborted") return;
-      hoertZu = false;
-      recHint.textContent = T("noTranscript") + " (" + e.error + ")";
-    };
-
-    /* Meldet, dass die Erkennung wirklich angelaufen ist. Bleibt das
-       aus, hat sie nie begonnen - und genau das unterscheidet stilles
-       Scheitern von "laeuft, hoert aber nichts". */
-    recognizer.onstart = () => meldeSprache({ gestartet: true });
-    recognizer.onaudiostart = () => meldeSprache({ tonAn: true });
-
-    recognizer.start();
-  } catch (err) {
-    hoertZu = false;
-    recognizer = null;
-    meldeSprache({ error: "throw:" + (err.name || "?") });
-    recHint.textContent = T("noTranscript") + " (" + (err.name || "Start") + ")";
-  }
-}
-
-async function startRecording() {
-  /* Die Erkennung zuerst. Chrome auf Android gibt sie stillschweigend
-     auf, wenn die Aufnahme das Mikrofon schon haelt - andersherum haben
-     beide eine Chance. Schlaegt gleich die Aufnahme fehl, wird sie
-     unten wieder abgeraeumt. */
-  recStart = Date.now();
-  recTime.textContent = "0:00";
-  composer.classList.add("hide");
-  recBar.classList.remove("hide");
-  toggleEmoji(false);
-  startListening();
-
-  let stream;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch {
-    hoertZu = false;
-    if (recognizer) { try { recognizer.abort(); } catch {} recognizer = null; }
-    recBar.classList.add("hide");
-    composer.classList.remove("hide");
-    showErr(T("errMic"));
-    return;
-  }
-  const mime = pickMime();
-  try {
-    recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-  } catch {
-    hoertZu = false;
-    if (recognizer) { try { recognizer.abort(); } catch {} recognizer = null; }
-    recBar.classList.add("hide");
-    composer.classList.remove("hide");
-    showErr(T("errMic"));
-    stream.getTracks().forEach((t) => t.stop());
-    return;
-  }
-
-  chunks = []; recCancelled = false;
-  recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
-  recorder.onstop = () => {
-    stream.getTracks().forEach((t) => t.stop());
-    clearInterval(recTimer);
-    recBar.classList.add("hide");
-    composer.classList.remove("hide");
-
-    const sekunden = Math.max(1, Math.round((Date.now() - recStart) / 1000));
-    const aufnahme = new Blob(chunks, { type: recorder.mimeType });
-
-    /* Erst das Weiterlaufen abschalten, dann auf das letzte Ergebnis
-       warten - sonst startet onend die Erkennung wieder, und der Text
-       waere beim Abschicken noch nicht da. */
-    hoertZu = false;
-    beendeErkennung(() => {
-      meldeSprache({ ende: true, zeichen: transcript.length, laeufe: neustarts });
-      if (recCancelled) return;
-      sendVoice(aufnahme, sekunden);
-    });
-  };
-
-  recorder.start();
-  recTimer = setInterval(tickTime, 250);
-}
-
-function stopRecording(abbrechen) {
-  recCancelled = Boolean(abbrechen);
-  if (recorder && recorder.state !== "inactive") recorder.stop();
-}
-
-async function sendVoice(blob, sekunden) {
-  if (blob.size < 800) { showErr(T("errTooShort")); return; }
-  const base64 = await new Promise((ok) => {
-    const fr = new FileReader();
-    fr.onload = () => ok(String(fr.result).split(",")[1] || "");
-    fr.readAsDataURL(blob);
-  });
-  try {
-    const r = await fetch("/api/voice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        room: me.room, device: deviceId, name: me.name, lang: me.lang,
-        seconds: sekunden, transcript, mime: blob.type, audio: base64,
-      }),
-    });
-    if (!r.ok) showErr(r.status === 429 ? T("errTooFast") : T("errVoice"));
-  } catch {
-    showErr(T("errVoice"));
-  }
-}
+/* Sprachnachrichten wurden am 14.09.2026 entfernt: Ohne Mitschrift
+   blieben sie unuebersetzt, und genau dafuer gibt es lumo. Das
+   Abspielen schon verschickter Aufnahmen bleibt erhalten, ebenso die
+   Schnittstelle auf dem Server - wer sie zurueckholen will, braucht
+   nur wieder einen Knopf. Wer sprechen statt tippen will, nimmt das
+   Diktat darunter. */
 
 /* ------------------------------------------------------------------
    Diktieren
@@ -964,6 +718,13 @@ let festLaenge = 0;        // Zeichenzahl von diktatFest beim Beenden
 
    Die Ueberlappung muss an einer Wortgrenze enden, sonst wuerde aus
    "das Sofa" faelschlich etwas abgeschnitten. */
+/* Meldet nur, WIE das Diktat ausging - nie, was gesprochen wurde.
+   Fehlerkuerzel, Zeichenzahl und die Form der Ergebnisliste reichen zur
+   Fehlersuche und verraten nichts. Steht unter /health. */
+function meldeSprache(info) {
+  try { socket.emit("speechInfo", info); } catch {}
+}
+
 function ohneUeberlappung(alt, neu) {
   if (!alt || !neu) return neu;
   /* Wortweise vergleichen, nicht zeichenweise: Chrome schreibt das
@@ -1127,14 +888,6 @@ function toggleDiktat() {
 
 dictBtn.onclick = toggleDiktat;
 composerButtons();
-
-micBtn.onclick = () => {
-  /* Nicht beides gleichzeitig - daran ist die Mitschrift gescheitert. */
-  if (diktiert) stoppeDiktat();
-  if (!recorder || recorder.state === "inactive") startRecording();
-};
-$("recSend").onclick = () => stopRecording(false);
-$("recCancel").onclick = () => stopRecording(true);
 
 /* ------------------------------------------------------------------
    Loeschen

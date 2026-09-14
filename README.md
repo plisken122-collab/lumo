@@ -76,29 +76,31 @@ Wie viel vom Tageskontingent noch übrig ist, steht unter `/health`. Was tatsäc
 
 Die Zähler liegen im Arbeitsspeicher. Bei mehreren Instanzen zählt jede für sich — bei einem Dienst auf Render ist das genau eine.
 
-## Sprachnachrichten
+## Sprachnachrichten — am 14.09.2026 entfernt
 
-Der Knopf mit dem Mikrofon sitzt rechts neben dem Eingabefeld. Antippen startet die Aufnahme, ein zweiter Tipp schickt sie ab, *Abbrechen* verwirft sie. Nach zwei Minuten endet die Aufnahme von selbst (`VOICE_MAX_SECONDS`).
+Der Mikrofon-Knopf ist raus. Grund: Die Mitschrift während der Aufnahme funktionierte auf Android nicht (siehe unten), und eine Sprachnachricht ohne Text wird nicht übersetzt — womit der Sinn von lumo verfehlt ist. Wer sprechen statt tippen will, nimmt das **Diktat**.
+
+Was bleibt: Schon verschickte Aufnahmen lassen sich weiter abspielen, die Schnittstelle `/api/voice`, die Auslieferung unter `/medien/<kennung>` und die Tabelle `media` sind unangetastet. Wer die Funktion zurückholen will, braucht im Grunde nur wieder einen Knopf.
+
+Der folgende Abschnitt beschreibt, warum es nicht ging.
+
+## Warum die Mitschrift während einer Aufnahme scheiterte
 
 **Sprachnachrichten werden nicht übersetzt.** Der Versuch, während der Aufnahme mitzuschreiben, ist gescheitert — und zwar aus einem Grund, der sich nicht umgehen ließ: Aufnahme und Spracherkennung wollen beide das Mikrofon, und Chrome auf Android gibt die Erkennung dann still auf. Gemessen am 14.09.2026: Die Erkennung startete, bekam Ton, meldete keinen Fehler und lieferte trotzdem kein einziges Wort. Weder das Umdrehen der Reihenfolge noch ein Warten auf das letzte Ergebnis half.
-
-Wer sich verständlich machen will, nimmt stattdessen den **Sprechen-Knopf** (siehe unten). Wer die Stimme übertragen will, nimmt die Sprachnachricht — dann ohne Text.
 
 Soll beides zusammengehen, müsste die Mitschrift auf dem Server entstehen, über einen Dienst wie Whisper oder Deepgram. Das kostet rund einen halben Cent je Aufnahme und ist bewusst nicht gebaut.
 
 ## Sprechen statt tippen
 
-Der Knopf 🗣️ neben dem Mikrofon hört nur zu und schreibt in das Eingabefeld — er nimmt nichts auf. Genau deshalb funktioniert er: Es streitet sich niemand ums Mikrofon.
+Der Knopf 🗣️ neben dem Eingabefeld hört nur zu und schreibt in das Eingabefeld — er nimmt nichts auf. Genau deshalb funktioniert er: Es streitet sich niemand ums Mikrofon.
 
 Antippen, sprechen, der Text erscheint währenddessen im Feld. Nochmal antippen beendet es. Danach ist es eine ganz gewöhnliche Nachricht, wird also übersetzt wie jede andere — du sprichst in deiner Sprache, der andere liest in seiner. Schon Getipptes bleibt stehen, das Gesprochene hängt sich dahinter.
 
 Kostet keinen Cent zusätzlich, weil die Erkennung im Browser läuft. Auf dem iPhone fehlt sie allerdings — dort blendet sich der Knopf selbst aus.
 
-Wie bei WhatsApp zeigt die Eingabezeile entweder die Sprechen-Knöpfe oder den Senden-Knopf, je nachdem ob schon Text da ist.
+Wie bei WhatsApp zeigt die Eingabezeile entweder den Sprechen-Knopf oder den Senden-Knopf, je nachdem ob schon Text da ist.
 
-Die Aufnahmen liegen in der Datenbank, nicht in einem Dateispeicher — eine halbe Minute Opus sind rund 40 KB. Sie hängen per Fremdschlüssel an der Nachricht: Löscht die Aufbewahrungsfrist die Nachricht, verschwindet die Aufnahme mit. Ausgeliefert werden sie unter `/medien/<kennung>` und liegen damit hinter dem Zugangswort wie alles andere.
-
-Für Bilder gilt das nicht — die sind hundertmal größer und gehören in einen Objektspeicher wie Cloudflare R2. Das ist noch nicht gebaut.
+Bilder brauchen einen Objektspeicher wie Cloudflare R2 — für die Datenbank sind sie zu groß. Noch nicht gebaut.
 
 ## Jemanden einladen
 
