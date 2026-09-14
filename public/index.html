@@ -194,20 +194,20 @@ const asked = new Set();
    Oberflaeche in der Sprache, die jemand fuer seine Nachrichten waehlt.
 ------------------------------------------------------------------- */
 function applyLanguage(code) {
-  const T = window.LUMO_T;
-  T.set(code);
+  const L = window.LUMO_T;
+  L.set(code);
   document.documentElement.lang = code;
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
   for (const key of ["tagline", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy"]) {
     const el = $("t-" + key);
-    if (el) el.textContent = T.t(key);
+    if (el) el.textContent = L.t(key);
   }
-  $("name").placeholder = T.t("namePlaceholder");
-  $("room").placeholder = T.t("roomPlaceholder");
-  $("enter").textContent = T.t("enter");
-  $("draft").placeholder = T.t("write");
-  $("send").textContent = T.t("send");
+  $("name").placeholder = L.t("namePlaceholder");
+  $("room").placeholder = L.t("roomPlaceholder");
+  $("enter").textContent = L.t("enter");
+  $("draft").placeholder = L.t("write");
+  $("send").textContent = L.t("send");
   updateBell();
   msgs.forEach(render);
 }
