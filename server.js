@@ -609,6 +609,19 @@ io.on("connection", (socket) => {
     pushToRoom(room, msg).catch((e) => console.error("Push-Lauf:", e.message));
   });
 
+  /* Loeschen fuer alle. Nur die eigene Nachricht - geprueft wird am
+     Geraet, das sie geschrieben hat, nicht an dem, was der Browser
+     behauptet zu duerfen. */
+  socket.on("deleteForAll", async ({ id }) => {
+    if (!room || !id) return;
+    try {
+      const ok = await store.deleteForAll(String(id), me.device);
+      if (ok) io.to(room).emit("deleted", { id: String(id) });
+    } catch (err) {
+      console.error("Loeschen fehlgeschlagen:", err.message);
+    }
+  });
+
   socket.on("need", ({ id, lang }) => {
     if (!room) return;
     /* Nachfragen sind meist billig - beim Sprachwechsel holt der Browser

@@ -100,6 +100,16 @@ Die Aufnahmen liegen in der Datenbank, nicht in einem Dateispeicher — eine hal
 
 Für Bilder gilt das nicht — die sind hundertmal größer und gehören in einen Objektspeicher wie Cloudflare R2. Das ist noch nicht gebaut.
 
+## Nachrichten löschen
+
+Unter jeder Nachricht steht `⋯`. Dahinter liegen zwei Möglichkeiten, wie bei WhatsApp:
+
+**Für alle löschen** gibt es nur bei eigenen Nachrichten. Der Server entfernt Text, alle Übersetzungen und eine etwaige Sprachaufnahme wirklich aus der Datenbank. Stehen bleibt „Diese Nachricht wurde gelöscht" — sonst entstünde im Gespräch eine unerklärliche Lücke. Geprüft wird am Gerät, das die Nachricht geschrieben hat, nicht daran, was der Browser behauptet zu dürfen.
+
+**Für mich löschen** geht bei jeder Nachricht und bleibt auf diesem Gerät. Die Kennungen liegen im `localStorage` unter `lumo-hidden`, die letzten 500. Andere sehen die Nachricht weiter — und auf einem zweiten Gerät desselben Menschen taucht sie wieder auf.
+
+Eine Frist wie bei WhatsApp, nach der sich nichts mehr für alle löschen lässt, gibt es bewusst nicht.
+
 ## Was noch fehlt für den Produktivbetrieb
 
 - **Login.** Aktuell reicht der Chat-Code. Wer ihn kennt, liest mit.

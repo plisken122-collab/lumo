@@ -61,6 +61,11 @@ export async function init() {
        NULL heisst: gewoehnliche Textnachricht. */
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_seconds INTEGER;
 
+    /* Fuer alle geloescht. Der Inhalt ist dann wirklich fort - stehen
+       bleibt nur diese Markierung, damit im Verlauf kein unerklaerliches
+       Loch entsteht. */
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
+
     /* Die Aufnahme selbst. Opus ist klein - eine halbe Minute sind rund
        40 KB, das traegt die Datenbank ohne Muehe. Bilder gehoeren spaeter
        nicht hierher, die sind hundertmal groesser.
@@ -126,6 +131,34 @@ export async function addMedia(messageId, { mime, bytes }) {
      ON CONFLICT (message_id) DO NOTHING`,
     [messageId, mime, bytes]
   );
+}
+
+/* ------------------------- Loeschen fuer alle -------------------------
+   Der Inhalt verschwindet wirklich: Text, alle Uebersetzungen und eine
+   etwaige Aufnahme. Die Zeile selbst bleibt mit deleted = TRUE stehen,
+   damit der Verlauf keine Luecke bekommt und jeder sieht, dass hier
+   etwas war.
+
+   Gibt zurueck, ob geloescht wurde - false heisst: gibt es nicht, oder
+   jemand anderes hat sie geschrieben.
+------------------------------------------------------------------- */
+export async function deleteForAll(id, device) {
+  if (!usingDatabase) {
+    const m = mem.messages.get(id);
+    if (!m || m.device !== device) return false;
+    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null;
+    mem.media.delete(id);
+    return true;
+  }
+  const { rowCount } = await pool.query(
+    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL
+     WHERE id = $1 AND device = $2 AND deleted = FALSE`,
+    [id, device]
+  );
+  if (!rowCount) return false;
+  await pool.query(`DELETE FROM translations WHERE message_id = $1`, [id]);
+  await pool.query(`DELETE FROM media WHERE message_id = $1`, [id]);
+  return true;
 }
 
 export async function getMedia(messageId) {
@@ -199,6 +232,7 @@ function rowToMsg(r, translations) {
     id: r.id, room: r.room, device: r.device, name: r.name,
     text: r.body, lang: r.lang, detected: r.detected, at: Number(r.at), tr,
     audioSeconds: r.audio_seconds ?? null,
+    deleted: Boolean(r.deleted),
   };
 }
 

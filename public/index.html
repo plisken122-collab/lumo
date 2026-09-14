@@ -73,6 +73,28 @@
   .theirs .bubble { background:#F1F2F5; border-bottom-left-radius:5px; }
   .meta { font-size:11.5px; color:var(--muted); display:flex; gap:8px; align-items:center; }
   .meta button { background:none; padding:0; color:var(--muted); font-size:11.5px; text-decoration:underline; }
+  .meta .more { text-decoration:none; font-size:15px; line-height:1; padding:0 3px; }
+  .deleted { opacity:.6; font-style:italic; }
+
+  /* Kleines Menue zum Loeschen. Liegt ueber allem und schliesst bei
+     einem Klick daneben. */
+  .sheet {
+    position:fixed; inset:0; z-index:20;
+    background:rgba(32,34,43,.35);
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .sheet-inner {
+    background:var(--surface); width:100%; max-width:520px;
+    border-radius:16px 16px 0 0; padding:8px;
+    padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  }
+  .sheet-inner button {
+    display:block; width:100%; text-align:left;
+    background:transparent; color:var(--ink);
+    padding:14px 14px; font-size:15px; border-radius:10px;
+  }
+  .sheet-inner button:hover { background:var(--canvas); }
+  .sheet-inner .danger { color:var(--danger); }
   .orig { margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:14px; opacity:.85; }
   .mine .orig { border-top-color:rgba(255,255,255,.28); }
   .waiting { opacity:.45; animation:pulse 1.2s infinite; }
@@ -271,7 +293,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v18";
+const BUILD = "v19";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -343,6 +365,12 @@ function start() {
 
   socket.on("history", (list) => { list.forEach((m) => add(m, false)); });
   socket.on("message", (m) => add(m, true));
+  socket.on("deleted", ({ id }) => {
+    const m = msgs.get(id);
+    if (!m) return;
+    m.deleted = true; m.text = ""; m.tr = {}; m.audioSeconds = null; m.open = false;
+    render(m);
+  });
   socket.on("system", (ev) => {
     const d = document.createElement("div");
     d.className = "system";
@@ -388,6 +416,9 @@ $("langSwitch").onchange = (e) => {
 
 function add(m, live) {
   if (msgs.has(m.id)) return;
+  /* Fuer mich geloescht: taucht auch nach einem Neustart nicht wieder
+     auf, die Kennung liegt im Browser. */
+  if (verborgen.has(m.id)) return;
   m.live = Boolean(live) && m.device !== deviceId;   // eigene Nachrichten nie melden
   msgs.set(m.id, m);
   const row = document.createElement("div");
@@ -403,6 +434,22 @@ function render(m) {
   const row = $("m" + m.id); if (!row) return;
   const bubble = row.querySelector(".bubble");
   const meta = row.querySelector(".meta");
+  /* Geloeschtes hat keinen Inhalt mehr - weder uebersetzen noch
+     abspielen, nur der Hinweis bleibt. */
+  if (m.deleted) {
+    bubble.textContent = "";
+    const s = document.createElement("span");
+    s.className = "deleted";
+    s.textContent = T("deletedNote");
+    bubble.appendChild(s);
+    meta.textContent = "";
+    const wer = document.createElement("span");
+    wer.textContent = m.name;
+    meta.appendChild(wer);
+    meta.appendChild(menueKnopf(m));
+    return;
+  }
+
   /* Ohne Text gibt es nichts zu uebersetzen - das betrifft
      Sprachnachrichten, bei denen die Mitschrift fehlgeschlagen ist.
      Sonst wartet die Blase ewig auf eine Uebersetzung von nichts. */
@@ -469,6 +516,17 @@ function render(m) {
     b.onclick = () => { m.open = !m.open; render(m); };
     meta.appendChild(b);
   }
+  meta.appendChild(menueKnopf(m));
+}
+
+function menueKnopf(m) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "more";
+  b.textContent = "⋯";
+  b.title = T("options");
+  b.onclick = (e) => { e.stopPropagation(); zeigeMenue(m); };
+  return b;
 }
 
 const draft = $("draft");
@@ -914,6 +972,73 @@ micBtn.onclick = () => {
 };
 $("recSend").onclick = () => stopRecording(false);
 $("recCancel").onclick = () => stopRecording(true);
+
+/* ------------------------------------------------------------------
+   Loeschen
+
+   Zwei Arten, wie bei WhatsApp:
+
+   "Fuer alle" geht nur bei eigenen Nachrichten. Der Server entfernt
+   Text, Uebersetzungen und Aufnahme wirklich; stehen bleibt ein
+   Hinweis, damit im Verlauf kein unerklaerliches Loch entsteht.
+
+   "Fuer mich" bleibt auf diesem Geraet. Die Kennungen liegen im
+   localStorage - andere sehen die Nachricht weiter.
+------------------------------------------------------------------ */
+function versteckte() {
+  try { return new Set(JSON.parse(localStorage.getItem("lumo-hidden") || "[]")); }
+  catch { return new Set(); }
+}
+let verborgen = versteckte();
+
+function versteckeLokal(id) {
+  verborgen.add(id);
+  try { localStorage.setItem("lumo-hidden", JSON.stringify([...verborgen].slice(-500))); } catch {}
+  const row = $("m" + id);
+  if (row) row.remove();
+  msgs.delete(id);
+}
+
+let sheet = null;
+function schliesseSheet() {
+  if (sheet) { sheet.remove(); sheet = null; }
+}
+
+function zeigeMenue(m) {
+  schliesseSheet();
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  const box = document.createElement("div");
+  box.className = "sheet-inner";
+
+  /* Fuer alle nur, wenn sie von diesem Geraet kam und noch da ist. */
+  if (m.device === deviceId && !m.deleted) {
+    const a = document.createElement("button");
+    a.type = "button";
+    a.className = "danger";
+    a.textContent = T("delForAll");
+    a.onclick = () => { socket.emit("deleteForAll", { id: m.id }); schliesseSheet(); };
+    box.appendChild(a);
+  }
+
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = T("delForMe");
+  b.onclick = () => { versteckeLokal(m.id); schliesseSheet(); };
+  box.appendChild(b);
+
+  const c = document.createElement("button");
+  c.type = "button";
+  c.textContent = T("cancel");
+  c.onclick = schliesseSheet;
+  box.appendChild(c);
+
+  sheet.appendChild(box);
+  sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
+  document.body.appendChild(sheet);
+}
+
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") schliesseSheet(); });
 
 function scrollDown() { $("log").scrollTop = $("log").scrollHeight; }
 function showErr(t) {
