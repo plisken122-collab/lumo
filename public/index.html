@@ -329,7 +329,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v29";
+const BUILD = "v30";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -404,6 +404,7 @@ function start() {
 
   socket.on("history", (list) => { list.forEach((m) => add(m, false)); });
   socket.on("message", (m) => add(m, true));
+  socket.on("deleteFailed", () => { showErr(T("delFailed")); });
   socket.on("deleted", ({ id }) => {
     const m = msgs.get(id);
     if (!m) return;

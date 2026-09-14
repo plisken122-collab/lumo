@@ -210,6 +210,7 @@ const inFlight = new Map(); // key -> Promise, verhindert doppelte Anfragen
 let quotaWarnedUntil = 0; // damit die Tagesgrenze nur einmal gemeldet wird
 let lastClient = null;   // letzte Meldung eines Geraets, siehe /health
 let lastSpeech = null;   // wie die letzte Mitschrift ausging, siehe /health
+let letzterLoeschFehler = null; // damit ein gescheitertes Loeschen sichtbar wird
 
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
@@ -512,6 +513,8 @@ app.get("/health", (_req, res) =>
     langs: CODES.length,
     lastClient,
     lastSpeech,
+    dbFehler: store.schemaFehler || null,
+    loeschFehler: letzterLoeschFehler,
     limits: {
       msgPerMin: MSG_PER_MIN,
       translationsPerDay: TRANSLATIONS_PER_DAY > 0 ? TRANSLATIONS_PER_DAY : null,
@@ -628,8 +631,13 @@ io.on("connection", (socket) => {
     try {
       const ok = await store.deleteForAll(String(id), me.device);
       if (ok) io.to(room).emit("deleted", { id: String(id) });
+      /* Nicht geloescht heisst: fremde Nachricht oder schon weg. Auch
+         das gehoert zurueckgemeldet, sonst tippt jemand ins Leere. */
+      else socket.emit("deleteFailed", { id: String(id), grund: "nicht erlaubt" });
     } catch (err) {
       console.error("Loeschen fehlgeschlagen:", err.message);
+      letzterLoeschFehler = err.message.slice(0, 200);
+      socket.emit("deleteFailed", { id: String(id), grund: "Fehler" });
     }
   });
 

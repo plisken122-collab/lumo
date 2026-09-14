@@ -32,6 +32,11 @@ const mem = {
 };
 
 /* ---------------------------- Schema ---------------------------- */
+/* Haelt fest, ob das Anlegen der Tabellen schiefging. Frueher landete
+   das nur im Protokoll - und wenn eine spaeter hinzugefuegte Spalte
+   fehlte, scheiterte etwa das Loeschen lautlos. Steht unter /health. */
+export let schemaFehler = null;
+
 export async function init() {
   if (!usingDatabase) {
     console.log("  Hinweis: keine DATABASE_URL gesetzt - Daten nur im Arbeitsspeicher.");
@@ -100,7 +105,33 @@ export async function init() {
     );
     CREATE INDEX IF NOT EXISTS usage_at ON usage_log (at);
   `);
-  console.log("  Datenbank bereit.");
+  /* Die nachtraeglich gekommenen Spalten einzeln absichern: Laeuft die
+     grosse Anweisung oben aus irgendeinem Grund nicht durch, faellt es
+     sonst erst auf, wenn jemand etwas loeschen will. */
+  for (const [spalte, art] of [["audio_seconds", "INTEGER"],
+                               ["deleted", "BOOLEAN NOT NULL DEFAULT FALSE"]]) {
+    try {
+      await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS ${spalte} ${art}`);
+    } catch (err) {
+      schemaFehler = `${spalte}: ${err.message}`.slice(0, 200);
+      console.error(`  Spalte ${spalte} fehlt und liess sich nicht anlegen:`, err.message);
+    }
+  }
+
+  /* Gegenprobe: Ist die Spalte wirklich da? */
+  try {
+    const { rows } = await pool.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'messages' AND column_name IN ('deleted','audio_seconds')`
+    );
+    const da = rows.map((r) => r.column_name);
+    if (!da.includes("deleted")) schemaFehler = "Spalte deleted fehlt";
+    if (!da.includes("audio_seconds")) schemaFehler = "Spalte audio_seconds fehlt";
+  } catch (err) {
+    schemaFehler = "Pruefung fehlgeschlagen: " + err.message.slice(0, 150);
+  }
+
+  console.log(schemaFehler ? "  Datenbank bereit, ABER: " + schemaFehler : "  Datenbank bereit.");
 }
 
 /* --------------------------- Nachrichten --------------------------- */
