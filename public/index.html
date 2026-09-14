@@ -262,7 +262,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v16";
+const BUILD = "v17";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -610,7 +610,28 @@ function tickTime() {
    ausserhalb und starten nach jedem Ende neu, solange noch aufgenommen
    wird. Ohne das kommt bei einem ganzen Satz fast nichts an. */
 let hoertZu = false;
-let neustarts = 0;   // wie oft die Erkennung sich neu starten musste
+let neustarts = 0;        // wie oft die Erkennung sich neu starten musste
+let letzteVorschau = "";  // letzter Zwischenstand, falls kein endgueltiger kommt
+
+/* Beendet die Erkennung und wartet kurz auf ihr letztes Wort. Ohne diese
+   Wartezeit liest der Aufrufer den Text in derselben Millisekunde aus,
+   in der gestoppt wird - und bekommt nichts. */
+function beendeErkennung(fertig) {
+  if (!recognizer) { fertig(); return; }
+  const r = recognizer;
+  recognizer = null;
+  let erledigt = false;
+  const einmal = () => {
+    if (erledigt) return;
+    erledigt = true;
+    if (!transcript && letzteVorschau) transcript = letzteVorschau.trim();
+    fertig();
+  };
+  r.onend = einmal;
+  r.onerror = einmal;
+  setTimeout(einmal, 1500);
+  try { r.stop(); } catch { einmal(); }
+}
 
 /* Meldet nur, WIE es ausging - nie, was gesprochen wurde. Fehlerkuerzel
    und Zeichenzahl reichen zur Fehlersuche und verraten nichts. */
@@ -630,6 +651,7 @@ function startListening() {
   recHint.textContent = T("listening");
   hoertZu = true;
   neustarts = 0;
+  letzteVorschau = "";
   meldeSprache({ neu: true });
   starteErkennung(SR);
 }
@@ -650,6 +672,10 @@ function starteErkennung(SR) {
       }
       if (neu) transcript = (transcript + " " + neu).trim();
       const zeigen = (transcript + " " + lose).trim();
+      /* Den Zwischenstand aufheben: Wird die Aufnahme beendet, bevor
+         Chrome das Ergebnis endgueltig macht, ist er alles, was wir
+         haben - und ungenauer Text schlaegt gar keinen. */
+      if (zeigen) letzteVorschau = zeigen;
       if (zeigen) recHint.textContent = zeigen.slice(-60);
     };
 
@@ -723,17 +749,22 @@ async function startRecording() {
   recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
   recorder.onstop = () => {
     stream.getTracks().forEach((t) => t.stop());
-    /* Erst das Weiterlaufen abschalten, dann stoppen - sonst startet
-       onend die Erkennung sofort wieder. */
-    hoertZu = false;
-    if (recognizer) { try { recognizer.stop(); } catch {} recognizer = null; }
-    meldeSprache({ ende: true, zeichen: transcript.length, laeufe: neustarts });
     clearInterval(recTimer);
     recBar.classList.add("hide");
     composer.classList.remove("hide");
-    if (recCancelled) return;
+
     const sekunden = Math.max(1, Math.round((Date.now() - recStart) / 1000));
-    sendVoice(new Blob(chunks, { type: recorder.mimeType }), sekunden);
+    const aufnahme = new Blob(chunks, { type: recorder.mimeType });
+
+    /* Erst das Weiterlaufen abschalten, dann auf das letzte Ergebnis
+       warten - sonst startet onend die Erkennung wieder, und der Text
+       waere beim Abschicken noch nicht da. */
+    hoertZu = false;
+    beendeErkennung(() => {
+      meldeSprache({ ende: true, zeichen: transcript.length, laeufe: neustarts });
+      if (recCancelled) return;
+      sendVoice(aufnahme, sekunden);
+    });
   };
 
   recorder.start();
