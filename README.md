@@ -27,21 +27,19 @@ Läuft auf http://localhost:3000
 
 ---
 
-## Auf Render deployen
+## Änderungen live bringen
+
+Die App läuft bereits: **https://lumo-3d74.onrender.com**, aus dem Repo **github.com/plisken122-collab/lumo**, Branch `main`. Render deployt bei jedem Push von selbst (`Auto-Deploy: On Commit`) und liest dabei `render.yaml`. Also genügt:
 
 ```bash
-git init && git add -A && git commit -m "lumo" && git branch -M main
+git add -A && git commit -m "was geändert wurde" && git push
 ```
 
-Dann auf github.com ein leeres Repo anlegen und:
+**Falle mit zwei GitHub-Konten.** Scheitert der Push mit `Permission to plisken122-collab/lumo.git denied to carrango-pt` und HTTP 403, hat sich Git mit dem Konto des Carrango-Projekts angemeldet. Zwei Dinge müssen stimmen: der Kontoname in der Adresse (steht schon drin, `https://plisken122-collab@github.com/...`) **und** im Browser eine Anmeldung als `plisken122-collab` — dort öffnet sich das Anmeldefenster.
 
-```bash
-git remote add origin https://github.com/DEINNAME/lumo.git && git push -u origin main
-```
+Kommt die Änderung trotz erfolgreichem Push nicht live, im Dashboard *Manual Deploy → Deploy latest commit*. Dass alles durch ist, prüfst du an `/health` und daran, ob die geänderte Datei wirklich ausgeliefert wird.
 
-Auf render.com → New → Web Service → Repo verbinden. Render liest `render.yaml`. Einzige manuelle Eingabe: unter **Environment** den Key `ANTHROPIC_API_KEY` mit deinem Wert setzen.
-
-Danach eigene Domain verbinden (Settings → Custom Domain), CNAME bei Cloudflare setzen — genau wie bei Carrango.
+Eigene Domain: Settings → Custom Domain, CNAME bei Cloudflare setzen — genau wie bei Carrango.
 
 ---
 
@@ -63,18 +61,30 @@ Die App ist eine PWA. Im Browser öffnen → Teilen → „Zum Home-Bildschirm".
 - Sprache jederzeit umschaltbar, alte Nachrichten werden nachübersetzt
 - Übersetzungen werden pro Nachricht und Sprache gecacht — jede Übersetzung kostet nur einmal
 
+## Grenzen gegen zu hohe Kosten
+
+Jede Übersetzung kostet, und eine Nachricht löst eine je Lesersprache aus. Drei Grenzen bremsen das, alle über `.env` einstellbar. Eine 0 schaltet die jeweilige Grenze ab.
+
+| Variable | Standard | Wirkung |
+|---|---|---|
+| `TRANSLATIONS_PER_DAY` | 2000 | Obergrenze für alle zusammen. Danach kommen Nachrichten weiter an, werden aber im Original angezeigt. |
+| `MSG_PER_MIN` | 20 | Nachrichten je Minute und Gerät. Der abgewiesene Text bleibt im Eingabefeld stehen. |
+| `NEED_PER_MIN` | 120 | Nachfragen nach Übersetzungen je Minute und Gerät. |
+| `GATE_TRIES_PER_15MIN` | 10 | Versuche beim Zugangswort je Adresse, sonst lässt es sich durchprobieren. |
+
+Wie viel vom Tageskontingent noch übrig ist, steht unter `/health`. Was tatsächlich verbraucht wurde, zeigt `/stats.html`.
+
+Die Zähler liegen im Arbeitsspeicher. Bei mehreren Instanzen zählt jede für sich — bei einem Dienst auf Render ist das genau eine.
+
 ## Was noch fehlt für den Produktivbetrieb
 
-- **Datenbank.** Nachrichten liegen im Arbeitsspeicher und sind beim Neustart weg. Postgres einbauen.
 - **Login.** Aktuell reicht der Chat-Code. Wer ihn kennt, liest mit.
 - **Ende-zu-Ende-Verschlüsselung.** Geht nicht zusammen mit Server-Übersetzung — entweder der Server liest mit, oder die Übersetzung läuft auf dem Gerät.
-- **Push-Benachrichtigungen.** Web Push über VAPID.
-- **Rate Limit.** Sonst kann jemand deine API-Rechnung hochtreiben.
 - **Bilder und Sprachnachrichten.**
 
-## Kosten
+Erledigt sind inzwischen: Datenbank (Postgres, siehe `store.js`), Push über VAPID, Zugangswort, Aufbewahrungsfrist und die Grenzen oben.
 
-Render Free reicht zum Testen (schläft nach Inaktivität ein). Für den Dauerbetrieb Starter ~7 €/Monat. Dazu die Anthropic-API nach Verbrauch — bei normalem Chatvolumen ein paar Euro im Monat.
+Was der Betrieb kostet, steht weiter unten unter [Kosten im Betrieb](#kosten-im-betrieb).
 
 ---
 
@@ -100,9 +110,9 @@ Klappt der QR-Code nicht, liegt es fast immer an einem dieser drei Punkte:
 
 ### Variante B — online stellen (funktioniert überall)
 
-Einmal auf Render deployen (siehe oben). Danach bekommst du eine feste Adresse wie `https://lumo.onrender.com`, die auf jedem Handy funktioniert, auch über Mobilfunk und auch wenn dein Rechner aus ist.
+Die App ist bereits online: **https://lumo-3d74.onrender.com**. Die Adresse funktioniert auf jedem Handy, auch über Mobilfunk und auch wenn dein Rechner aus ist. Ist ein `ACCESS_CODE` gesetzt, braucht jeder zuerst dieses Wort.
 
-Auf dem Free-Plan schläft der Server nach 15 Minuten Leerlauf ein. Der erste Aufruf danach dauert dann ~30 Sekunden — nicht erschrecken, das ist kein Fehler.
+Der Dienst läuft auf dem Starter-Plan und schläft nicht ein — der erste Aufruf kommt also sofort.
 
 ### Als App auf den Home-Bildschirm
 

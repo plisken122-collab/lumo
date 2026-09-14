@@ -59,6 +59,9 @@ const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWi
 
 app.post("/api/gate", (req, res) => {
   if (!gateOn) return res.json({ ok: true });
+  if (!take(`gate:${req.ip}`, GATE_TRIES, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu viele Versuche. Spaeter nochmal." });
+  }
   const given = String(req.body?.code || "");
   const a = crypto.createHash("sha256").update(given).digest();
   const b = crypto.createHash("sha256").update(ACCESS_CODE).digest();
@@ -93,6 +96,62 @@ const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 const PRICE_IN = Number(process.env.PRICE_IN_PER_MTOK || 2);
 const PRICE_OUT = Number(process.env.PRICE_OUT_PER_MTOK || 10);
 const RETENTION_DAYS = Number(process.env.RETENTION_DAYS || 30);
+
+/* ------------------------------ Bremse ------------------------------
+   Jede Uebersetzung kostet Geld, und eine Nachricht loest eine je
+   Lesersprache aus. Drei Grenzen, von aussen nach innen:
+
+   1. Zugangswort - begrenzte Versuche je Adresse, sonst laesst es sich
+      in Ruhe durchprobieren.
+   2. Nachrichten - begrenzt je Geraet. Bremst den Dauerlaeufer, nicht
+      das normale Gespraech.
+   3. Uebersetzungen - eine Obergrenze fuer alle zusammen, pro Tag. Das
+      ist die eigentliche Sicherung der Rechnung: Was danach kommt, wird
+      zugestellt, aber im Original angezeigt.
+
+   Alles nur im Arbeitsspeicher. Bei mehreren Instanzen zaehlt jede fuer
+   sich - bei einem Dienst auf Render ist das genau eine.
+-------------------------------------------------------------------- */
+const GATE_TRIES = Number(process.env.GATE_TRIES_PER_15MIN || 10);
+const MSG_PER_MIN = Number(process.env.MSG_PER_MIN || 20);
+const NEED_PER_MIN = Number(process.env.NEED_PER_MIN || 120);
+const TRANSLATIONS_PER_DAY = Number(process.env.TRANSLATIONS_PER_DAY || 2000);
+
+const counters = new Map(); // Schluessel -> { n, until }
+
+/* Zaehlt einen Versuch. Gibt false zurueck, wenn die Grenze erreicht
+   ist. Eine Grenze von 0 oder weniger heisst: keine Grenze. */
+function take(key, max, windowMs) {
+  if (!(max > 0)) return true;
+  const now = Date.now();
+  const c = counters.get(key);
+  if (!c || c.until <= now) {
+    counters.set(key, { n: 1, until: now + windowMs });
+    return true;
+  }
+  if (c.n >= max) return false;
+  c.n++;
+  return true;
+}
+
+/* Wie viele Uebersetzungen heute noch drin sind. Nur zur Anzeige. */
+function leftToday() {
+  if (!(TRANSLATIONS_PER_DAY > 0)) return null;
+  const c = counters.get("tr:day");
+  if (!c || c.until <= Date.now()) return TRANSLATIONS_PER_DAY;
+  return Math.max(0, TRANSLATIONS_PER_DAY - c.n);
+}
+
+/* Abgelaufene Zaehler wegraeumen, sonst waechst die Map unbegrenzt. */
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, c] of counters) if (c.until <= now) counters.delete(k);
+}, 5 * 60 * 1000).unref();
+
+/* Hinter dem Proxy von Render steht die echte Adresse des Besuchers in
+   X-Forwarded-For. Ohne diese Zeile sieht Express nur den Proxy - und
+   alle Besucher teilten sich einen Zaehler. */
+app.set("trust proxy", 1);
 
 /* ------------------------- Web Push einrichten ------------------------- */
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
@@ -138,6 +197,7 @@ const HINTS = {
 
 /* ---------------------------- Uebersetzung ---------------------------- */
 const inFlight = new Map(); // key -> Promise, verhindert doppelte Anfragen
+let quotaWarnedUntil = 0; // damit die Tagesgrenze nur einmal gemeldet wird
 
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
@@ -185,8 +245,32 @@ async function ensure(room, msgId, target) {
   if (msg.lang === target) return msg.text;
   if (msg.tr[target]) return msg.tr[target];
 
+  /* Steht kein einziger Buchstabe drin, ist nichts zu uebersetzen -
+     reine Smileys, Zahlen oder Satzzeichen. Spart einen bezahlten
+     Aufruf und schuetzt die Zeichen davor, unterwegs zu verunglaecken.
+
+     Die Runde muss trotzdem raus: Ohne sie wartet der Browser ewig auf
+     eine Uebersetzung, die nie kommt, und zeigt weiter "uebersetzt ...". */
+  if (!/\p{L}/u.test(msg.text)) {
+    io.to(room).emit("translated", { id: msgId, lang: target, text: msg.text });
+    return msg.text;
+  }
+
   const key = `${msgId}:${target}`;
   if (inFlight.has(key)) return inFlight.get(key);
+
+  /* Erst hier zaehlen: Alles darueber kam aus dem Zwischenspeicher und
+     hat nichts gekostet. */
+  if (!take("tr:day", TRANSLATIONS_PER_DAY, 24 * 60 * 60 * 1000)) {
+    /* Einmal je Tagesfenster ins Protokoll, nicht bei jeder Nachricht. */
+    const until = counters.get("tr:day")?.until || 0;
+    if (quotaWarnedUntil !== until) {
+      quotaWarnedUntil = until;
+      console.error(`  Tagesgrenze von ${TRANSLATIONS_PER_DAY} Uebersetzungen erreicht.`);
+    }
+    io.to(room).emit("quotaReached", { id: msgId });
+    return null;
+  }
 
   const job = (async () => {
     try {
@@ -323,6 +407,11 @@ app.get("/health", (_req, res) =>
     gate: gateOn,
     retentionDays: RETENTION_DAYS > 0 ? RETENTION_DAYS : null,
     langs: CODES.length,
+    limits: {
+      msgPerMin: MSG_PER_MIN,
+      translationsPerDay: TRANSLATIONS_PER_DAY > 0 ? TRANSLATIONS_PER_DAY : null,
+      translationsLeftToday: leftToday(),
+    },
   })
 );
 
@@ -361,6 +450,10 @@ io.on("connection", (socket) => {
 
   socket.on("send", async ({ text }) => {
     if (!room || !text?.trim()) return;
+    if (!take(`msg:${me.device}`, MSG_PER_MIN, 60 * 1000)) {
+      socket.emit("tooFast");
+      return;
+    }
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       room,
@@ -384,7 +477,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("need", ({ id, lang }) => {
-    if (room) ensure(room, id, clean(lang)).catch(() => {});
+    if (!room) return;
+    /* Nachfragen sind meist billig - beim Sprachwechsel holt der Browser
+       den ganzen Verlauf auf einmal nach. Die Grenze faengt nur den Fall
+       ab, dass jemand das Ereignis von Hand in Schleife schickt. */
+    if (!take(`need:${me.device}`, NEED_PER_MIN, 60 * 1000)) return;
+    ensure(room, id, clean(lang)).catch(() => {});
   });
 
   socket.on("disconnect", () => {
@@ -439,5 +537,8 @@ http.listen(PORT, "0.0.0.0", async () => {
   console.log(RETENTION_DAYS > 0
     ? `  Nachrichten werden nach ${RETENTION_DAYS} Tagen geloescht.`
     : "  Hinweis: RETENTION_DAYS=0 - Nachrichten bleiben unbegrenzt liegen.");
+  console.log(TRANSLATIONS_PER_DAY > 0
+    ? `  Bremse: ${MSG_PER_MIN} Nachrichten je Minute und Geraet, ${TRANSLATIONS_PER_DAY} Uebersetzungen am Tag.`
+    : `  Bremse: ${MSG_PER_MIN} Nachrichten je Minute und Geraet. WARNUNG: keine Tagesgrenze fuer Uebersetzungen.`);
   console.log("");
 });

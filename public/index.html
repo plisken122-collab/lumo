@@ -85,6 +85,34 @@
   .composer textarea:focus { outline:none; }
   .composer button { border-radius:10px; padding:0 18px; background:var(--mine); color:#fff; font-size:14px; font-weight:500; }
   .composer button:disabled { background:var(--line); cursor:default; }
+
+  /* Auswahl zum Einfuegen. Auf dem Handy hat man die Tastatur dafuer,
+     am Rechner nicht - dort ist das der einzige bequeme Weg. */
+  .composer .emoji-btn {
+    background:transparent; padding:0 10px; font-size:20px; line-height:1;
+    color:var(--muted); border-radius:10px; flex-shrink:0;
+  }
+  .composer .emoji-btn:hover { background:var(--canvas); }
+  .composer .emoji-btn[aria-expanded="true"] { background:var(--canvas); }
+  .emoji-panel {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:8px; margin-bottom:8px;
+  }
+  .emoji-tabs { display:flex; gap:4px; margin-bottom:6px; }
+  .emoji-tabs button {
+    flex:1; padding:6px 0; font-size:17px; line-height:1;
+    border-radius:8px; background:transparent;
+  }
+  .emoji-tabs button[aria-selected="true"] { background:var(--canvas); }
+  .emoji-grid {
+    display:grid; grid-template-columns:repeat(8, 1fr); gap:2px;
+    max-height:168px; overflow-y:auto;
+  }
+  .emoji-grid button {
+    padding:5px 0; font-size:21px; line-height:1.15;
+    border-radius:8px; background:transparent;
+  }
+  .emoji-grid button:hover { background:var(--canvas); }
   .err { color:var(--danger); font-size:13px; margin:8px 2px 0; }
   .hide { display:none !important; }
   .note {
@@ -131,7 +159,12 @@
     </div>
     <div id="log"></div>
     <div id="err" class="err hide"></div>
+    <div id="emojiPanel" class="emoji-panel hide">
+      <div id="emojiTabs" class="emoji-tabs"></div>
+      <div id="emojiGrid" class="emoji-grid"></div>
+    </div>
     <div class="composer">
+      <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
       <textarea id="draft" rows="1"></textarea>
       <button id="send" disabled></button>
     </div>
@@ -258,6 +291,21 @@ function start() {
     showErr(T("errTranslate"));
     const m = msgs.get(id); if (m) { m.failed = true; render(m); }
   });
+  socket.on("tooFast", () => {
+    showErr(T("errTooFast"));
+    /* Die Nachricht wurde nicht angenommen - den Text zurueck ins Feld,
+       damit niemand neu tippen muss. */
+    if (!draft.value.trim() && lastSent) {
+      draft.value = lastSent;
+      draft.style.height = "auto";
+      draft.style.height = Math.min(draft.scrollHeight, 120) + "px";
+      $("send").disabled = false;
+    }
+  });
+  socket.on("quotaReached", ({ id }) => {
+    showErr(T("errQuota"));
+    const m = msgs.get(id); if (m) { m.failed = true; render(m); }
+  });
 }
 
 $("langSwitch").onchange = (e) => {
@@ -334,12 +382,100 @@ draft.addEventListener("keydown", (e) => {
 });
 $("send").onclick = sendMsg;
 
+let lastSent = "";
+
 function sendMsg() {
   const text = draft.value.trim();
   if (!text) return;
+  lastSent = text;
   socket.emit("send", { text });
   draft.value = ""; draft.style.height = "auto"; $("send").disabled = true;
 }
+
+/* ------------------------------------------------------------------
+   Smileys
+
+   Eine feste Auswahl statt aller Unicode-Zeichen: die Datei soll klein
+   bleiben. Die Reiter tragen selbst ein Zeichen als Beschriftung - so
+   braucht die Auswahl keine Uebersetzung in dreizehn Sprachen.
+
+   Die Zeichen stehen durch Leerzeichen getrennt. Zusammengesetzte wie
+   ❤️ oder ✌️ bestehen aus mehreren Codepunkten und zerfallen, wenn man
+   den Text zeichenweise durchgeht - mit split(" ") bleiben sie heil.
+------------------------------------------------------------------ */
+const EMOJI = [
+  ["🕘", ""],
+  ["🙂", "😀 😃 😄 😁 😆 😅 🤣 😂 🙂 🙃 😉 😊 😇 🥰 😍 🤩 😘 😗 😚 😙 🥲 😋 😛 😜 🤪 😝 🤗 🤭 🤔 🤨 😐 😑 😶 🙄 😏 😣 😥 😮 🤐 😯 😪 😫 🥱 😴 😌 😛 🤤 😒 😓 😔 😕 🙃 🤑 😲 🙁 😖 😞 😟 😤 😢 😭 😦 😧 😨 😩 🤯 😬 😰 😱 🥵 🥶 😳 🤪 😵 😡 😠 🤬 😷 🤒 🤕 🤢 🤮 🤧 😇 🥳 🥸 🤠 😎 🤓 🧐 😈 👿 💀 👻 👽 🤖 💩"],
+  ["👍", "👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤝 🙏 ✍️ 💪 🦾 🤳 👀 👁️ 👄 👅 🧠 🦷 👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 🙋 🙆 🙅 🤷 🤦 💁 🙇 🚶 🏃 💃 🕺 👫 👬 👭 👪 🫂"],
+  ["❤️", "❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 💋 👑 💎 🔥 ✨ 🌟 ⭐ 💫 ⚡ 💥 🎉 🎊 🎈 🎁 🎀 🥂 🍻 🎂 🧁 ☕ 🍵 🍺 🍷 🎵 🎶 🎤 🎧 🎸 🎹 🎬 📷 💡 🔔 📣 💬 💭"],
+  ["🍕", "🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🥦 🥬 🥒 🌶️ 🌽 🥕 🧄 🧅 🥔 🥐 🥖 🍞 🧀 🥚 🍳 🥞 🧇 🥓 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍿 🍝 🍜 🍲 🍣 🍱 🍤 🍚 🍦 🍰 🍫 🍬 🍭 🍩 🍪"],
+  ["⚽", "⚽ 🏀 🏈 ⚾ 🎾 🏐 🏉 🎱 🏓 🏸 🥊 ⛳ 🏹 🎣 🎿 🎯 🎮 🎲 ♟️ 🚗 🚕 🚙 🚌 🏎️ 🚓 🚑 🚒 🚲 🛵 🏍️ ✈️ 🚀 🚁 ⛵ 🚤 🚢 🏠 🏡 🏢 🏥 🏨 🏪 ⛪ 🗼 🗽 ⛲ ⛺ 🌍 🌎 🌏 🌙 ⛰️ 🏔️ 🌋 🏖️ 🏝️"],
+  ["🐶", "🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🙈 🙉 🙊 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🐺 🐗 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🕷️ 🐢 🐍 🐙 🦀 🐠 🐟 🐬 🐳 🦈 🐘 🐫 🦒 🐄 🐎 🐑 🐐 🦌 🐕 🐈 🌵 🌲 🌳 🌴 🌱 🍀 🍃 🍁 🌺 🌻 🌹 🌷 🌸 💐 🍄"],
+  ["✅", "✅ ❌ ❎ ➕ ➖ ✖️ ❓ ❔ ❕ ❗ ‼️ ⁉️ 💯 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🔺 🔻 🔶 🔷 ⚠️ 🚫 ⛔ 📛 ♻️ ✔️ ☑️ 📌 📍 🔒 🔓 ⏰ ⌛ ⏳ 🔋 📱 💻 ⌨️ 🖨️ 📁 📄 📅 📊 ✏️ 📝 💰 💶 🛒 🎓 ⚙️ 🔧 🔨"],
+];
+
+const emojiBtn = $("emojiBtn"), emojiPanel = $("emojiPanel");
+const emojiTabs = $("emojiTabs"), emojiGrid = $("emojiGrid");
+
+/* Zuletzt benutzte, wie bei WhatsApp. Liegt nur im Browser. */
+function recentEmoji() {
+  try { return JSON.parse(localStorage.getItem("lumoEmoji") || "[]"); } catch { return []; }
+}
+function rememberEmoji(ch) {
+  const list = [ch, ...recentEmoji().filter((c) => c !== ch)].slice(0, 24);
+  try { localStorage.setItem("lumoEmoji", JSON.stringify(list)); } catch {}
+  EMOJI[0][1] = list.join(" ");
+}
+
+function showEmojiGroup(i) {
+  [...emojiTabs.children].forEach((b, n) =>
+    b.setAttribute("aria-selected", n === i ? "true" : "false"));
+  emojiGrid.textContent = "";
+  const chars = EMOJI[i][1] ? EMOJI[i][1].split(" ") : [];
+  for (const ch of chars) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = ch;
+    b.onclick = () => { insertEmoji(ch); rememberEmoji(ch); };
+    emojiGrid.appendChild(b);
+  }
+}
+
+function insertEmoji(ch) {
+  const a = draft.selectionStart ?? draft.value.length;
+  const b = draft.selectionEnd ?? draft.value.length;
+  draft.value = draft.value.slice(0, a) + ch + draft.value.slice(b);
+  const pos = a + ch.length;
+  draft.focus();
+  draft.setSelectionRange(pos, pos);
+  /* Loest Hoehenanpassung und den Senden-Knopf mit aus, statt beides
+     hier noch einmal zu schreiben. */
+  draft.dispatchEvent(new Event("input"));
+}
+
+function toggleEmoji(open) {
+  const show = open === undefined ? emojiPanel.classList.contains("hide") : open;
+  emojiPanel.classList.toggle("hide", !show);
+  emojiBtn.setAttribute("aria-expanded", show ? "true" : "false");
+  if (show) showEmojiGroup(recentEmoji().length ? 0 : 1);
+}
+
+EMOJI[0][1] = recentEmoji().join(" ");
+for (let i = 0; i < EMOJI.length; i++) {
+  const t = document.createElement("button");
+  t.type = "button";
+  t.textContent = EMOJI[i][0];
+  t.setAttribute("aria-selected", "false");
+  t.onclick = () => showEmojiGroup(i);
+  emojiTabs.appendChild(t);
+}
+
+emojiBtn.onclick = (e) => { e.stopPropagation(); toggleEmoji(); };
+document.addEventListener("click", (e) => {
+  if (!emojiPanel.classList.contains("hide") &&
+      !emojiPanel.contains(e.target) && e.target !== emojiBtn) toggleEmoji(false);
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleEmoji(false); });
 
 function scrollDown() { $("log").scrollTop = $("log").scrollHeight; }
 function showErr(t) {
