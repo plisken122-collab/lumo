@@ -566,6 +566,7 @@ io.on("connection", (socket) => {
        Fehler genau dann verloren, wenn sie gebraucht werden. */
     const vorher = info?.neu ? {} : (lastSpeech || {});
     lastSpeech = {
+      diktat: Boolean(info?.diktat || vorher.diktat),
       gestartet: Boolean(info?.gestartet || vorher.gestartet),
       tonAn: Boolean(info?.tonAn || vorher.tonAn),
       error: info?.error ? String(info.error).slice(0, 40) : (vorher.error || null),

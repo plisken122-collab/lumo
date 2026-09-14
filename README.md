@@ -80,9 +80,21 @@ Die Zähler liegen im Arbeitsspeicher. Bei mehreren Instanzen zählt jede für s
 
 Der Knopf mit dem Mikrofon sitzt rechts neben dem Eingabefeld. Antippen startet die Aufnahme, ein zweiter Tipp schickt sie ab, *Abbrechen* verwirft sie. Nach zwei Minuten endet die Aufnahme von selbst (`VOICE_MAX_SECONDS`).
 
-**Übersetzt werden sie auch.** Während du sprichst, schreibt der Browser mit — über die Spracherkennung, die er selbst mitbringt. Diese Mitschrift reist als gewöhnlicher Nachrichtentext mit und läuft danach durch dieselbe Übersetzung wie jede getippte Nachricht. Der Empfänger hört die Aufnahme und liest den Text in seiner Sprache darunter. Das kostet keinen Aufruf mehr als eine Textnachricht, weil der Server nie Audio zu Gesicht bekommt.
+**Sprachnachrichten werden nicht übersetzt.** Der Versuch, während der Aufnahme mitzuschreiben, ist gescheitert — und zwar aus einem Grund, der sich nicht umgehen ließ: Aufnahme und Spracherkennung wollen beide das Mikrofon, und Chrome auf Android gibt die Erkennung dann still auf. Gemessen am 14.09.2026: Die Erkennung startete, bekam Ton, meldete keinen Fehler und lieferte trotzdem kein einziges Wort. Weder das Umdrehen der Reihenfolge noch ein Warten auf das letzte Ergebnis half.
 
-Der Haken: **Auf dem iPhone gibt es diese Spracherkennung praktisch nicht.** Dort geht die Aufnahme trotzdem raus, nur ohne Mitschrift — dann steht unter dem Abspieler „ohne Mitschrift", und es gibt nichts zu übersetzen. In Chrome und auf Android läuft es.
+Wer sich verständlich machen will, nimmt stattdessen den **Sprechen-Knopf** (siehe unten). Wer die Stimme übertragen will, nimmt die Sprachnachricht — dann ohne Text.
+
+Soll beides zusammengehen, müsste die Mitschrift auf dem Server entstehen, über einen Dienst wie Whisper oder Deepgram. Das kostet rund einen halben Cent je Aufnahme und ist bewusst nicht gebaut.
+
+## Sprechen statt tippen
+
+Der Knopf 🗣️ neben dem Mikrofon hört nur zu und schreibt in das Eingabefeld — er nimmt nichts auf. Genau deshalb funktioniert er: Es streitet sich niemand ums Mikrofon.
+
+Antippen, sprechen, der Text erscheint währenddessen im Feld. Nochmal antippen beendet es. Danach ist es eine ganz gewöhnliche Nachricht, wird also übersetzt wie jede andere — du sprichst in deiner Sprache, der andere liest in seiner. Schon Getipptes bleibt stehen, das Gesprochene hängt sich dahinter.
+
+Kostet keinen Cent zusätzlich, weil die Erkennung im Browser läuft. Auf dem iPhone fehlt sie allerdings — dort blendet sich der Knopf selbst aus.
+
+Wie bei WhatsApp zeigt die Eingabezeile entweder die Sprechen-Knöpfe oder den Senden-Knopf, je nachdem ob schon Text da ist.
 
 Die Aufnahmen liegen in der Datenbank, nicht in einem Dateispeicher — eine halbe Minute Opus sind rund 40 KB. Sie hängen per Fremdschlüssel an der Nachricht: Löscht die Aufbewahrungsfrist die Nachricht, verschwindet die Aufnahme mit. Ausgeliefert werden sie unter `/medien/<kennung>` und liegen damit hinter dem Zugangswort wie alles andere.
 

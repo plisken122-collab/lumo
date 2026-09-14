@@ -80,16 +80,18 @@
   @media (prefers-reduced-motion:reduce) { .waiting { animation:none; } }
   .system { align-self:center; font-size:12px; color:var(--muted); }
 
-  .composer { display:flex; gap:8px; margin-top:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:6px; }
-  .composer textarea { border:none; background:transparent; padding:11px 10px; }
+  .composer { display:flex; gap:4px; margin-top:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:6px; }
+  /* flex + min-width:0, sonst drueckt das Feld die Knoepfe aus der
+     Zeile statt selbst schmaler zu werden. */
+  .composer textarea { border:none; background:transparent; padding:11px 8px; flex:1 1 auto; min-width:0; }
   .composer textarea:focus { outline:none; }
-  .composer button { border-radius:10px; padding:0 18px; background:var(--mine); color:#fff; font-size:14px; font-weight:500; }
+  .composer button { border-radius:10px; padding:0 14px; background:var(--mine); color:#fff; font-size:14px; font-weight:500; }
   .composer button:disabled { background:var(--line); cursor:default; }
 
   /* Auswahl zum Einfuegen. Auf dem Handy hat man die Tastatur dafuer,
      am Rechner nicht - dort ist das der einzige bequeme Weg. */
   .composer .emoji-btn {
-    background:transparent; padding:0 10px; font-size:20px; line-height:1;
+    background:transparent; padding:0 7px; font-size:20px; line-height:1;
     color:var(--muted); border-radius:10px; flex-shrink:0;
   }
   .composer .emoji-btn:hover { background:var(--canvas); }
@@ -116,10 +118,16 @@
 
   /* Mikrofon und laufende Aufnahme */
   .composer .mic-btn {
-    background:transparent; padding:0 10px; font-size:19px; line-height:1;
+    background:transparent; padding:0 7px; font-size:19px; line-height:1;
     color:var(--muted); border-radius:10px; flex-shrink:0;
   }
   .composer .mic-btn:hover { background:var(--canvas); }
+  /* Laeuft das Diktat, muss man das sehen - der Text erscheint zwar im
+     Feld, aber bis zum ersten Wort vergeht ein Moment. */
+  .composer .mic-btn.on {
+    background:var(--danger); border-radius:10px;
+    animation:pulse 1.4s ease-in-out infinite;
+  }
   .rec {
     display:flex; align-items:center; gap:10px; flex:1 1 auto;
     /* Ohne min-width:0 schrumpft ein Flex-Element nie unter die Breite
@@ -201,6 +209,7 @@
     <div class="composer" id="composer">
       <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
       <textarea id="draft" rows="1"></textarea>
+      <button id="dictBtn" class="mic-btn" type="button">🗣️</button>
       <button id="micBtn" class="mic-btn" type="button">🎤</button>
       <button id="send" disabled></button>
     </div>
@@ -262,7 +271,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v17";
+const BUILD = "v18";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -292,6 +301,7 @@ function applyLanguage(code) {
   $("draft").placeholder = L.t("write");
   $("send").textContent = L.t("send");
   $("micBtn").title = L.t("recordTitle");
+  $("dictBtn").title = L.t("dictateTitle");
   $("recSend").textContent = L.t("send");
   $("recCancel").textContent = L.t("cancel");
   updateBell();
@@ -462,8 +472,22 @@ function render(m) {
 }
 
 const draft = $("draft");
+
+/* Wie bei WhatsApp: Bei leerem Feld stehen Sprechen und Aufnehmen da,
+   sobald Text drin ist, weicht beides dem Senden-Knopf. Vier Knoepfe
+   nebeneinander passen auf ein schmales Handy nicht. Waehrend eines
+   laufenden Diktats bleibt sein Knopf stehen - man muss es ja
+   beenden koennen. */
+function composerButtons() {
+  const hatText = Boolean(draft.value.trim());
+  $("send").classList.toggle("hide", !hatText);
+  $("micBtn").classList.toggle("hide", hatText || !canRecord);
+  $("dictBtn").classList.toggle("hide", (hatText && !diktiert) || !kannErkennen);
+}
+
 draft.addEventListener("input", () => {
   $("send").disabled = !draft.value.trim();
+  composerButtons();
   draft.style.height = "auto";
   draft.style.height = Math.min(draft.scrollHeight, 120) + "px";
 });
@@ -588,7 +612,6 @@ let recorder = null, chunks = [], recStart = 0, recTimer = null;
 let recognizer = null, transcript = "", recCancelled = false;
 
 const canRecord = Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
-if (!canRecord) micBtn.classList.add("hide");
 
 /* Das erste Format, das der Browser wirklich kann. Chrome und Firefox
    nehmen webm/opus, Safari mp4. */
@@ -798,7 +821,97 @@ async function sendVoice(blob, sekunden) {
   }
 }
 
-micBtn.onclick = () => { if (!recorder || recorder.state === "inactive") startRecording(); };
+/* ------------------------------------------------------------------
+   Diktieren
+
+   Der andere Weg, und der einzige, der auf Android zuverlaessig laeuft:
+   Hier hoert nur die Spracherkennung zu, es wird nichts aufgenommen.
+   Damit streiten sich nicht zwei um das Mikrofon - genau daran ist die
+   Mitschrift waehrend einer Sprachnachricht gescheitert.
+
+   Der Text landet direkt im Eingabefeld und geht danach als ganz
+   gewoehnliche Nachricht raus, wird also uebersetzt wie jede andere.
+------------------------------------------------------------------ */
+const dictBtn = $("dictBtn");
+let diktiert = false, diktator = null, diktatBasis = "", diktatFest = "";
+
+const kannErkennen = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+function starteDiktat(SR) {
+  try {
+    diktator = new SR();
+    diktator.lang = me.lang;
+    diktator.continuous = true;
+    diktator.interimResults = true;
+
+    diktator.onresult = (e) => {
+      let neu = "", lose = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) neu += r[0].transcript;
+        else lose += r[0].transcript;
+      }
+      if (neu) diktatFest = (diktatFest + " " + neu).trim();
+      draft.value = (diktatBasis + diktatFest + (lose ? " " + lose : "")).trim();
+      /* Loest Hoehenanpassung und den Senden-Knopf mit aus. */
+      draft.dispatchEvent(new Event("input"));
+    };
+
+    /* Auf Android endet die Erkennung nach jeder Pause von selbst. */
+    diktator.onend = () => {
+      if (!diktiert) return;
+      setTimeout(() => { if (diktiert) starteDiktat(SR); }, 120);
+    };
+
+    diktator.onerror = (e) => {
+      meldeSprache({ diktat: true, error: e.error });
+      if (e.error === "no-speech" || e.error === "aborted") return;
+      stoppeDiktat();
+      showErr(T("noTranscript") + " (" + e.error + ")");
+    };
+
+    diktator.onstart = () => meldeSprache({ diktat: true, gestartet: true });
+    diktator.start();
+  } catch (err) {
+    meldeSprache({ diktat: true, error: "throw:" + (err.name || "?") });
+    stoppeDiktat();
+    showErr(T("errMic"));
+  }
+}
+
+function stoppeDiktat() {
+  diktiert = false;
+  dictBtn.classList.remove("on");
+  draft.placeholder = T("write");
+  composerButtons();
+  if (diktator) { try { diktator.stop(); } catch {} diktator = null; }
+  meldeSprache({ diktat: true, ende: true, zeichen: diktatFest.length });
+}
+
+function toggleDiktat() {
+  if (diktiert) { stoppeDiktat(); draft.focus(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showErr(T("errMic")); return; }
+  /* Schon Getipptes bleibt stehen, das Diktat haengt sich dahinter. */
+  diktatBasis = draft.value.trim() ? draft.value.replace(/\s*$/, "") + " " : "";
+  diktatFest = "";
+  diktiert = true;
+  dictBtn.classList.add("on");
+  draft.placeholder = T("dictating");
+  composerButtons();
+  toggleEmoji(false);
+  meldeSprache({ neu: true, diktat: true });
+  starteDiktat(SR);
+}
+
+dictBtn.onclick = toggleDiktat;
+composerButtons();
+
+micBtn.onclick = () => {
+  /* Nicht beides gleichzeitig - daran ist die Mitschrift gescheitert. */
+  if (diktiert) stoppeDiktat();
+  if (!recorder || recorder.state === "inactive") startRecording();
+};
 $("recSend").onclick = () => stopRecording(false);
 $("recCancel").onclick = () => stopRecording(true);
 
