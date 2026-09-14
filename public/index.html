@@ -606,6 +606,9 @@ function startListening() {
      unterscheiden, ob der Browser die Erkennung nicht kennt oder ob eine
      veraltete Fassung der Seite laeuft. */
   if (!SR) { recHint.textContent = T("noTranscript") + " (unsupported)"; return; }
+  /* Sofort sichtbar machen, dass mitgeschrieben wird - sonst sieht ein
+     stiller Anfang genauso aus wie ein Fehlschlag. */
+  recHint.textContent = T("listening");
   hoertZu = true;
   starteErkennung(SR);
 }
