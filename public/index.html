@@ -293,7 +293,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v20";
+const BUILD = "v21";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -903,22 +903,53 @@ let diktiert = false, diktator = null;
 let diktatBasis = "";  // was vor dem Diktat schon im Feld stand
 let diktatFest = "";   // Ergebnis abgeschlossener Durchlaeufe
 let diktatLauf = "";   // Ergebnis des laufenden Durchlaufs
+let diktatSitzung = 0;     // laufende Nummer, sperrt Nachzuegler aus
+let diktatLaeufe = 0;      // wie oft die Erkennung neu startete
+let diktatErgebnisse = 0;  // wie viele Ergebnisse ankamen
+
+/* Schneidet vom Anfang von "neu" weg, was am Ende von "alt" schon
+   steht. Beim Neustart spielt Chrome den gepufferten Ton noch einmal
+   durch die Erkennung - die neue Sitzung bringt das zuletzt Gesagte
+   also erneut mit. Ohne dieses Abschneiden steht es doppelt da.
+
+   Die Ueberlappung muss an einer Wortgrenze enden, sonst wuerde aus
+   "das Sofa" faelschlich etwas abgeschnitten. */
+function ohneUeberlappung(alt, neu) {
+  if (!alt || !neu) return neu;
+  const max = Math.min(alt.length, neu.length);
+  for (let n = max; n >= 3; n--) {
+    if (alt.slice(-n) !== neu.slice(0, n)) continue;
+    const rest = neu.slice(n);
+    if (rest && !/^\s/.test(rest)) continue;   // mitten im Wort - nicht schneiden
+    return rest.trim();
+  }
+  return neu;
+}
 
 /* Setzt das Feld aus den drei Teilen zusammen. Mehrfache Leerzeichen
    fallen weg, damit an den Nahtstellen keine Luecken entstehen. */
 function diktatText(lose) {
-  const teile = [diktatFest, diktatLauf, lose || ""].filter((t) => t);
+  const lauf = ohneUeberlappung(diktatFest, diktatLauf);
+  const teile = [diktatFest, lauf, lose || ""].filter((t) => t);
   return (diktatBasis + teile.join(" ")).replace(/\s{2,}/g, " ").trimStart();
 }
 
 function schreibeDiktatFest() {
-  if (diktatLauf) diktatFest = (diktatFest + " " + diktatLauf).trim();
+  const l = ohneUeberlappung(diktatFest, diktatLauf.trim());
   diktatLauf = "";
+  if (!l) return;
+  diktatFest = (diktatFest + " " + l).trim();
 }
 
 const kannErkennen = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 
 function starteDiktat(SR) {
+  /* Jede Sitzung bekommt eine Nummer. Chrome liefert nach dem Ende einer
+     Sitzung noch Ergebnisse nach - ohne diese Sperre schreibt eine
+     abgeloeste Sitzung ihren Text ein zweites Mal fest, und aus einem
+     "hallo" werden drei. */
+  const meine = ++diktatSitzung;
+  const aktuell = () => meine === diktatSitzung;
   try {
     diktator = new SR();
     diktator.lang = me.lang;
@@ -930,6 +961,8 @@ function starteDiktat(SR) {
        Woerter erneut mit - wer die anhaengt, bekommt aus einem "Hallo"
        drei. */
     diktator.onresult = (e) => {
+      if (!aktuell()) return;   // Nachzuegler einer abgeloesten Sitzung
+      diktatErgebnisse++;
       let fest = "", lose = "";
       for (let i = 0; i < e.results.length; i++) {
         const r = e.results[i];
@@ -946,9 +979,10 @@ function starteDiktat(SR) {
        dieser Durchlauf ergeben hat, wird dabei festgeschrieben - der
        naechste faengt mit leerer Ergebnisliste an. */
     diktator.onend = () => {
-      if (!diktiert) return;
+      if (!aktuell() || !diktiert) return;
+      diktatLaeufe++;
       schreibeDiktatFest();
-      setTimeout(() => { if (diktiert) starteDiktat(SR); }, 120);
+      setTimeout(() => { if (diktiert && aktuell()) starteDiktat(SR); }, 120);
     };
 
     diktator.onerror = (e) => {
@@ -977,7 +1011,8 @@ function stoppeDiktat() {
   schreibeDiktatFest();
   draft.value = diktatText("");
   draft.dispatchEvent(new Event("input"));
-  meldeSprache({ diktat: true, ende: true, zeichen: diktatFest.length });
+  meldeSprache({ diktat: true, ende: true, zeichen: diktatFest.length,
+                 laeufe: diktatLaeufe, ergebnisse: diktatErgebnisse });
 }
 
 function toggleDiktat() {
@@ -988,6 +1023,7 @@ function toggleDiktat() {
   diktatBasis = draft.value.trim() ? draft.value.replace(/\s*$/, "") + " " : "";
   diktatFest = "";
   diktatLauf = "";
+  diktatLaeufe = 0; diktatErgebnisse = 0;
   diktiert = true;
   dictBtn.classList.add("on");
   draft.placeholder = T("dictating");

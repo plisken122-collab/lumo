@@ -573,6 +573,7 @@ io.on("connection", (socket) => {
       ende: Boolean(info?.ende),
       zeichen: Number(info?.zeichen) || vorher.zeichen || 0,
       laeufe: Number(info?.laeufe) || vorher.laeufe || 0,
+      ergebnisse: Number(info?.ergebnisse) || vorher.ergebnisse || 0,
       at: new Date().toISOString(),
     };
   });
