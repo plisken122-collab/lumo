@@ -211,6 +211,7 @@ let quotaWarnedUntil = 0; // damit die Tagesgrenze nur einmal gemeldet wird
 let lastClient = null;   // letzte Meldung eines Geraets, siehe /health
 let lastSpeech = null;   // wie die letzte Mitschrift ausging, siehe /health
 let letzterLoeschFehler = null; // damit ein gescheitertes Loeschen sichtbar wird
+let letzterLoeschVersuch = null; // erreicht der Versuch den Server ueberhaupt?
 
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
@@ -515,6 +516,7 @@ app.get("/health", (_req, res) =>
     lastSpeech,
     dbFehler: store.schemaFehler || null,
     loeschFehler: letzterLoeschFehler,
+    loeschVersuch: letzterLoeschVersuch,
     limits: {
       msgPerMin: MSG_PER_MIN,
       translationsPerDay: TRANSLATIONS_PER_DAY > 0 ? TRANSLATIONS_PER_DAY : null,
@@ -627,13 +629,20 @@ io.on("connection", (socket) => {
      Geraet, das sie geschrieben hat, nicht an dem, was der Browser
      behauptet zu duerfen. */
   socket.on("deleteForAll", async ({ id }) => {
+    /* Haelt fest, dass ueberhaupt jemand geklopft hat - sonst laesst
+       sich "kam nie an" nicht von "war nicht erlaubt" unterscheiden. */
+    letzterLoeschVersuch = { id: String(id || "?").slice(0, 40), raum: Boolean(room),
+                             geraet: String(me.device || "?").slice(0, 12),
+                             at: new Date().toISOString() };
     if (!room || !id) return;
     try {
       const ok = await store.deleteForAll(String(id), me.device);
-      if (ok) io.to(room).emit("deleted", { id: String(id) });
+      if (ok) { letzterLoeschVersuch.ergebnis = "geloescht";
+                io.to(room).emit("deleted", { id: String(id) }); }
       /* Nicht geloescht heisst: fremde Nachricht oder schon weg. Auch
          das gehoert zurueckgemeldet, sonst tippt jemand ins Leere. */
-      else socket.emit("deleteFailed", { id: String(id), grund: "nicht erlaubt" });
+      else { letzterLoeschVersuch.ergebnis = "nicht erlaubt";
+             socket.emit("deleteFailed", { id: String(id), grund: "nicht erlaubt" }); }
     } catch (err) {
       console.error("Loeschen fehlgeschlagen:", err.message);
       letzterLoeschFehler = err.message.slice(0, 200);
