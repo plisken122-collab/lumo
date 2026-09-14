@@ -209,6 +209,7 @@ const HINTS = {
 const inFlight = new Map(); // key -> Promise, verhindert doppelte Anfragen
 let quotaWarnedUntil = 0; // damit die Tagesgrenze nur einmal gemeldet wird
 let lastClient = null;   // letzte Meldung eines Geraets, siehe /health
+let lastSpeech = null;   // wie die letzte Mitschrift ausging, siehe /health
 
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
@@ -510,6 +511,7 @@ app.get("/health", (_req, res) =>
     retentionDays: RETENTION_DAYS > 0 ? RETENTION_DAYS : null,
     langs: CODES.length,
     lastClient,
+    lastSpeech,
     limits: {
       msgPerMin: MSG_PER_MIN,
       translationsPerDay: TRANSLATIONS_PER_DAY > 0 ? TRANSLATIONS_PER_DAY : null,
@@ -553,6 +555,18 @@ io.on("connection", (socket) => {
       socket.emit("history", []);
     }
     socket.to(room).emit("system", { type: "joined", name: me.name });
+  });
+
+  /* Nur das Ergebnis der Mitschrift, nie ihr Inhalt: Fehlerkuerzel,
+     Zeichenzahl, Zahl der Neustarts. */
+  socket.on("speechInfo", (info) => {
+    lastSpeech = {
+      error: info?.error ? String(info.error).slice(0, 40) : null,
+      ende: Boolean(info?.ende),
+      zeichen: Number(info?.zeichen) || 0,
+      laeufe: Number(info?.laeufe) || 0,
+      at: new Date().toISOString(),
+    };
   });
 
   socket.on("setLang", ({ lang }) => {

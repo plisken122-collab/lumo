@@ -262,7 +262,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v14";
+const BUILD = "v15";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -610,6 +610,13 @@ function tickTime() {
    ausserhalb und starten nach jedem Ende neu, solange noch aufgenommen
    wird. Ohne das kommt bei einem ganzen Satz fast nichts an. */
 let hoertZu = false;
+let neustarts = 0;   // wie oft die Erkennung sich neu starten musste
+
+/* Meldet nur, WIE es ausging - nie, was gesprochen wurde. Fehlerkuerzel
+   und Zeichenzahl reichen zur Fehlersuche und verraten nichts. */
+function meldeSprache(info) {
+  try { socket.emit("speechInfo", info); } catch {}
+}
 
 function startListening() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -622,6 +629,7 @@ function startListening() {
      stiller Anfang genauso aus wie ein Fehlschlag. */
   recHint.textContent = T("listening");
   hoertZu = true;
+  neustarts = 0;
   starteErkennung(SR);
 }
 
@@ -647,10 +655,12 @@ function starteErkennung(SR) {
     /* Vorzeitiges Ende ist auf Android der Normalfall, kein Fehler. */
     recognizer.onend = () => {
       if (!hoertZu) return;
+      neustarts++;
       setTimeout(() => { if (hoertZu) starteErkennung(SR); }, 120);
     };
 
     recognizer.onerror = (e) => {
+      meldeSprache({ error: e.error });
       /* "no-speech" heisst nur: gerade war Stille. Weiterlaufen lassen. */
       if (e.error === "no-speech" || e.error === "aborted") return;
       hoertZu = false;
@@ -690,6 +700,7 @@ async function startRecording() {
        onend die Erkennung sofort wieder. */
     hoertZu = false;
     if (recognizer) { try { recognizer.stop(); } catch {} recognizer = null; }
+    meldeSprache({ ende: true, zeichen: transcript.length, laeufe: neustarts });
     clearInterval(recTimer);
     recBar.classList.add("hide");
     composer.classList.remove("hide");
