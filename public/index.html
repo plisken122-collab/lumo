@@ -91,7 +91,6 @@
   .theirs .bubble { background:#F1F2F5; border-bottom-left-radius:5px; }
   .meta { font-size:11.5px; color:var(--muted); display:flex; gap:8px; align-items:center; }
   .meta button { background:none; padding:0; color:var(--muted); font-size:11.5px; text-decoration:underline; }
-  .meta .more { text-decoration:none; font-size:15px; line-height:1; padding:0 3px; }
   .deleted { opacity:.6; font-style:italic; }
 
   /* Kleines Menue zum Loeschen. Liegt ueber allem und schliesst bei
@@ -319,7 +318,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v32";
+const BUILD = "v33";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -453,6 +452,16 @@ function add(m, live) {
   row.id = "m" + m.id;
   row.className = "row " + (m.device === deviceId ? "mine" : "theirs");
   row.innerHTML = '<div class="bubble"></div><div class="meta"></div>';
+
+  /* Wie bei WhatsApp: Die Nachricht selbst antippen oeffnet das Menue.
+     Klicks auf den Abspieler oder einen Knopf darin sind ausgenommen -
+     sonst liesse sich eine Sprachnachricht nicht mehr starten. */
+  const blase = row.querySelector(".bubble");
+  blase.style.cursor = "pointer";
+  blase.onclick = (e) => {
+    if (e.target.closest("audio, button, a")) return;
+    zeigeMenue(m);
+  };
   $("log").appendChild(row);
   render(m);
   scrollDown();
@@ -474,7 +483,6 @@ function render(m) {
     const wer = document.createElement("span");
     wer.textContent = m.name;
     meta.appendChild(wer);
-    meta.appendChild(menueKnopf(m));
     return;
   }
 
@@ -544,17 +552,6 @@ function render(m) {
     b.onclick = () => { m.open = !m.open; render(m); };
     meta.appendChild(b);
   }
-  meta.appendChild(menueKnopf(m));
-}
-
-function menueKnopf(m) {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.className = "more";
-  b.textContent = "⋯";
-  b.title = T("options");
-  b.onclick = (e) => { e.stopPropagation(); zeigeMenue(m); };
-  return b;
 }
 
 const draft = $("draft");
