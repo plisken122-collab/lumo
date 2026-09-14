@@ -560,11 +560,18 @@ io.on("connection", (socket) => {
   /* Nur das Ergebnis der Mitschrift, nie ihr Inhalt: Fehlerkuerzel,
      Zeichenzahl, Zahl der Neustarts. */
   socket.on("speechInfo", (info) => {
+    /* Die Meldungen kommen einzeln herein - Start, Ton, Fehler, Ende.
+       Zurueckgesetzt wird beim Beginn einer Aufnahme ("neu"), danach
+       wird ergaenzt. Wuerde das Ende zuruecksetzen, gingen Start und
+       Fehler genau dann verloren, wenn sie gebraucht werden. */
+    const vorher = info?.neu ? {} : (lastSpeech || {});
     lastSpeech = {
-      error: info?.error ? String(info.error).slice(0, 40) : null,
+      gestartet: Boolean(info?.gestartet || vorher.gestartet),
+      tonAn: Boolean(info?.tonAn || vorher.tonAn),
+      error: info?.error ? String(info.error).slice(0, 40) : (vorher.error || null),
       ende: Boolean(info?.ende),
-      zeichen: Number(info?.zeichen) || 0,
-      laeufe: Number(info?.laeufe) || 0,
+      zeichen: Number(info?.zeichen) || vorher.zeichen || 0,
+      laeufe: Number(info?.laeufe) || vorher.laeufe || 0,
       at: new Date().toISOString(),
     };
   });

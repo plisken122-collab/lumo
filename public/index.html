@@ -262,7 +262,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v15";
+const BUILD = "v16";
 
 let deviceId = localStorage.getItem("lumo-device");
 if (!deviceId) {
@@ -630,6 +630,7 @@ function startListening() {
   recHint.textContent = T("listening");
   hoertZu = true;
   neustarts = 0;
+  meldeSprache({ neu: true });
   starteErkennung(SR);
 }
 
@@ -667,19 +668,41 @@ function starteErkennung(SR) {
       recHint.textContent = T("noTranscript") + " (" + e.error + ")";
     };
 
+    /* Meldet, dass die Erkennung wirklich angelaufen ist. Bleibt das
+       aus, hat sie nie begonnen - und genau das unterscheidet stilles
+       Scheitern von "laeuft, hoert aber nichts". */
+    recognizer.onstart = () => meldeSprache({ gestartet: true });
+    recognizer.onaudiostart = () => meldeSprache({ tonAn: true });
+
     recognizer.start();
   } catch (err) {
     hoertZu = false;
     recognizer = null;
+    meldeSprache({ error: "throw:" + (err.name || "?") });
     recHint.textContent = T("noTranscript") + " (" + (err.name || "Start") + ")";
   }
 }
 
 async function startRecording() {
+  /* Die Erkennung zuerst. Chrome auf Android gibt sie stillschweigend
+     auf, wenn die Aufnahme das Mikrofon schon haelt - andersherum haben
+     beide eine Chance. Schlaegt gleich die Aufnahme fehl, wird sie
+     unten wieder abgeraeumt. */
+  recStart = Date.now();
+  recTime.textContent = "0:00";
+  composer.classList.add("hide");
+  recBar.classList.remove("hide");
+  toggleEmoji(false);
+  startListening();
+
   let stream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch {
+    hoertZu = false;
+    if (recognizer) { try { recognizer.abort(); } catch {} recognizer = null; }
+    recBar.classList.add("hide");
+    composer.classList.remove("hide");
     showErr(T("errMic"));
     return;
   }
@@ -687,6 +710,10 @@ async function startRecording() {
   try {
     recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
   } catch {
+    hoertZu = false;
+    if (recognizer) { try { recognizer.abort(); } catch {} recognizer = null; }
+    recBar.classList.add("hide");
+    composer.classList.remove("hide");
     showErr(T("errMic"));
     stream.getTracks().forEach((t) => t.stop());
     return;
@@ -710,14 +737,7 @@ async function startRecording() {
   };
 
   recorder.start();
-  recStart = Date.now();
-  recTime.textContent = "0:00";
-  recHint.textContent = "";
-  composer.classList.add("hide");
-  recBar.classList.remove("hide");
-  toggleEmoji(false);
   recTimer = setInterval(tickTime, 250);
-  startListening();
 }
 
 function stopRecording(abbrechen) {
