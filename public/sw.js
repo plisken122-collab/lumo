@@ -9,7 +9,7 @@
    sich sw.js selbst aendert, installiert der Browser ihn neu - und nur
    dann wird die alte Seite aus dem Zwischenspeicher geworfen. Sonst
    startet eine installierte App weiter mit der alten Fassung. */
-const CACHE = "lumo-v24";
+const CACHE = "lumo-v25";
 const SHELL = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
