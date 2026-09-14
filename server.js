@@ -61,7 +61,10 @@ function passedGate(req) {
 
 /* Diese Pfade muessen ohne Zugangswort erreichbar sein, sonst laesst sich
    die Eingabeseite nicht darstellen. */
-const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json", "/i18n.js"]);
+/* /sw.js gehoert dazu: Der Service Worker enthaelt nichts Vertrauliches,
+   muss sich aber erneuern koennen - und laesst sich so auch von aussen
+   pruefen, um festzustellen, welche Fassung wirklich ausgeliefert wird. */
+const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json", "/i18n.js", "/sw.js"]);
 const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWith("/icons/");
 
 app.post("/api/gate", (req, res) => {

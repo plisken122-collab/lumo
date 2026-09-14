@@ -602,7 +602,10 @@ let hoertZu = false;
 function startListening() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   transcript = "";
-  if (!SR) { recHint.textContent = T("noTranscript"); return; }
+  /* Das Kuerzel steht hier bewusst dran: Nur so laesst sich von aussen
+     unterscheiden, ob der Browser die Erkennung nicht kennt oder ob eine
+     veraltete Fassung der Seite laeuft. */
+  if (!SR) { recHint.textContent = T("noTranscript") + " (unsupported)"; return; }
   hoertZu = true;
   starteErkennung(SR);
 }
