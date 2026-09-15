@@ -76,7 +76,8 @@ const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg"
   /* Die Preise muss sehen koennen, wer noch gar nicht drin ist - sonst
      kauft niemand die Katze im Sack. Der Webhook von Stripe bringt kein
      Cookie mit und muss ebenfalls vorbei. */
-  "/preise.html", "/preise", "/api/stripe", "/api/plan", "/api/kasse", "/api/kasse-zurueck", "/api/verwalten"]);
+  "/preise.html", "/preise", "/api/stripe", "/api/plan", "/api/kasse", "/api/kasse-zurueck", "/api/verwalten",
+  "/api/raeume", "/api/raum-dazu", "/api/raum-weg"]);
 const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWith("/icons/");
 
 app.post("/api/gate", (req, res) => {
@@ -148,19 +149,26 @@ function eigeneHerkunft(req) {
   return `${schema}://${req.headers.host}`;
 }
 
-/* Was ein Chat im Monat darf und wie viel davon weg ist. */
+/* Was ein Chat im Monat darf und wie viel davon weg ist.
+
+   Das Kontingent gehoert dem Abo, nicht dem einzelnen Chat: Ein Abo
+   schaltet mehrere Chats frei, und die teilen sich die Uebersetzungen.
+   Ein Chat ohne Abo steht fuer sich und bekommt das freie Kontingent. */
 async function kontingent(room) {
-  const zeile = await store.getPlan(room);
+  const abo = await store.getAboByRoom(room);
   /* "gekuendigt" gehoert dazu: bezahlt ist bezahlt, der Tarif gilt bis
      zum Ende des Zeitraums. Erst "canceled" nimmt ihn weg. */
-  const laeuft = zeile && ["active", "trialing", "past_due", "gekuendigt"].includes(zeile.status);
-  const plan = laeuft ? zeile.plan : "frei";
+  const laeuft = abo && ["active", "trialing", "past_due", "gekuendigt"].includes(abo.status);
+  const plan = laeuft ? abo.plan : "frei";
+  const raeume = laeuft ? await store.raeumeVonAbo(abo.id) : [room];
   return {
     plan,
     bezahlt: Boolean(laeuft),
-    status: zeile?.status || null,
+    status: abo?.status || null,
     grenze: geld.KONTINGENT[plan] ?? geld.KONTINGENT.frei,
-    bisEnde: zeile?.period_end ? Number(zeile.period_end) : null,
+    plaetze: geld.PLAETZE[plan] ?? geld.PLAETZE.frei,
+    raeume,
+    bisEnde: abo?.period_end ? Number(abo.period_end) : null,
   };
 }
 
@@ -169,10 +177,12 @@ app.get("/api/plan", async (req, res) => {
   if (!room) return res.status(400).json({ error: "Kein Chat angegeben" });
   try {
     const k = await kontingent(room);
-    const benutzt = await store.translationsThisMonth(room);
+    /* Ueber alle Chats des Abos zusammen - sie teilen sich das Kontingent. */
+    const benutzt = await store.translationsThisMonthForRooms(k.raeume);
     res.json({
       ...k, benutzt, rest: Math.max(0, k.grenze - benutzt),
       bezahlungAn: geld.bezahlungAn,
+      plaetzeFrei: Math.max(0, k.plaetze - k.raeume.length),
       /* Welche Tarife wirklich hinterlegt sind. Ohne diese Angabe zeigt
          die Preisseite einen Knopf, der beim Druecken absagt. */
       tarife: geld.verfuegbar(),
@@ -262,7 +272,11 @@ function planZuPreis(preisId) {
 /* Eine bezahlte Sitzung in die Datenbank schreiben. Legt beim ersten Mal
    den Verwaltungsschluessel an und gibt ihn genau dann einmal zurueck. */
 async function eintragen(sitzung, room, { frischerSchluessel = false } = {}) {
-  const vorher = await store.getPlan(room);
+  /* Gibt es fuer dieses Abonnement schon ein Abo, gehoert der Kauf dazu -
+     sonst entsteht ein neues, und der gekaufte Chat ist sein erster. */
+  const abosNr = typeof sitzung.subscription === "string"
+    ? sitzung.subscription : sitzung.subscription?.id;
+  const vorher = (await store.getAboBySubscription(abosNr)) || (await store.getAboByRoom(room));
   /* Reihenfolge mit Bedacht: Die Metadaten haben wir selbst gesetzt, die
      Posten kommen nur mit, wenn wir sie ausdruecklich anfordern - und in
      der Webhook-Meldung fehlen sie ganz. */
@@ -287,36 +301,112 @@ async function eintragen(sitzung, room, { frischerSchluessel = false } = {}) {
     abdruck = geld.schluesselAbdruck(schluessel);
   }
 
-  await store.savePlan({
-    room, plan, status: "active",
+  const id = vorher?.id || store.neueAboId();
+  await store.saveAbo({
+    id, plan, status: "active",
     customer: typeof sitzung.customer === "string" ? sitzung.customer : sitzung.customer?.id,
-    subscription: typeof sitzung.subscription === "string" ? sitzung.subscription : sitzung.subscription?.id,
+    subscription: abosNr,
     manage_key: abdruck,
     period_end: null,
   });
-  monatsZaehler.delete(room); // Grenze hat sich geaendert, neu nachsehen
-  planZwischen.delete(room);
-  return { plan, schluessel };
+  /* Der Chat, fuer den bezahlt wurde, gehoert ab jetzt zum Abo. Gehoert er
+     schon einem anderen, bleibt es dabei - dann hat der Kaeufer ein Abo
+     ohne Chat und kann in der Verwaltung einen zuordnen. */
+  const dazu = await store.raumHinzufuegen(id, room);
+
+  frischeZahlen(await store.raeumeVonAbo(id));
+  return { plan, schluessel, aboId: id, raumUebernommen: dazu };
+}
+
+/* Nach jeder Aenderung an einem Abo muessen die gemerkten Zahlen weg -
+   sonst gilt die alte Grenze noch eine Minute weiter. */
+function frischeZahlen(raeume) {
+  for (const r of raeume || []) planZwischen.delete(r);
+  monatsZaehler.clear();
+}
+
+/* Abo heraussuchen und den Schluessel pruefen. Gibt entweder das Abo
+   zurueck oder hat die Antwort schon selbst beendet. */
+async function aboMitSchluessel(req, res) {
+  if (!take(`verw:${req.ip}`, 20, 15 * 60 * 1000)) {
+    res.status(429).json({ error: "Zu viele Versuche. Spaeter nochmal." });
+    return null;
+  }
+  const room = raumCode(req.body?.room);
+  const abo = await store.getAboByRoom(room);
+  if (!abo) {
+    res.status(404).json({ error: "Fuer diesen Chat gibt es keine Mitgliedschaft." });
+    return null;
+  }
+  if (!geld.schluesselStimmt(req.body?.schluessel, abo.manage_key)) {
+    res.status(403).json({ error: "Der Verwaltungsschluessel stimmt nicht." });
+    return null;
+  }
+  return abo;
 }
 
 app.post("/api/verwalten", async (req, res) => {
   if (!geld.bezahlungAn) return res.status(503).json({ error: "Bezahlung ist aus." });
-  if (!take(`verw:${req.ip}`, 10, 15 * 60 * 1000)) {
-    return res.status(429).json({ error: "Zu viele Versuche. Spaeter nochmal." });
-  }
-  const room = raumCode(req.body?.room);
-  const zeile = await store.getPlan(room);
-  if (!zeile || !zeile.customer) return res.status(404).json({ error: "Fuer diesen Chat gibt es keine Mitgliedschaft." });
-  if (!geld.schluesselStimmt(req.body?.schluessel, zeile.manage_key)) {
-    return res.status(403).json({ error: "Der Verwaltungsschluessel stimmt nicht." });
-  }
+  const abo = await aboMitSchluessel(req, res);
+  if (!abo) return;
+  if (!abo.customer) return res.status(404).json({ error: "Zu dieser Mitgliedschaft fehlt der Kunde bei Stripe." });
   try {
-    const seite = await geld.verwaltungsSeite({ kunde: zeile.customer, herkunft: eigeneHerkunft(req) });
+    const seite = await geld.verwaltungsSeite({ kunde: abo.customer, herkunft: eigeneHerkunft(req) });
     res.json({ url: seite.url });
   } catch (err) {
     letzterGeldFehler = err.message.slice(0, 200);
     res.status(502).json({ error: "Die Verwaltung antwortet gerade nicht." });
   }
+});
+
+/* ------------------- Chats eines Abos verwalten -------------------
+   Nur mit dem Verwaltungsschluessel. Sonst koennte jeder, der einen
+   Chat-Code kennt, sich an ein fremdes Abo haengen.
+------------------------------------------------------------------ */
+app.post("/api/raeume", async (req, res) => {
+  const abo = await aboMitSchluessel(req, res);
+  if (!abo) return;
+  const raeume = await store.raeumeVonAbo(abo.id);
+  const plaetze = geld.PLAETZE[abo.plan] ?? geld.PLAETZE.frei;
+  res.json({ plan: abo.plan, status: abo.status, raeume, plaetze, frei: Math.max(0, plaetze - raeume.length) });
+});
+
+app.post("/api/raum-dazu", async (req, res) => {
+  const abo = await aboMitSchluessel(req, res);
+  if (!abo) return;
+
+  const neu = raumCode(req.body?.neuerRaum);
+  if (!neu) return res.status(400).json({ error: "Kein Chat angegeben." });
+
+  const raeume = await store.raeumeVonAbo(abo.id);
+  if (raeume.includes(neu)) return res.json({ raeume, schon: true });
+
+  const plaetze = geld.PLAETZE[abo.plan] ?? geld.PLAETZE.frei;
+  if (raeume.length >= plaetze) {
+    return res.status(409).json({ error: `Dieser Tarif schaltet ${plaetze} Chats frei. Nimm erst einen heraus.` });
+  }
+  if (!(await store.raumHinzufuegen(abo.id, neu))) {
+    return res.status(409).json({ error: "Dieser Chat gehoert schon zu einer anderen Mitgliedschaft." });
+  }
+  const jetzt = await store.raeumeVonAbo(abo.id);
+  frischeZahlen(jetzt.concat(raeume));
+  res.json({ raeume: jetzt, frei: Math.max(0, plaetze - jetzt.length) });
+});
+
+app.post("/api/raum-weg", async (req, res) => {
+  const abo = await aboMitSchluessel(req, res);
+  if (!abo) return;
+
+  const weg = raumCode(req.body?.raumWeg);
+  const vorher = await store.raeumeVonAbo(abo.id);
+  if (vorher.length <= 1) {
+    return res.status(409).json({ error: "Der letzte Chat kann nicht heraus - sonst gaebe es keinen Weg zurueck in die Verwaltung." });
+  }
+  await store.raumEntfernen(abo.id, weg);
+  const jetzt = await store.raeumeVonAbo(abo.id);
+  frischeZahlen(vorher);
+  const plaetze = geld.PLAETZE[abo.plan] ?? geld.PLAETZE.frei;
+  res.json({ raeume: jetzt, frei: Math.max(0, plaetze - jetzt.length) });
 });
 
 /* --------------------------- Meldungen von Stripe ---------------------
@@ -353,14 +443,13 @@ app.post("/api/stripe", async (req, res) => {
     } else if (meldung.type?.startsWith("customer.subscription.")) {
       /* Kennen wir das Abonnement schon, ist es unseres - dann braucht
          es die Marke nicht. Kennen wir es nicht, muss sie da sein. */
-      const zeile = await store.getPlanBySubscription(d.id);
-      if (!zeile && !geld.unsere(d)) return;
-      const room = raumCode(zeile?.room || d.metadata?.raum);
-      if (room) {
-        await store.savePlan({
-          room,
+      const abo = await store.getAboBySubscription(d.id);
+      if (!abo && !geld.unsere(d)) return;
+      if (abo) {
+        await store.saveAbo({
+          id: abo.id,
           plan: (geld.KONTINGENT[d.metadata?.plan] ? d.metadata.plan : null)
-            || planZuPreis(d.items?.data?.[0]?.price?.id) || zeile?.plan || "plus",
+            || planZuPreis(d.items?.data?.[0]?.price?.id) || abo.plan || "plus",
           /* Wer im Kundenportal kuendigt, behaelt den Tarif bis zum Ende
              des bezahlten Zeitraums - Stripe laesst den Status dabei auf
              "active" und setzt nur cancel_at_period_end. Ohne diese
@@ -373,8 +462,7 @@ app.post("/api/stripe", async (req, res) => {
           subscription: d.id,
           period_end: laufzeitEnde(d),
         });
-        monatsZaehler.delete(room);
-        planZwischen.delete(room);
+        frischeZahlen(await store.raeumeVonAbo(abo.id));
       }
     }
   } catch (err) {
@@ -609,30 +697,36 @@ const costOf = (u) => (u.inTokens / 1e6) * PRICE_IN + (u.outTokens / 1e6) * PRIC
 async function imKontingent(room) {
   const monat = monatsKennung();
 
-  let grenze;
+  /* Gezaehlt wird je Abo, nicht je Chat: Alle Chats eines Abos teilen
+     sich dieselben Uebersetzungen. Ein Chat ohne Abo bildet seinen
+     eigenen "Topf" - der Schluessel ist dann einfach der Chat selbst. */
+  let topf, grenze, raeume;
   const gemerkt = planZwischen.get(room);
   if (gemerkt && gemerkt.bis > Date.now()) {
-    grenze = gemerkt.wert;
+    ({ topf, grenze, raeume } = gemerkt.wert);
   } else {
     try {
-      grenze = (await kontingent(room)).grenze;
+      const k = await kontingent(room);
+      grenze = k.grenze;
+      raeume = k.raeume;
+      topf = k.bezahlt ? "abo:" + k.raeume.slice().sort().join(",") : "raum:" + room;
     } catch (err) {
       letzterGeldFehler = "Kontingent: " + err.message.slice(0, 150);
       return true;
     }
-    planZwischen.set(room, { bis: Date.now() + 60 * 1000, wert: grenze });
+    planZwischen.set(room, { bis: Date.now() + 60 * 1000, wert: { topf, grenze, raeume } });
   }
   if (!(grenze > 0)) return true; // 0 heisst: keine Grenze
 
-  let stand = monatsZaehler.get(room);
+  let stand = monatsZaehler.get(topf);
   if (!stand || stand.monat !== monat) {
     try {
-      stand = { monat, n: await store.translationsThisMonth(room) };
+      stand = { monat, n: await store.translationsThisMonthForRooms(raeume) };
     } catch (err) {
       letzterGeldFehler = "Monatszaehler: " + err.message.slice(0, 150);
       return true;
     }
-    monatsZaehler.set(room, stand);
+    monatsZaehler.set(topf, stand);
   }
 
   if (stand.n >= grenze) return false;

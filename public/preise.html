@@ -81,6 +81,17 @@
     background:var(--canvas); border-radius:9px; padding:10px 12px; margin:8px 0;
     word-break:break-all; user-select:all;
   }
+  .chats { margin:12px 0 0; }
+  .chats ul { list-style:none; padding:0; margin:0 0 6px; }
+  .chats li {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:6px;
+  }
+  .chats code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:14px; word-break:break-all; }
+  .chats button {
+    font-family:inherit; font-size:13px; background:none; border:none;
+    color:var(--danger); cursor:pointer; padding:2px 4px; flex-shrink:0;
+  }
   .hide { display:none !important; }
   .back { display:inline-block; margin-top:8px; font-size:14px; }
   @media (max-width:460px) {
@@ -114,7 +125,7 @@
       <p class="small">Preços com IVA incluído. Sem contrato de fidelização — cancela quando quiser.</p>
 
       <div class="merk">
-        <strong>Quem convida, paga.</strong> Uma subscrição pertence a uma conversa, não a uma pessoa. Quem paga abre a conversa para toda a gente que lá está — a sua família no estrangeiro não precisa de pagar nada, nem sequer de criar conta.
+        <strong>Quem convida, paga.</strong> Quem paga abre as suas conversas para toda a gente que lá está — a sua família no estrangeiro não precisa de pagar nada, nem sequer de criar conta.
       </div>
 
       <div class="zeitraum" role="tablist">
@@ -138,8 +149,8 @@
         <h3>Plus <span class="fahne">mais escolhido</span></h3>
         <div class="preis" data-preis="plus">4,99 € <span class="je">/ mês</span></div>
         <ul>
-          <li><strong>1500 traduções por mês</strong> na conversa</li>
-          <li>Vale para toda a gente na conversa</li>
+          <li><strong>1500 traduções por mês</strong>, repartidas por <strong>até 3 conversas</strong></li>
+          <li>Vale para toda a gente nessas conversas</li>
           <li>Cancelável a qualquer momento</li>
         </ul>
         <button class="kaufen" data-plan="plus">Escolher Plus</button>
@@ -149,7 +160,7 @@
         <h3>Família</h3>
         <div class="preis" data-preis="familie">9,99 € <span class="je">/ mês</span></div>
         <ul>
-          <li><strong>5000 traduções por mês</strong> na conversa</li>
+          <li><strong>5000 traduções por mês</strong>, repartidas por <strong>até 10 conversas</strong></li>
           <li>Para grupos grandes e conversas com muitas línguas</li>
           <li>Cancelável a qualquer momento</li>
         </ul>
@@ -169,6 +180,13 @@
         <label>Chave de gestão</label>
         <input data-feld="schluessel" autocomplete="off" spellcheck="false" placeholder="xxxxx-xxxxx-xxxxx-xxxxx">
         <button class="kaufen leer" data-verwaltung style="margin-top:14px">Abrir gestão</button>
+        <button class="kaufen leer" data-chats-zeigen style="margin-top:8px">Ver as minhas conversas</button>
+        <div data-chats class="chats hide"></div>
+        <div data-chats-dazu class="hide">
+          <label>Código da conversa a adicionar</label>
+          <input data-feld="neuerRaum" autocomplete="off" spellcheck="false">
+          <button class="kaufen leer" data-raum-dazu style="margin-top:8px">Adicionar esta conversa</button>
+        </div>
       </div>
 
       <p class="small">O pagamento é processado pela Stripe. Nunca vemos os dados do seu cartão. Aplicam-se as <a href="/agb">Condições de Utilização</a>; sobre o prazo de 14 dias, ver <a href="/widerruf">Direito de livre resolução</a>.</p>
@@ -184,7 +202,7 @@
       <p class="small">Alle Preise inklusive Mehrwertsteuer. Keine Mindestlaufzeit — jederzeit kündbar.</p>
 
       <div class="merk">
-        <strong>Wer einlädt, zahlt.</strong> Eine Mitgliedschaft gehört zu einem Chat, nicht zu einer Person. Wer bezahlt, schaltet den Chat für alle darin frei — deine Familie im Ausland zahlt nichts und braucht nicht einmal ein Konto.
+        <strong>Wer einlädt, zahlt.</strong> Wer bezahlt, schaltet seine Chats für alle darin frei — deine Familie im Ausland zahlt nichts und braucht nicht einmal ein Konto.
       </div>
 
       <div class="zeitraum" role="tablist">
@@ -208,8 +226,8 @@
         <h3>Plus <span class="fahne">meistgewählt</span></h3>
         <div class="preis" data-preis="plus">4,99 € <span class="je">/ Monat</span></div>
         <ul>
-          <li><strong>1500 Übersetzungen im Monat</strong> im Chat</li>
-          <li>Gilt für alle im Chat</li>
+          <li><strong>1500 Übersetzungen im Monat</strong>, verteilt über <strong>bis zu 3 Chats</strong></li>
+          <li>Gilt für alle in diesen Chats</li>
           <li>Jederzeit kündbar</li>
         </ul>
         <button class="kaufen" data-plan="plus">Plus nehmen</button>
@@ -219,7 +237,7 @@
         <h3>Familie</h3>
         <div class="preis" data-preis="familie">9,99 € <span class="je">/ Monat</span></div>
         <ul>
-          <li><strong>5000 Übersetzungen im Monat</strong> im Chat</li>
+          <li><strong>5000 Übersetzungen im Monat</strong>, verteilt über <strong>bis zu 10 Chats</strong></li>
           <li>Für große Gruppen und Chats mit vielen Sprachen</li>
           <li>Jederzeit kündbar</li>
         </ul>
@@ -239,6 +257,13 @@
         <label>Verwaltungsschlüssel</label>
         <input data-feld="schluessel" autocomplete="off" spellcheck="false" placeholder="xxxxx-xxxxx-xxxxx-xxxxx">
         <button class="kaufen leer" data-verwaltung style="margin-top:14px">Verwaltung öffnen</button>
+        <button class="kaufen leer" data-chats-zeigen style="margin-top:8px">Meine Chats anzeigen</button>
+        <div data-chats class="chats hide"></div>
+        <div data-chats-dazu class="hide">
+          <label>Chat-Code zum Dazunehmen</label>
+          <input data-feld="neuerRaum" autocomplete="off" spellcheck="false">
+          <button class="kaufen leer" data-raum-dazu style="margin-top:8px">Diesen Chat dazunehmen</button>
+        </div>
       </div>
 
       <p class="small">Die Zahlung wickelt Stripe ab. Deine Kartendaten sehen wir nie. Es gelten die <a href="/agb">Nutzungsbedingungen</a>; zur Frist von 14 Tagen siehe <a href="/widerruf">Widerrufsbelehrung</a>.</p>
@@ -254,7 +279,7 @@
       <p class="small">All prices include VAT. No minimum term — cancel any time.</p>
 
       <div class="merk">
-        <strong>Whoever invites, pays.</strong> A membership belongs to a chat, not to a person. Paying unlocks that chat for everyone in it — your family abroad pays nothing and doesn't even need an account.
+        <strong>Whoever invites, pays.</strong> Paying unlocks your chats for everyone in them — your family abroad pays nothing and doesn't even need an account.
       </div>
 
       <div class="zeitraum" role="tablist">
@@ -278,8 +303,8 @@
         <h3>Plus <span class="fahne">most chosen</span></h3>
         <div class="preis" data-preis="plus">€4.99 <span class="je">/ month</span></div>
         <ul>
-          <li><strong>1500 translations a month</strong> in the chat</li>
-          <li>Covers everyone in the chat</li>
+          <li><strong>1500 translations a month</strong>, shared across <strong>up to 3 chats</strong></li>
+          <li>Covers everyone in those chats</li>
           <li>Cancel any time</li>
         </ul>
         <button class="kaufen" data-plan="plus">Get Plus</button>
@@ -289,7 +314,7 @@
         <h3>Family</h3>
         <div class="preis" data-preis="familie">€9.99 <span class="je">/ month</span></div>
         <ul>
-          <li><strong>5000 translations a month</strong> in the chat</li>
+          <li><strong>5000 translations a month</strong>, shared across <strong>up to 10 chats</strong></li>
           <li>For large groups and chats with many languages</li>
           <li>Cancel any time</li>
         </ul>
@@ -309,6 +334,13 @@
         <label>Management key</label>
         <input data-feld="schluessel" autocomplete="off" spellcheck="false" placeholder="xxxxx-xxxxx-xxxxx-xxxxx">
         <button class="kaufen leer" data-verwaltung style="margin-top:14px">Open management</button>
+        <button class="kaufen leer" data-chats-zeigen style="margin-top:8px">Show my chats</button>
+        <div data-chats class="chats hide"></div>
+        <div data-chats-dazu class="hide">
+          <label>Chat code to add</label>
+          <input data-feld="neuerRaum" autocomplete="off" spellcheck="false">
+          <button class="kaufen leer" data-raum-dazu style="margin-top:8px">Add this chat</button>
+        </div>
       </div>
 
       <p class="small">Payment is handled by Stripe. We never see your card details. Our <a href="/agb">Terms of Use</a> apply; on the 14-day period see <a href="/widerruf">Right of withdrawal</a>.</p>
@@ -492,6 +524,84 @@ async function kaufen(plan, knopf) {
 document.querySelectorAll("[data-plan]").forEach((b) => { b.onclick = () => kaufen(b.dataset.plan, b); });
 
 /* --------------------------- Verwaltung oeffnen --------------------------- */
+/* ------------------------- Chats des Abos -------------------------
+   Ein Abo schaltet mehrere Chats frei. Welche das sind, darf nur sehen
+   und aendern, wer den Verwaltungsschluessel hat - sonst haengte sich
+   jeder, der einen Chat-Code kennt, an ein fremdes Abo. */
+const CHATWORTE = {
+  pt: { keine: "Esta subscrição ainda não tem conversas.", frei: "{n} lugar(es) livre(s) de {p}",
+        weg: "retirar", zuletzt: "Não é possível retirar a última conversa." },
+  de: { keine: "Zu dieser Mitgliedschaft gehört noch kein Chat.", frei: "{n} von {p} Plätzen frei",
+        weg: "herausnehmen", zuletzt: "Der letzte Chat kann nicht heraus." },
+  en: { keine: "This membership has no chats yet.", frei: "{n} of {p} places free",
+        weg: "remove", zuletzt: "The last chat cannot be removed." },
+};
+
+function zugangsDaten() {
+  return {
+    room: (raumFelder()[0]?.value || "").trim(),
+    schluessel: (document.querySelector('[data-feld="schluessel"]')?.value || "").trim(),
+  };
+}
+
+function zeichneChats(daten) {
+  const w = CHATWORTE[sprache] || CHATWORTE.en;
+  const listen = document.querySelectorAll("[data-chats]");
+  const html = daten.raeume.length
+    ? "<ul>" + daten.raeume.map((r) =>
+        `<li><code>${r.replace(/[<>&]/g, "")}</code>` +
+        `<button data-weg="${r.replace(/"/g, "")}">${w.weg}</button></li>`).join("") + "</ul>"
+    : `<p class="small">${w.keine}</p>`;
+  const rest = `<p class="small">${w.frei.replace("{n}", daten.frei).replace("{p}", daten.plaetze)}</p>`;
+  listen.forEach((el) => { el.innerHTML = html + rest; el.classList.remove("hide"); });
+  document.querySelectorAll("[data-chats-dazu]").forEach((el) => el.classList.toggle("hide", daten.frei < 1));
+  document.querySelectorAll("[data-weg]").forEach((b) => { b.onclick = () => raumWeg(b.dataset.weg); });
+}
+
+async function chatsHolen(zeigeFehler = true) {
+  const w = WORTE[sprache];
+  const { room, schluessel } = zugangsDaten();
+  if (!room || !schluessel) { if (zeigeFehler) melden("schlecht", w.fehlt); return null; }
+  try {
+    const a = await fetch("/api/raeume", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ room, schluessel }),
+    });
+    const daten = await a.json().catch(() => ({}));
+    if (!a.ok) { if (zeigeFehler) melden("schlecht", daten.error || w.schiefe); return null; }
+    zeichneChats(daten);
+    return daten;
+  } catch { if (zeigeFehler) melden("schlecht", w.schiefe); return null; }
+}
+
+async function raumAendern(pfad, zusatz) {
+  const w = WORTE[sprache];
+  const { room, schluessel } = zugangsDaten();
+  if (!room || !schluessel) { melden("schlecht", w.fehlt); return; }
+  try {
+    const a = await fetch(pfad, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ room, schluessel, ...zusatz }),
+    });
+    const daten = await a.json().catch(() => ({}));
+    if (!a.ok) { melden("schlecht", daten.error || w.schiefe); return; }
+    await chatsHolen();
+  } catch { melden("schlecht", w.schiefe); }
+}
+
+const raumWeg = (r) => raumAendern("/api/raum-weg", { raumWeg: r });
+
+document.querySelectorAll("[data-chats-zeigen]").forEach((b) => { b.onclick = () => chatsHolen(); });
+document.querySelectorAll("[data-raum-dazu]").forEach((b) => {
+  b.onclick = async () => {
+    const feld = document.querySelector('[data-feld="neuerRaum"]');
+    const neu = (feld?.value || "").trim();
+    if (!neu) { melden("schlecht", WORTE[sprache].fehlt); return; }
+    await raumAendern("/api/raum-dazu", { neuerRaum: neu });
+    document.querySelectorAll('[data-feld="neuerRaum"]').forEach((f) => { f.value = ""; });
+  };
+});
+
 document.querySelectorAll("[data-verwaltung]").forEach((b) => {
   b.onclick = async () => {
     const w = WORTE[sprache];

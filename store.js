@@ -9,6 +9,7 @@
      Praktisch zum lokalen Testen, aber nach einem Neustart ist alles weg.
 -------------------------------------------------------------------- */
 import pg from "pg";
+import crypto from "crypto";
 
 const URL = process.env.DATABASE_URL;
 export const usingDatabase = Boolean(URL);
@@ -31,6 +32,8 @@ const mem = {
   media: new Map(),    // message_id -> { mime, bytes }
   plans: new Map(),    // room -> Mitgliedschaft
   funnel: new Map(),   // "tag|ereignis" -> Anzahl
+  abos: new Map(),     // id -> Abo
+  aboRaeume: new Map(), // room -> abo_id
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -127,6 +130,36 @@ export async function init() {
     );
     CREATE INDEX IF NOT EXISTS plans_sub ON plans (subscription);
 
+    /* Die Mitgliedschaft gehoert dem Zahler, nicht einem einzelnen Chat.
+
+       Zuerst hing sie am Chat - technisch sauber, kaufmaessig unklug:
+       Wer drei Gespraeche fuehrte, haette dreimal zahlen muessen. Jetzt
+       haelt der Zahler ein Abo, und er schaltet damit mehrere Chats frei.
+
+       Erkannt wird er am Verwaltungsschluessel, den nur er besitzt -
+       damit braucht es weiterhin kein Konto. */
+    CREATE TABLE IF NOT EXISTS abos (
+      id           TEXT PRIMARY KEY,
+      plan         TEXT NOT NULL,
+      status       TEXT NOT NULL,
+      customer     TEXT,
+      subscription TEXT,
+      manage_key   TEXT,
+      period_end   BIGINT,
+      at           BIGINT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS abos_sub ON abos (subscription);
+
+    /* Welche Chats zu einem Abo gehoeren. Ein Chat kann nur zu einem
+       Abo gehoeren - sonst liesse sich dasselbe Gespraech zweimal
+       freischalten und niemand wuesste, wessen Kontingent zaehlt. */
+    CREATE TABLE IF NOT EXISTS abo_raeume (
+      abo_id TEXT NOT NULL REFERENCES abos(id) ON DELETE CASCADE,
+      room   TEXT NOT NULL UNIQUE,
+      at     BIGINT NOT NULL,
+      PRIMARY KEY (abo_id, room)
+    );
+
     /* Trichter: eine Zahl je Tag und Ereignis, sonst nichts. Keine
        Kennung, keine Adresse, kein Geraet - man kann daraus nicht
        zurueckrechnen, wer etwas getan hat. Damit ist es kein
@@ -167,6 +200,14 @@ export async function init() {
     if (!da.includes("audio_seconds")) schemaFehler = "Spalte audio_seconds fehlt";
   } catch (err) {
     schemaFehler = "Pruefung fehlgeschlagen: " + err.message.slice(0, 150);
+  }
+
+  /* Einmalig: alte, am Chat haengende Mitgliedschaften in Abos ueberfuehren. */
+  try {
+    await umzugAltePlaene();
+  } catch (err) {
+    schemaFehler = "Umzug der Mitgliedschaften: " + err.message.slice(0, 150);
+    console.error("  Umzug der Mitgliedschaften fehlgeschlagen:", err.message);
   }
 
   console.log(schemaFehler ? "  Datenbank bereit, ABER: " + schemaFehler : "  Datenbank bereit.");
@@ -551,4 +592,157 @@ export async function trichter(tage = 14) {
     (proTag[z.tag] ||= {})[z.ereignis] = z.n;
   }
   return { tage, summe, proTag };
+}
+
+/* ------------------------------- Abos -------------------------------
+   Ein Abo gehoert dem Zahler. Welche Chats es freischaltet, steht in
+   abo_raeume - ein Chat immer nur in einem Abo.
+------------------------------------------------------------------- */
+export function neueAboId() {
+  return "abo_" + crypto.randomBytes(12).toString("hex");
+}
+
+export async function getAbo(id) {
+  if (!id) return null;
+  if (!usingDatabase) return mem.abos.get(id) || null;
+  const { rows } = await pool.query(`SELECT * FROM abos WHERE id = $1`, [id]);
+  return rows[0] || null;
+}
+
+export async function getAboByRoom(room) {
+  if (!usingDatabase) {
+    const id = mem.aboRaeume.get(room);
+    return id ? mem.abos.get(id) || null : null;
+  }
+  const { rows } = await pool.query(
+    `SELECT a.* FROM abos a JOIN abo_raeume r ON r.abo_id = a.id WHERE r.room = $1`, [room]
+  );
+  return rows[0] || null;
+}
+
+export async function getAboBySubscription(subscription) {
+  if (!subscription) return null;
+  if (!usingDatabase) {
+    return [...mem.abos.values()].find((a) => a.subscription === subscription) || null;
+  }
+  const { rows } = await pool.query(`SELECT * FROM abos WHERE subscription = $1`, [subscription]);
+  return rows[0] || null;
+}
+
+export async function saveAbo(a) {
+  const zeile = {
+    id: a.id, plan: a.plan, status: a.status,
+    customer: a.customer || null, subscription: a.subscription || null,
+    manage_key: a.manage_key || null, period_end: a.period_end || null,
+    at: Date.now(),
+  };
+  if (!usingDatabase) {
+    const alt = mem.abos.get(a.id) || {};
+    mem.abos.set(a.id, {
+      ...alt, ...zeile,
+      customer: zeile.customer ?? alt.customer ?? null,
+      subscription: zeile.subscription ?? alt.subscription ?? null,
+      manage_key: zeile.manage_key ?? alt.manage_key ?? null,
+    });
+    return mem.abos.get(a.id);
+  }
+  /* COALESCE, damit eine spaetere Meldung von Stripe den Schluessel des
+     Zahlers nicht ueberschreibt. */
+  const { rows } = await pool.query(
+    `INSERT INTO abos (id, plan, status, customer, subscription, manage_key, period_end, at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+     ON CONFLICT (id) DO UPDATE SET
+       plan = EXCLUDED.plan, status = EXCLUDED.status,
+       customer = COALESCE(EXCLUDED.customer, abos.customer),
+       subscription = COALESCE(EXCLUDED.subscription, abos.subscription),
+       manage_key = COALESCE(EXCLUDED.manage_key, abos.manage_key),
+       period_end = EXCLUDED.period_end, at = EXCLUDED.at
+     RETURNING *`,
+    [zeile.id, zeile.plan, zeile.status, zeile.customer, zeile.subscription,
+     zeile.manage_key, zeile.period_end, zeile.at]
+  );
+  return rows[0];
+}
+
+export async function raeumeVonAbo(aboId) {
+  if (!usingDatabase) {
+    return [...mem.aboRaeume.entries()].filter(([, id]) => id === aboId).map(([r]) => r).sort();
+  }
+  const { rows } = await pool.query(
+    `SELECT room FROM abo_raeume WHERE abo_id = $1 ORDER BY at`, [aboId]
+  );
+  return rows.map((r) => r.room);
+}
+
+/* Gibt zurueck, ob der Chat dazugekommen ist. false heisst: gehoert
+   schon zu einem anderen Abo. */
+export async function raumHinzufuegen(aboId, room) {
+  if (!usingDatabase) {
+    const belegt = mem.aboRaeume.get(room);
+    if (belegt && belegt !== aboId) return false;
+    mem.aboRaeume.set(room, aboId);
+    return true;
+  }
+  const { rowCount } = await pool.query(
+    `INSERT INTO abo_raeume (abo_id, room, at) VALUES ($1,$2,$3)
+     ON CONFLICT (room) DO NOTHING`,
+    [aboId, room, Date.now()]
+  );
+  if (rowCount > 0) return true;
+  const { rows } = await pool.query(`SELECT abo_id FROM abo_raeume WHERE room = $1`, [room]);
+  return rows[0]?.abo_id === aboId;
+}
+
+export async function raumEntfernen(aboId, room) {
+  if (!usingDatabase) {
+    if (mem.aboRaeume.get(room) === aboId) mem.aboRaeume.delete(room);
+    return;
+  }
+  await pool.query(`DELETE FROM abo_raeume WHERE abo_id = $1 AND room = $2`, [aboId, room]);
+}
+
+/* Verbrauch eines ganzen Abos im laufenden Kalendermonat: die Summe
+   ueber alle seine Chats. */
+export async function translationsThisMonthForRooms(rooms) {
+  if (!rooms || !rooms.length) return 0;
+  const jetzt = new Date();
+  const monatsAnfang = Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth(), 1);
+
+  if (!usingDatabase) {
+    return mem.usage.filter((r) => rooms.includes(r.room) && r.at >= monatsAnfang).length;
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM usage_log WHERE room = ANY($1) AND at >= $2`,
+    [rooms, monatsAnfang]
+  );
+  return rows[0]?.n || 0;
+}
+
+/* --------------------------- Umzug ---------------------------------
+   Die alten Mitgliedschaften hingen am Chat. Jede wird zu einem Abo mit
+   genau diesem einen Chat - niemand verliert etwas, und ab dann kann
+   der Zahler weitere Chats dazunehmen.
+------------------------------------------------------------------- */
+export async function umzugAltePlaene() {
+  if (!usingDatabase) return 0;
+  const { rows: schon } = await pool.query(`SELECT COUNT(*)::int AS n FROM abos`);
+  if (schon[0].n > 0) return 0;               /* schon umgezogen */
+
+  const { rows: alt } = await pool.query(`SELECT * FROM plans`);
+  let n = 0;
+  for (const p of alt) {
+    const id = neueAboId();
+    await pool.query(
+      `INSERT INTO abos (id, plan, status, customer, subscription, manage_key, period_end, at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [id, p.plan, p.status, p.customer, p.subscription, p.manage_key, p.period_end, Number(p.at) || Date.now()]
+    );
+    await pool.query(
+      `INSERT INTO abo_raeume (abo_id, room, at) VALUES ($1,$2,$3) ON CONFLICT (room) DO NOTHING`,
+      [id, p.room, Number(p.at) || Date.now()]
+    );
+    n++;
+  }
+  if (n) console.log(`  ${n} alte Mitgliedschaft(en) in Abos umgezogen.`);
+  return n;
 }

@@ -51,6 +51,15 @@ export const KONTINGENT = {
   familie: Number(process.env.KONTINGENT_FAMILIE || 5000),
 };
 
+/* Wie viele Chats ein Tarif freischaltet. Das Kontingent oben gilt fuer
+   alle zusammen, nicht je Chat - wer drei Gespraeche fuehrt, soll nicht
+   dreimal zahlen muessen. */
+export const PLAETZE = {
+  frei: 1,
+  plus: Number(process.env.PLAETZE_PLUS || 3),
+  familie: Number(process.env.PLAETZE_FAMILIE || 10),
+};
+
 /* Welche Preis-Kennungen wirklich hinterlegt sind. Die Preisseite fragt
    das ab, damit kein Knopf erscheint, der ins Leere fuehrt. */
 export function verfuegbar() {
