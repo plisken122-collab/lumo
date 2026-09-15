@@ -151,7 +151,9 @@ function eigeneHerkunft(req) {
 /* Was ein Chat im Monat darf und wie viel davon weg ist. */
 async function kontingent(room) {
   const zeile = await store.getPlan(room);
-  const laeuft = zeile && ["active", "trialing", "past_due"].includes(zeile.status);
+  /* "gekuendigt" gehoert dazu: bezahlt ist bezahlt, der Tarif gilt bis
+     zum Ende des Zeitraums. Erst "canceled" nimmt ihn weg. */
+  const laeuft = zeile && ["active", "trialing", "past_due", "gekuendigt"].includes(zeile.status);
   const plan = laeuft ? zeile.plan : "frei";
   return {
     plan,
@@ -236,6 +238,17 @@ app.get("/api/kasse-zurueck", async (req, res) => {
     res.status(502).json({ error: "Konnte die Zahlung nicht nachschlagen." });
   }
 });
+
+/* Wann endet der bezahlte Zeitraum?
+
+   Stripe hat current_period_end in neueren API-Fassungen vom Abonnement
+   zu dessen Posten verschoben. Unser Webhook laeuft auf 2026-08-26; an
+   der alten Stelle steht dort nichts mehr. Beide Stellen abfragen, damit
+   es auch bei einer aelteren Fassung stimmt. */
+function laufzeitEnde(abo) {
+  const sek = abo?.items?.data?.[0]?.current_period_end ?? abo?.current_period_end;
+  return sek ? Number(sek) * 1000 : null;
+}
 
 /* Zu welchem Tarif gehoert diese Preis-Kennung? Umgekehrter Weg, damit
    der Webhook nicht raten muss. */
@@ -348,10 +361,17 @@ app.post("/api/stripe", async (req, res) => {
           room,
           plan: (geld.KONTINGENT[d.metadata?.plan] ? d.metadata.plan : null)
             || planZuPreis(d.items?.data?.[0]?.price?.id) || zeile?.plan || "plus",
-          status: meldung.type.endsWith("deleted") ? "canceled" : String(d.status || "active"),
+          /* Wer im Kundenportal kuendigt, behaelt den Tarif bis zum Ende
+             des bezahlten Zeitraums - Stripe laesst den Status dabei auf
+             "active" und setzt nur cancel_at_period_end. Ohne diese
+             Unterscheidung stuende der Chat bis zuletzt auf "aktiv" und
+             waere dann von einem Tag auf den anderen wieder frei. */
+          status: meldung.type.endsWith("deleted")
+            ? "canceled"
+            : (d.cancel_at_period_end ? "gekuendigt" : String(d.status || "active")),
           customer: typeof d.customer === "string" ? d.customer : d.customer?.id,
           subscription: d.id,
-          period_end: d.current_period_end ? d.current_period_end * 1000 : null,
+          period_end: laufzeitEnde(d),
         });
         monatsZaehler.delete(room);
         planZwischen.delete(room);
