@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E4E5E9">
+<meta name="robots" content="noindex, nofollow">
+<title>Diralo — Proteção de dados</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E;
+    --line:#D2D4DB; --mine:#384C9E;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--canvas); color:var(--ink);
+    font-family:'DM Sans', system-ui, sans-serif; font-size:16px; line-height:1.6;
+  }
+  .wrap { max-width:680px; margin:0 auto; padding:24px 16px 60px; }
+  .brandline { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .brandline img { display:block; height:34px; width:auto; }
+  .brandline span { font-size:26px; font-weight:500; }
+  a { color:var(--mine); }
+  .tabs { display:flex; gap:6px; margin:18px 0 20px; }
+  .tabs button {
+    font-family:inherit; font-size:14px; padding:8px 14px; border:1px solid var(--line);
+    background:var(--surface); color:var(--muted); border-radius:9px; cursor:pointer;
+  }
+  .tabs button[aria-selected="true"] { background:var(--mine); border-color:var(--mine); color:#fff; }
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:16px; padding:20px 22px; margin-bottom:16px;
+  }
+  h1 { font-size:22px; font-weight:500; margin:0 0 4px; }
+  h2 { font-size:17px; font-weight:500; margin:26px 0 8px; }
+  h2:first-of-type { margin-top:16px; }
+  p { margin:0 0 12px; }
+  ul { margin:0 0 12px; padding-left:20px; }
+  li { margin-bottom:6px; }
+  table { width:100%; border-collapse:collapse; margin:0 0 14px; font-size:14.5px; }
+  th, td { text-align:left; padding:7px 10px 7px 0; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:500; }
+  .small { font-size:13.5px; color:var(--muted); }
+  .merk { background:#F1F2F5; border-left:3px solid var(--mine); padding:11px 14px; border-radius:10px; margin:0 0 14px; }
+  .hide { display:none !important; }
+  .back { display:inline-block; margin-top:8px; font-size:14px; }
+  @media (max-width:460px) {
+    table, tbody, tr, td, th { display:block; }
+    th { padding-bottom:0; border:none; }
+    td { border-bottom:1px solid var(--line); padding-bottom:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brandline">
+    <img src="/brand/logo-mark.svg" alt=""><span>Diralo</span>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-lang="pt" aria-selected="true">Português</button>
+    <button role="tab" data-lang="de" aria-selected="false">Deutsch</button>
+    <button role="tab" data-lang="en" aria-selected="false">English</button>
+  </div>
+
+  <!-- ============================ Português ============================ -->
+  <section data-lang="pt">
+    <div class="card">
+      <h1>Política de privacidade</h1>
+      <p class="small">Última atualização: 15 de setembro de 2026</p>
+
+      <div class="merk">
+        <strong>O essencial em três frases.</strong> Para traduzir, cada mensagem é enviada ao nosso servidor e daí à Anthropic, nos Estados Unidos — não existe encriptação ponto a ponto. Tudo é apagado automaticamente ao fim de 30 dias. Não pedimos nome verdadeiro, email nem número de telefone.
+      </div>
+
+      <h2>1. Responsável pelo tratamento</h2>
+      <p>Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, concelho de Silves, Portugal.<br>
+      NIF 297662414 · <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a> · +351 933 917 633</p>
+
+      <h2>2. Que dados tratamos e porquê</h2>
+      <table>
+        <tr><th>Dados</th><th>Finalidade</th><th>Fundamento (RGPD)</th></tr>
+        <tr><td>Conteúdo das mensagens</td><td>Transmitir e traduzir</td><td>Art. 6.º-1-b (execução do contrato)</td></tr>
+        <tr><td>Traduções geradas</td><td>Evitar traduzir o mesmo duas vezes</td><td>Art. 6.º-1-b</td></tr>
+        <tr><td>Nome escolhido</td><td>Mostrar quem escreveu</td><td>Art. 6.º-1-b</td></tr>
+        <tr><td>Código do chat</td><td>Agrupar a conversa</td><td>Art. 6.º-1-b</td></tr>
+        <tr><td>Identificador do dispositivo</td><td>Reconhecer as suas próprias mensagens</td><td>Art. 6.º-1-b</td></tr>
+        <tr><td>Idioma e data/hora</td><td>Traduzir e ordenar</td><td>Art. 6.º-1-b</td></tr>
+        <tr><td>Endereço IP</td><td>Limitar tentativas e abusos</td><td>Art. 6.º-1-f (interesse legítimo)</td></tr>
+        <tr><td>Número de carateres e de tokens</td><td>Calcular custos</td><td>Art. 6.º-1-f</td></tr>
+        <tr><td>Subscrição de notificações</td><td>Avisar de mensagens novas</td><td>Art. 6.º-1-a (consentimento)</td></tr>
+      </table>
+      <p>O identificador do dispositivo é um número aleatório gerado no seu navegador. Não contém nada sobre si e não permite identificá-lo fora do serviço.</p>
+
+      <h2>3. Transferência para os Estados Unidos</h2>
+      <p>Para traduzir, o texto de cada mensagem é enviado à <strong>Anthropic PBC</strong> (São Francisco, EUA). É este o ponto mais sensível desta política, por isso dizemo-lo sem rodeios: <strong>o conteúdo das suas mensagens sai da União Europeia.</strong></p>
+      <p>A Anthropic trata os dados por nossa conta, ao abrigo de um contrato de subcontratação com as cláusulas contratuais-tipo da Comissão Europeia. Segundo as condições da Anthropic para a interface de programação, o conteúdo não é utilizado para treinar modelos.</p>
+      <p>Mensagens sem qualquer letra — apenas emojis, números ou pontuação — não são enviadas para tradução.</p>
+
+      <h2>4. Outros destinatários</h2>
+      <ul>
+        <li><strong>Render Services, Inc.</strong> — alojamento do servidor e da base de dados, em Frankfurt, Alemanha.</li>
+        <li><strong>Cloudflare, Inc.</strong> — registo do domínio, DNS e reencaminhamento do endereço de contacto.</li>
+        <li><strong>Serviços de notificação da Google e da Apple</strong> — apenas se ativar as notificações. O conteúdo vai encriptado; estes serviços veem o destinatário técnico, não o texto.</li>
+      </ul>
+
+      <h2>5. Durante quanto tempo</h2>
+      <table>
+        <tr><td>Mensagens, traduções e gravações</td><td><strong>30 dias</strong>, depois apagadas automaticamente</td></tr>
+        <tr><td>Contagem de custos (sem texto)</td><td>1 ano</td></tr>
+        <tr><td>Subscrições de notificações inativas</td><td>6 meses</td></tr>
+        <tr><td>Dados guardados no seu navegador</td><td>Até os apagar</td></tr>
+      </table>
+      <p>Pode apagar uma mensagem para todos a qualquer momento: toque nela e escolha «Apagar para todos». O texto, as traduções e a gravação são removidos da base de dados; fica apenas a indicação de que ali existiu uma mensagem.</p>
+
+      <h2>6. O que fica guardado no seu navegador</h2>
+      <p>Nome, idioma e código do chat escolhidos, o identificador do dispositivo, os emojis usados recentemente, a preferência de som e a lista de mensagens que apagou só para si. Nada disto é publicidade nem segue a sua navegação. Se existir palavra de acesso, é usado ainda um cookie técnico que guarda apenas um valor derivado — nunca a própria palavra.</p>
+
+      <h2>7. Sem encriptação ponto a ponto</h2>
+      <p>Ao contrário do WhatsApp ou do Signal, as mensagens <strong>não</strong> são encriptadas de ponta a ponta. Não podem ser: para traduzir é preciso ler. Quem administra o servidor tem, tecnicamente, acesso ao conteúdo. Não escreva no Diralo aquilo que não confiaria a um terceiro.</p>
+
+      <h2>8. Os seus direitos</h2>
+      <p>Tem direito a aceder, retificar, apagar, limitar o tratamento, à portabilidade e a opor-se ao tratamento. Para exercer qualquer destes direitos, escreva para <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a>.</p>
+      <p>Como não recolhemos nome verdadeiro nem email, poderá ser necessário indicar o código do chat e o momento aproximado para conseguirmos localizar as suas mensagens.</p>
+      <p>Pode ainda apresentar reclamação à autoridade de controlo: <strong>CNPD — Comissão Nacional de Proteção de Dados</strong>, <a href="https://www.cnpd.pt" target="_blank" rel="noopener">www.cnpd.pt</a>.</p>
+
+      <h2>9. Alterações</h2>
+      <p>Esta política pode ser alterada quando o serviço mudar. A data no topo indica a versão em vigor.</p>
+
+      <a class="back" href="/">← Voltar ao Diralo</a> &nbsp;·&nbsp; <a class="back" href="/impressum">Informação legal</a>
+    </div>
+  </section>
+
+  <!-- ============================= Deutsch ============================= -->
+  <section data-lang="de" class="hide">
+    <div class="card">
+      <h1>Datenschutzerklärung</h1>
+      <p class="small">Stand: 15. September 2026 — der Anbieter ist in Portugal niedergelassen; die portugiesische Fassung ist die verbindliche.</p>
+
+      <div class="merk">
+        <strong>Das Wichtigste in drei Sätzen.</strong> Zum Übersetzen geht jede Nachricht an unseren Server und von dort an Anthropic in die USA — es gibt keine Ende-zu-Ende-Verschlüsselung. Nach 30 Tagen wird alles automatisch gelöscht. Wir verlangen weder echten Namen noch E-Mail noch Telefonnummer.
+      </div>
+
+      <h2>1. Verantwortlicher</h2>
+      <p>Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, Kreis Silves, Portugal.<br>
+      NIF 297662414 · <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a> · +351 933 917 633</p>
+
+      <h2>2. Welche Daten wir verarbeiten und wozu</h2>
+      <table>
+        <tr><th>Daten</th><th>Zweck</th><th>Grundlage (DSGVO)</th></tr>
+        <tr><td>Nachrichteninhalt</td><td>Übermitteln und übersetzen</td><td>Art. 6 Abs. 1 b (Vertrag)</td></tr>
+        <tr><td>Erzeugte Übersetzungen</td><td>Dasselbe nicht zweimal übersetzen</td><td>Art. 6 Abs. 1 b</td></tr>
+        <tr><td>Gewählter Name</td><td>Anzeigen, wer geschrieben hat</td><td>Art. 6 Abs. 1 b</td></tr>
+        <tr><td>Chat-Code</td><td>Das Gespräch zuordnen</td><td>Art. 6 Abs. 1 b</td></tr>
+        <tr><td>Gerätekennung</td><td>Eigene Nachrichten erkennen</td><td>Art. 6 Abs. 1 b</td></tr>
+        <tr><td>Sprache und Zeitstempel</td><td>Übersetzen und sortieren</td><td>Art. 6 Abs. 1 b</td></tr>
+        <tr><td>IP-Adresse</td><td>Versuche begrenzen, Missbrauch abwehren</td><td>Art. 6 Abs. 1 f (berechtigtes Interesse)</td></tr>
+        <tr><td>Zeichen- und Tokenzahl</td><td>Kosten berechnen</td><td>Art. 6 Abs. 1 f</td></tr>
+        <tr><td>Anmeldung für Benachrichtigungen</td><td>Über neue Nachrichten informieren</td><td>Art. 6 Abs. 1 a (Einwilligung)</td></tr>
+      </table>
+      <p>Die Gerätekennung ist eine Zufallszahl, die in deinem Browser entsteht. Sie enthält nichts über dich und erlaubt außerhalb des Dienstes keine Zuordnung.</p>
+
+      <h2>3. Übermittlung in die USA</h2>
+      <p>Zum Übersetzen geht der Text jeder Nachricht an <strong>Anthropic PBC</strong> (San Francisco, USA). Das ist der heikelste Punkt dieser Erklärung, deshalb ohne Umschweife: <strong>Der Inhalt deiner Nachrichten verlässt die Europäische Union.</strong></p>
+      <p>Anthropic verarbeitet die Daten in unserem Auftrag auf Grundlage eines Auftragsverarbeitungsvertrags mit den Standardvertragsklauseln der Europäischen Kommission. Nach den Bedingungen von Anthropic für die Programmierschnittstelle werden die Inhalte nicht zum Training von Modellen verwendet.</p>
+      <p>Nachrichten ohne einen einzigen Buchstaben — also nur Emojis, Zahlen oder Satzzeichen — werden gar nicht erst zur Übersetzung geschickt.</p>
+
+      <h2>4. Weitere Empfänger</h2>
+      <ul>
+        <li><strong>Render Services, Inc.</strong> — Betrieb von Server und Datenbank, Standort Frankfurt am Main.</li>
+        <li><strong>Cloudflare, Inc.</strong> — Domainverwaltung, DNS und Weiterleitung der Kontaktadresse.</li>
+        <li><strong>Benachrichtigungsdienste von Google und Apple</strong> — nur wenn du Benachrichtigungen einschaltest. Der Inhalt geht verschlüsselt hinaus; diese Dienste sehen den technischen Empfänger, nicht den Text.</li>
+      </ul>
+
+      <h2>5. Wie lange</h2>
+      <table>
+        <tr><td>Nachrichten, Übersetzungen, Aufnahmen</td><td><strong>30 Tage</strong>, danach automatische Löschung</td></tr>
+        <tr><td>Kostenzählung (ohne Text)</td><td>1 Jahr</td></tr>
+        <tr><td>Ungenutzte Benachrichtigungs-Anmeldungen</td><td>6 Monate</td></tr>
+        <tr><td>Daten in deinem Browser</td><td>Bis du sie löschst</td></tr>
+      </table>
+      <p>Du kannst eine Nachricht jederzeit für alle löschen: antippen und „Für alle löschen" wählen. Text, Übersetzungen und Aufnahme verschwinden aus der Datenbank; stehen bleibt nur der Hinweis, dass dort eine Nachricht war.</p>
+
+      <h2>6. Was in deinem Browser gespeichert wird</h2>
+      <p>Gewählter Name, Sprache und Chat-Code, die Gerätekennung, zuletzt benutzte Smileys, die Ton-Einstellung und die Liste der nur für dich gelöschten Nachrichten. Nichts davon dient Werbung oder verfolgt dich über andere Seiten. Ist ein Zugangswort gesetzt, kommt ein technisch notwendiges Cookie hinzu, das nur einen abgeleiteten Wert speichert — nie das Wort selbst.</p>
+
+      <h2>7. Keine Ende-zu-Ende-Verschlüsselung</h2>
+      <p>Anders als bei WhatsApp oder Signal sind die Nachrichten <strong>nicht</strong> Ende-zu-Ende verschlüsselt. Sie können es nicht sein: Wer übersetzen will, muss lesen. Wer den Server betreibt, hat technisch Zugriff auf die Inhalte. Schreib in Diralo nichts, was du einem Dritten nicht anvertrauen würdest.</p>
+
+      <h2>8. Deine Rechte</h2>
+      <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Melde dich dafür unter <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a>.</p>
+      <p>Da wir weder echten Namen noch E-Mail erheben, brauchen wir dafür möglicherweise den Chat-Code und den ungefähren Zeitpunkt, um deine Nachrichten überhaupt zu finden.</p>
+      <p>Außerdem kannst du dich bei der Aufsichtsbehörde beschweren: <strong>CNPD — Comissão Nacional de Proteção de Dados</strong>, <a href="https://www.cnpd.pt" target="_blank" rel="noopener">www.cnpd.pt</a>. Da der Anbieter in Portugal sitzt, ist sie zuständig, auch wenn du in Deutschland wohnst.</p>
+
+      <h2>9. Änderungen</h2>
+      <p>Diese Erklärung kann sich ändern, wenn sich der Dienst ändert. Das Datum oben zeigt die geltende Fassung.</p>
+
+      <a class="back" href="/">← Zurück zu Diralo</a> &nbsp;·&nbsp; <a class="back" href="/impressum">Impressum</a>
+    </div>
+  </section>
+
+  <!-- ============================= English ============================= -->
+  <section data-lang="en" class="hide">
+    <div class="card">
+      <h1>Privacy policy</h1>
+      <p class="small">Last updated: 15 September 2026 — the provider is established in Portugal; the Portuguese version is the binding one.</p>
+
+      <div class="merk">
+        <strong>The essentials in three sentences.</strong> To translate, every message goes to our server and from there to Anthropic in the United States — there is no end-to-end encryption. Everything is deleted automatically after 30 days. We ask for no real name, no email and no phone number.
+      </div>
+
+      <h2>1. Controller</h2>
+      <p>Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, municipality of Silves, Portugal.<br>
+      NIF 297662414 · <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a> · +351 933 917 633</p>
+
+      <h2>2. What we process and why</h2>
+      <table>
+        <tr><th>Data</th><th>Purpose</th><th>Legal basis (GDPR)</th></tr>
+        <tr><td>Message content</td><td>Deliver and translate</td><td>Art. 6(1)(b) — contract</td></tr>
+        <tr><td>Generated translations</td><td>Avoid translating twice</td><td>Art. 6(1)(b)</td></tr>
+        <tr><td>Chosen name</td><td>Show who wrote</td><td>Art. 6(1)(b)</td></tr>
+        <tr><td>Chat code</td><td>Group the conversation</td><td>Art. 6(1)(b)</td></tr>
+        <tr><td>Device identifier</td><td>Recognise your own messages</td><td>Art. 6(1)(b)</td></tr>
+        <tr><td>Language and timestamp</td><td>Translate and sort</td><td>Art. 6(1)(b)</td></tr>
+        <tr><td>IP address</td><td>Rate limiting, abuse prevention</td><td>Art. 6(1)(f) — legitimate interest</td></tr>
+        <tr><td>Character and token counts</td><td>Cost accounting</td><td>Art. 6(1)(f)</td></tr>
+        <tr><td>Notification subscription</td><td>Alert you to new messages</td><td>Art. 6(1)(a) — consent</td></tr>
+      </table>
+      <p>The device identifier is a random number generated in your browser. It contains nothing about you and identifies you nowhere outside this service.</p>
+
+      <h2>3. Transfer to the United States</h2>
+      <p>To translate, the text of every message is sent to <strong>Anthropic PBC</strong> (San Francisco, USA). This is the most sensitive point in this policy, so plainly: <strong>the content of your messages leaves the European Union.</strong></p>
+      <p>Anthropic processes the data on our behalf under a data processing agreement incorporating the European Commission's standard contractual clauses. Under Anthropic's API terms, content is not used to train models.</p>
+      <p>Messages without a single letter — only emoji, numbers or punctuation — are never sent for translation.</p>
+
+      <h2>4. Other recipients</h2>
+      <ul>
+        <li><strong>Render Services, Inc.</strong> — server and database hosting, located in Frankfurt, Germany.</li>
+        <li><strong>Cloudflare, Inc.</strong> — domain registration, DNS and forwarding of the contact address.</li>
+        <li><strong>Google and Apple push services</strong> — only if you enable notifications. Content is transmitted encrypted; these services see the technical recipient, not the text.</li>
+      </ul>
+
+      <h2>5. How long</h2>
+      <table>
+        <tr><td>Messages, translations, recordings</td><td><strong>30 days</strong>, then deleted automatically</td></tr>
+        <tr><td>Cost accounting (no text)</td><td>1 year</td></tr>
+        <tr><td>Unused notification subscriptions</td><td>6 months</td></tr>
+        <tr><td>Data in your browser</td><td>Until you clear it</td></tr>
+      </table>
+      <p>You can delete a message for everyone at any time: tap it and choose "Delete for everyone". Text, translations and recording are removed from the database; only the note that a message was there remains.</p>
+
+      <h2>6. What is stored in your browser</h2>
+      <p>Your chosen name, language and chat code, the device identifier, recently used emoji, the sound setting, and the list of messages you deleted for yourself only. None of it serves advertising or tracks you across other sites. If an access word is set, a technically necessary cookie is added that stores only a derived value — never the word itself.</p>
+
+      <h2>7. No end-to-end encryption</h2>
+      <p>Unlike WhatsApp or Signal, messages are <strong>not</strong> end-to-end encrypted. They cannot be: translating requires reading. Whoever runs the server has technical access to the content. Do not write anything in Diralo that you would not entrust to a third party.</p>
+
+      <h2>8. Your rights</h2>
+      <p>You have the right of access, rectification, erasure, restriction of processing, data portability and objection. To exercise any of these, write to <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a>.</p>
+      <p>Because we collect no real name and no email, we may need the chat code and the approximate time in order to locate your messages at all.</p>
+      <p>You may also lodge a complaint with the supervisory authority: <strong>CNPD — Comissão Nacional de Proteção de Dados</strong>, <a href="https://www.cnpd.pt" target="_blank" rel="noopener">www.cnpd.pt</a>.</p>
+
+      <h2>9. Changes</h2>
+      <p>This policy may change when the service changes. The date at the top shows the version in force.</p>
+
+      <a class="back" href="/">← Back to Diralo</a> &nbsp;·&nbsp; <a class="back" href="/impressum">Legal notice</a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  /* Gleiche Umschaltung wie im Impressum: Browsersprache vorwaehlen,
+     die portugiesische Fassung bleibt die verbindliche. */
+  const knoepfe = [...document.querySelectorAll(".tabs button")];
+  const teile = [...document.querySelectorAll("section[data-lang]")];
+
+  function zeige(code) {
+    knoepfe.forEach((b) => b.setAttribute("aria-selected", b.dataset.lang === code ? "true" : "false"));
+    teile.forEach((s) => s.classList.toggle("hide", s.dataset.lang !== code));
+    document.documentElement.lang = code;
+  }
+
+  knoepfe.forEach((b) => { b.onclick = () => zeige(b.dataset.lang); });
+
+  const browser = (navigator.language || "pt").slice(0, 2).toLowerCase();
+  if (browser === "de" || browser === "en") zeige(browser);
+</script>
+</body>
+</html>

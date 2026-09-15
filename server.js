@@ -66,7 +66,7 @@ function passedGate(req) {
    pruefen, um festzustellen, welche Fassung wirklich ausgeliefert wird. */
 /* Das Impressum muss ohne Zugangswort erreichbar sein - eine
    Pflichtangabe hinter einer Sperre erfuellt ihren Zweck nicht. */
-const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json", "/i18n.js", "/sw.js", "/impressum.html", "/impressum"]);
+const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json", "/i18n.js", "/sw.js", "/impressum.html", "/impressum", "/datenschutz.html", "/datenschutz"]);
 const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWith("/icons/");
 
 app.post("/api/gate", (req, res) => {
@@ -99,6 +99,8 @@ app.use((req, res, next) => {
 /* Kurze Adresse ohne Endung, damit sie sich vorlesen laesst. */
 app.get("/impressum", (_req, res) =>
   res.sendFile(join(__dirname, "public", "impressum.html")));
+app.get("/datenschutz", (_req, res) =>
+  res.sendFile(join(__dirname, "public", "datenschutz.html")));
 
 app.use(express.static(join(__dirname, "public")));
 
