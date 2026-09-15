@@ -146,6 +146,20 @@ Ist das Kontingent alle, **kommen Nachrichten weiterhin an** — sie werden nur 
 4. Unter **Developers → Webhooks** einen Endpunkt auf `https://diralo.app/api/stripe` anlegen, mit den Ereignissen `checkout.session.completed`, `customer.subscription.updated` und `customer.subscription.deleted`.
 5. Im **Customer Portal** das Kündigen und den Rechnungsabruf einschalten.
 
+### Ein Stripe-Konto, zwei Geschäfte
+
+Carrango läuft auf dieselbe Rechtsperson — Carsten Herziger, pessoa singular, NIF 297662414. „Carrango" ist nur eine Marke. Diralos Impressum nennt dieselbe Person und dieselbe Steuernummer, es gibt also keinen Bruch zwischen dem, wer kassiert, und dem, wer im Vertrag steht.
+
+Trotzdem ist **ein zweites Stripe-Konto unter demselben Login die bessere Wahl** (in Stripe oben links im Kontowähler → „New account"):
+
+- Auf dem Kontoauszug des Kunden steht sonst die Marke des anderen Geschäfts. Wer eine Abbuchung nicht wiedererkennt, ruft die Bank an statt uns — das kostet bei jeder Rückbuchung Geld und Ansehen.
+- Getrennte Bücher, getrennte Auszahlungen, getrennte Schlüssel.
+- Ein Webhook-Endpunkt bekommt **alle** Ereignisse seines Kontos, nicht nur die eigenen.
+
+Falls doch ein gemeinsames Konto: Der Code ist darauf vorbereitet. Jede Zahlung von uns trägt `metadata.app = "diralo"`, und alles ohne diese Marke wird stillschweigend übergangen (`unsere()` in `bezahlung.js`). Ohne diesen Schutz würde eine fremde Zahlung, die zufällig `client_reference_id` setzt, hier einen Chat freischalten. Bei einer Meldung zu einem Abonnement, das wir bereits kennen, ist die Marke nicht nötig — eine Kündigung muss auch dann greifen, wenn Stripe sie ohne Metadaten schickt.
+
+Unabhängig davon: Unter **Settings → Business → Public details** den Kontoauszugs-Text auf `DIRALO` setzen.
+
 ### Umgebungsvariablen
 
 | Variable | Wofür |

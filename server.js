@@ -211,6 +211,9 @@ app.get("/api/kasse-zurueck", async (req, res) => {
     if (sitzung.payment_status !== "paid" && sitzung.status !== "complete") {
       return res.json({ fertig: false });
     }
+    /* Auch hier: eine Kennung aus einem anderen Geschaeft desselben
+       Stripe-Kontos darf hier nichts freischalten. */
+    if (!geld.unsere(sitzung)) return res.status(400).json({ error: "Gehoert nicht zu Diralo" });
     const room = raumCode(sitzung.client_reference_id || sitzung.metadata?.raum);
     if (!room) return res.status(400).json({ error: "Kein Chat an der Zahlung" });
 
@@ -306,10 +309,18 @@ app.post("/api/stripe", async (req, res) => {
   try {
     const d = meldung.data?.object || {};
     if (meldung.type === "checkout.session.completed") {
+      /* Nur, was unsere Marke traegt. Laeuft im selben Stripe-Konto noch
+         ein anderes Geschaeft, landen dessen Zahlungen ebenfalls hier -
+         und eine fremde client_reference_id wuerde sonst hier einen Chat
+         freischalten. */
+      if (!geld.unsere(d)) return;
       const room = raumCode(d.client_reference_id || d.metadata?.raum);
       if (room) await eintragen(d, room);
     } else if (meldung.type?.startsWith("customer.subscription.")) {
+      /* Kennen wir das Abonnement schon, ist es unseres - dann braucht
+         es die Marke nicht. Kennen wir es nicht, muss sie da sein. */
       const zeile = await store.getPlanBySubscription(d.id);
+      if (!zeile && !geld.unsere(d)) return;
       const room = raumCode(zeile?.room || d.metadata?.raum);
       if (room) {
         await store.savePlan({

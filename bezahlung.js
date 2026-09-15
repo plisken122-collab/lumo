@@ -20,6 +20,15 @@ const WEBHOOK_GEHEIMNIS = process.env.STRIPE_WEBHOOK_SECRET || "";
 export const bezahlungAn = Boolean(SCHLUESSEL);
 export const webhookAn = Boolean(WEBHOOK_GEHEIMNIS);
 
+/* Woran wir unsere eigenen Zahlungen wiedererkennen. Wichtig, wenn im
+   selben Stripe-Konto noch ein anderes Geschaeft laeuft: Jeder Webhook
+   bekommt die Meldungen des ganzen Kontos, nicht nur die eigenen. */
+export const MARKE = "diralo";
+
+/* Gehoert diese Meldung zu uns? Alles ohne unsere Marke geht uns nichts
+   an und wird stillschweigend uebergangen. */
+export const unsere = (objekt) => objekt?.metadata?.app === MARKE;
+
 /* Die Preis-Kennungen kommen aus der Umgebung, nicht aus dem Code: Sie
    unterscheiden sich zwischen Test- und Echtbetrieb, und ein Preis, der
    im Quelltext steht, wird irgendwann versehentlich mit veroeffentlicht. */
@@ -126,9 +135,14 @@ export async function kassengang({ preisId, raum, plan, herkunft, sprache }) {
     /* Tarif und Chat an beiden Stellen mitgeben. Die Meldung zum
        Kassengang bringt die Posten naemlich nicht mit, und spaetere
        Meldungen zum Abonnement kennen den Kassengang gar nicht mehr -
-       ohne diese zwei Zeilen muesste der Server den Tarif raten. */
-    subscription_data: { metadata: { raum, plan } },
-    metadata: { raum, plan },
+       ohne diese zwei Zeilen muesste der Server den Tarif raten.
+
+       app: Ein Stripe-Konto kann mehrere Geschaefte tragen, und jeder
+       Webhook bekommt die Meldungen *aller*. Ohne diese Marke koennte
+       eine fremde Zahlung, die zufaellig client_reference_id setzt, hier
+       eine Mitgliedschaft anlegen. */
+    subscription_data: { metadata: { raum, plan, app: MARKE } },
+    metadata: { raum, plan, app: MARKE },
   });
 }
 
