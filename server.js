@@ -228,7 +228,7 @@ app.get("/api/kasse-zurueck", async (req, res) => {
     const room = raumCode(sitzung.client_reference_id || sitzung.metadata?.raum);
     if (!room) return res.status(400).json({ error: "Kein Chat an der Zahlung" });
 
-    const gespeichert = await eintragen(sitzung, room);
+    const gespeichert = await eintragen(sitzung, room, { frischerSchluessel: true });
     res.json({ fertig: true, room, plan: gespeichert.plan, schluessel: gespeichert.schluessel || null });
   } catch (err) {
     console.error("  Rueckkehr von der Kasse:", err.message);
@@ -248,7 +248,7 @@ function planZuPreis(preisId) {
 
 /* Eine bezahlte Sitzung in die Datenbank schreiben. Legt beim ersten Mal
    den Verwaltungsschluessel an und gibt ihn genau dann einmal zurueck. */
-async function eintragen(sitzung, room) {
+async function eintragen(sitzung, room, { frischerSchluessel = false } = {}) {
   const vorher = await store.getPlan(room);
   /* Reihenfolge mit Bedacht: Die Metadaten haben wir selbst gesetzt, die
      Posten kommen nur mit, wenn wir sie ausdruecklich anfordern - und in
@@ -257,9 +257,19 @@ async function eintragen(sitzung, room) {
   const plan = (geld.KONTINGENT[sitzung.metadata?.plan] ? sitzung.metadata.plan : null)
     || planZuPreis(preisId) || vorher?.plan || "plus";
 
+  /* Der Verwaltungsschluessel laesst sich nur in dem Moment herausgeben,
+     in dem er entsteht - gespeichert wird bloss sein Abdruck.
+
+     Der Webhook ist aber schneller als der zurueckkehrende Browser. Legte
+     nur er den Schluessel an, waere er schon vergeben, bevor der Kaeufer
+     wieder da ist - und niemand kaeme je an ihn heran.
+
+     Deshalb: Kommt der Kaeufer mit der Kennung seines Kassengangs zurueck,
+     wird ein frischer Schluessel erzeugt und einmal ausgegeben. Diese
+     Kennung hat nur, wer gerade bezahlt hat. */
   let schluessel = null;
   let abdruck = vorher?.manage_key || null;
-  if (!abdruck) {
+  if (!abdruck || frischerSchluessel) {
     schluessel = geld.neuerVerwaltungsSchluessel();
     abdruck = geld.schluesselAbdruck(schluessel);
   }

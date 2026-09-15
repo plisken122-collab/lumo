@@ -344,16 +344,19 @@ const WORTE = {
         fehlt: "Indique primeiro o código da conversa.", schiefe: "Não resultou. Tente novamente.",
         gekauft: "Obrigado! A conversa <strong>{room}</strong> está agora no plano {plan}.",
         bewahren: "Guarde esta chave de gestão. Só a mostramos uma vez:",
+        ohneSchluessel: "Não foi possível gerar a chave de gestão. Contacte-nos em kontakt@diralo.app — a subscrição está activa.",
         abgebrochen: "Pagamento cancelado. Não foi cobrado nada." },
   de: { laeuft: "Einen Moment…", keineKasse: "Die Bezahlung ist noch nicht eingerichtet. Schau später noch einmal.",
         fehlt: "Trag zuerst den Chat-Code ein.", schiefe: "Hat nicht geklappt. Versuch es noch einmal.",
         gekauft: "Danke! Der Chat <strong>{room}</strong> läuft jetzt mit {plan}.",
         bewahren: "Heb diesen Verwaltungsschlüssel auf. Wir zeigen ihn nur dieses eine Mal:",
+        ohneSchluessel: "Der Verwaltungsschlüssel konnte nicht erzeugt werden. Melde dich bei kontakt@diralo.app — die Mitgliedschaft läuft.",
         abgebrochen: "Zahlung abgebrochen. Es wurde nichts berechnet." },
   en: { laeuft: "One moment…", keineKasse: "Payment is not set up yet. Please check back soon.",
         fehlt: "Enter the chat code first.", schiefe: "That didn't work. Please try again.",
         gekauft: "Thank you! Chat <strong>{room}</strong> is now on {plan}.",
         bewahren: "Keep this management key. We show it only once:",
+        ohneSchluessel: "The management key could not be created. Write to kontakt@diralo.app — the membership is active.",
         abgebrochen: "Payment cancelled. Nothing was charged." },
 };
 
@@ -536,6 +539,11 @@ document.querySelectorAll("[data-verwaltung]").forEach((b) => {
     let html = w().gekauft.replace("{room}", daten.room).replace("{plan}", daten.plan);
     if (daten.schluessel) {
       html += "<p>" + w().bewahren + '</p><div class="schluessel">' + daten.schluessel + "</div>";
+    } else {
+      /* Darf nicht vorkommen - aber ohne Schluessel kann niemand
+         kuendigen, deshalb hier lieber ein deutlicher Hinweis als ein
+         stiller gruener Kasten. */
+      html += "<p>" + w().ohneSchluessel + "</p>";
     }
     melden("gut", html);
     raumFelder().forEach((f) => { f.value = daten.room; });
