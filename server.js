@@ -101,8 +101,19 @@ app.post("/api/gate", (req, res) => {
 app.use((req, res, next) => {
   if (!gateOn || isOpen(req.path) || passedGate(req)) return next();
   if ((req.headers.accept || "").includes("text/html")) {
-    return res.status(401).sendFile(join(__dirname, "public", "gate.html"));
+    /* Bewusst 200 und nicht 401: Die Seite hier *ist* die Antwort, nicht
+       ein Fehler. Mit 401 hielten Pruefdienste - Stripe etwa, beim
+       Anlegen des Kontos - diralo.app fuer eine tote Adresse und wiesen
+       sie zurueck.
+
+       Die Sperre selbst aendert sich dadurch nicht: Ohne das richtige
+       Cookie kommt weiterhin nur diese Seite. Und gate.html traegt
+       noindex und meldet keinen Service Worker an - sie kann also weder
+       in einer Suchmaschine noch im Zwischenspeicher landen. */
+    return res.sendFile(join(__dirname, "public", "gate.html"));
   }
+  /* Aufrufe der Schnittstelle bleiben bei 401 - dort ist es wirklich
+     eine abgewiesene Anfrage, und der Browser soll das auch so lesen. */
   res.status(401).json({ error: "Zugang gesperrt" });
 });
 
