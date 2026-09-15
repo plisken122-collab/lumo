@@ -141,7 +141,7 @@ Ist das Kontingent alle, **kommen Nachrichten weiterhin an** — sie werden nur 
 ### Was in Stripe eingerichtet werden muss
 
 1. Konto anlegen und freischalten (Stripe fragt Personalien, Steuernummer und Bankverbindung ab).
-2. Unter **Tax** die Steuerberechnung einschalten. Ohne sie weist Stripe den Kassengang zurück, weil der Code `automatic_tax` anfordert. Für Verkäufe an Verbraucher in der EU ist das keine Kür, sondern Pflicht — die Mehrwertsteuer richtet sich nach dem Land des Käufers.
+2. **Stripe Tax bleibt aus.** Die Preise sind Bruttopreise mit 23 % portugiesischer Mehrwertsteuer darin — 4,99 € sind 4,99 €. Das ist zulässig, solange der Umsatz mit Verbrauchern in **anderen** EU-Ländern unter **10.000 € im Jahr** bleibt (EU-Geringfügigkeitsschwelle für digitale Leistungen). Wird die Schwelle überschritten, schuldest du die Steuer des Käuferlandes: Dann muss `automatic_tax: { enabled: true }` zurück in `bezahlung.js` (die Stelle ist dort kommentiert), Stripe Tax eingeschaltet und bei jedem Preis das Steuerverhalten auf **inklusive** gestellt werden. Achtung: Das Steuerverhalten eines Preises lässt sich bei Stripe nur **einmal** festlegen — dafür braucht es dann neue Preise.
 3. Zwei Produkte mit je zwei Preisen anlegen (Plus und Familie, monatlich und jährlich). Die Beträge müssen mit der Tabelle oben **und** mit `TARIFE` in `public/preise.html` übereinstimmen.
 4. Unter **Developers → Webhooks** einen Endpunkt auf `https://diralo.app/api/stripe` anlegen, mit den Ereignissen `checkout.session.completed`, `customer.subscription.updated` und `customer.subscription.deleted`.
 5. Im **Customer Portal** das Kündigen und den Rechnungsabruf einschalten.

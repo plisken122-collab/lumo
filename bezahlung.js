@@ -125,9 +125,15 @@ export async function kassengang({ preisId, raum, plan, herkunft, sprache }) {
     locale: ["de", "pt", "en"].includes(sprache) ? sprache : "auto",
     success_url: `${herkunft}/preise?erfolg={CHECKOUT_SESSION_ID}`,
     cancel_url: `${herkunft}/preise?abgebrochen=1`,
-    /* Steuer nach dem Land des Kaeufers. Muss in Stripe unter Tax
-       eingeschaltet sein, sonst weist Stripe den Aufruf zurueck. */
-    automatic_tax: { enabled: true },
+    /* Keine automatische Steuer. Die Preise sind Bruttopreise mit 23 %
+       portugiesischer Mehrwertsteuer darin - so steht es auch auf der
+       Preisseite: 4,99 Euro sind 4,99 Euro.
+
+       Das ist zulaessig, solange der Umsatz mit Verbrauchern in anderen
+       EU-Laendern unter 10.000 Euro im Jahr bleibt. Darueber schuldet
+       man die Steuer des Kaeuferlandes; dann muss hier wieder
+       automatic_tax rein und in Stripe unter Tax eingeschaltet werden.
+       Siehe README, Abschnitt Bezahlung mit Stripe. */
     /* Fuer die Rechnung und als einzige Spur, die der Kaeufer spaeter
        vorzeigen kann, wenn er den Verwaltungsschluessel verliert. */
     customer_creation: "always",
