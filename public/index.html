@@ -350,7 +350,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v40";
+const BUILD = "v41";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1015,7 +1015,10 @@ function einladungsLink(code) {
 
 async function einladen() {
   const link = einladungsLink(me.room);
-  const text = T("inviteText");
+  /* Bewusst immer auf Englisch: Die Einladung geht an jemanden, der eine
+     andere Sprache spricht - sonst braeuchte er Diralo nicht. Deutscher
+     Text waere fuer ihn genau das Hindernis, das die App abschaffen soll. */
+  const text = window.LUMO_T.en("inviteText");
   if (navigator.share) {
     try { await navigator.share({ text: text + " " + link }); return; } catch { /* abgebrochen */ }
   }

@@ -533,6 +533,15 @@ window.LUMO_T = (function () {
     has: (code) => Boolean(S[pick(code)]),
     set(code) { current = pick(code); return current; },
     get: () => current,
+    /* Fuer Texte, die an jemanden gehen, der unsere Sprache gerade nicht
+       spricht - die Einladung vor allem. Wer eingeladen wird, versteht
+       den Absender ja per Annahme nicht; Englisch ist der kleinste
+       gemeinsame Nenner, den beide zumindest erkennen. */
+    en(key, vars) {
+      let s = S.en[key] || key;
+      if (vars) for (const k in vars) s = s.replace("{" + k + "}", vars[k]);
+      return s;
+    },
     /* t("joined", {name: "João"}) */
     t(key, vars) {
       let s = (S[current] && S[current][key]) || S.en[key] || key;
