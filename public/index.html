@@ -468,7 +468,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v45";
+const BUILD = "v46";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -632,6 +632,11 @@ function start() {
     render(m);
   });
   socket.on("system", (ev) => {
+    /* Zu viele Chatwechsel in kurzer Zeit - die Bremse gegen das
+       Durchprobieren von Codes. Einen normalen Nutzer trifft das kaum;
+       wenn doch, soll er wissen, warum, statt vor einer stummen App zu
+       sitzen. */
+    if (ev && ev.type === "tooManyJoins") { showErr(T("tooManyJoins")); return; }
     const d = document.createElement("div");
     d.className = "system";
     d.textContent = typeof ev === "string" ? ev : T(ev.type, { name: ev.name });

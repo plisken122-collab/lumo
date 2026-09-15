@@ -13,6 +13,40 @@ import * as geld from "./bezahlung.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+
+/* --------------------------------------------------------------------
+   Schutzkopfzeilen
+
+   Kein fremdes Skript soll sich einschleusen lassen, die Seite soll in
+   keinem fremden Rahmen laufen (Clickjacking), und der Browser soll
+   nicht raten, was eine Datei ist. Die App laedt nur von sich selbst
+   und von Google Fonts - mehr erlaubt die Regel nicht.
+
+   'unsafe-inline' bleibt noetig, weil Stil und Skript in der Seite
+   stehen. Ein XSS-Weg entstuende dadurch nur, wenn irgendwo fremder
+   Text als HTML landete - genau das tut die App nirgends, jede
+   Nachricht geht durch textContent. Die Regel ist der Guertel zum
+   Hosentraeger.
+-------------------------------------------------------------------- */
+app.disable("x-powered-by");   // verraet sonst "Express"
+app.use((_req, res, next) => {
+  res.setHeader("Content-Security-Policy", [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src https://fonts.gstatic.com",
+    "img-src 'self' data:",
+    "media-src 'self'",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; "));
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  next();
+});
 const http = createServer(app);
 const io = new Server(http);
 
@@ -1064,9 +1098,18 @@ io.use((socket, next) => {
   next(new Error("Zugang gesperrt"));
 });
 
+/* Die echte Adresse hinter dem Proxy von Render. socket.handshake.address
+   waere nur der Proxy - alle Besucher haetten dieselbe. */
+function sockAdresse(socket) {
+  const vor = socket.handshake.headers["x-forwarded-for"];
+  if (vor) return String(vor).split(",")[0].trim();
+  return socket.handshake.address || "?";
+}
+
 io.on("connection", (socket) => {
   let room = null;
   let me = { name: "Gast", lang: "de", device: null };
+  const ip = sockAdresse(socket);
 
   socket.on("join", async ({ roomCode, name, lang, device, build, speech }) => {
     /* Zur Fehlersuche: Welche Fassung hat das Geraet geladen, und kann
@@ -1081,7 +1124,19 @@ io.on("connection", (socket) => {
        Einladungslink - muss den alten verlassen. Sonst bekaeme er die
        Nachrichten beider Raeume. */
     const vorher = room;
-    room = String(roomCode || "lobby").trim().toLowerCase().slice(0, 60);
+    const gewuenscht = String(roomCode || "lobby").trim().toLowerCase().slice(0, 60);
+
+    /* Chat-Codes durchprobieren unterbinden. Der Code ist das einzige
+       Geheimnis; wer einen Treffer landet, bekaeme sofort den ganzen
+       Verlauf. Ein neuer Chat je Beitritt ist normal - hundert in einer
+       Minute ist ein Woerterbuchangriff. Nur echte Wechsel zaehlen,
+       damit ein Reconnect in denselben Chat nichts verbraucht. */
+    if (gewuenscht !== vorher && !take(`join:${ip}`, 40, 5 * 60 * 1000)) {
+      socket.emit("system", { type: "tooManyJoins" });
+      return;
+    }
+
+    room = gewuenscht;
     if (vorher !== room) zaehle("eingetreten");
     if (vorher && vorher !== room) {
       socket.leave(vorher);
