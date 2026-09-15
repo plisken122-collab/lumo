@@ -124,10 +124,61 @@ Tippe eine Nachricht an — wie bei WhatsApp. Ein Menü klappt von unten auf mit
 
 Eine Frist wie bei WhatsApp, nach der sich nichts mehr für alle löschen lässt, gibt es bewusst nicht.
 
+## Bezahlung mit Stripe
+
+Eine Mitgliedschaft gehört zu **einem Chat**, nicht zu einem Gerät oder einer Person. Wer bezahlt, schaltet den Chat für alle darin frei. Das passt zu einer App ohne Konten — und der Chat-Code ist ohnehin schon der Schlüssel zu allem, was drin steht.
+
+Gezählt werden **Übersetzungen**, nicht Nachrichten. Eine Nachricht in eine Sprache ist eine Übersetzung; in einer Gruppe mit drei gelesenen Sprachen sind es zwei. Der Zähler liest aus `usage_log` — es gibt also keine zweite Zahl, die aus dem Tritt geraten kann. Er beginnt am Ersten jedes Monats von vorn.
+
+| Tarif | Preis | Übersetzungen im Monat |
+|---|---|---|
+| Frei | 0 € | 200 |
+| Plus | 4,99 € / 49,90 € im Jahr | 1500 |
+| Familie | 9,99 € / 99,90 € im Jahr | 5000 |
+
+Ist das Kontingent alle, **kommen Nachrichten weiterhin an** — sie werden nur im Original angezeigt. Zustellung hängt nie am Geld.
+
+### Was in Stripe eingerichtet werden muss
+
+1. Konto anlegen und freischalten (Stripe fragt Personalien, Steuernummer und Bankverbindung ab).
+2. Unter **Tax** die Steuerberechnung einschalten. Ohne sie weist Stripe den Kassengang zurück, weil der Code `automatic_tax` anfordert. Für Verkäufe an Verbraucher in der EU ist das keine Kür, sondern Pflicht — die Mehrwertsteuer richtet sich nach dem Land des Käufers.
+3. Zwei Produkte mit je zwei Preisen anlegen (Plus und Familie, monatlich und jährlich). Die Beträge müssen mit der Tabelle oben **und** mit `TARIFE` in `public/preise.html` übereinstimmen.
+4. Unter **Developers → Webhooks** einen Endpunkt auf `https://diralo.app/api/stripe` anlegen, mit den Ereignissen `checkout.session.completed`, `customer.subscription.updated` und `customer.subscription.deleted`.
+5. Im **Customer Portal** das Kündigen und den Rechnungsabruf einschalten.
+
+### Umgebungsvariablen
+
+| Variable | Wofür |
+|---|---|
+| `STRIPE_SECRET_KEY` | Fehlt sie, ist der ganze Bereich aus und die Preisseite zeigt statt der Knöpfe einen Hinweis |
+| `STRIPE_WEBHOOK_SECRET` | Ohne sie nimmt der Webhook nichts an |
+| `STRIPE_PRICE_PLUS_MONAT`, `STRIPE_PRICE_PLUS_JAHR` | Preis-Kennungen aus Stripe (`price_…`) |
+| `STRIPE_PRICE_FAMILIE_MONAT`, `STRIPE_PRICE_FAMILIE_JAHR` | dieselben für Familie |
+| `PUBLIC_ORIGIN` | Wohin Stripe nach der Zahlung zurückführt, z. B. `https://diralo.app` |
+| `KONTINGENT_FREI`, `KONTINGENT_PLUS`, `KONTINGENT_FAMILIE` | Grenzen ändern, ohne den Code anzufassen |
+
+Ein Preis, der in Stripe fehlt, lässt den zugehörigen Knopf gar nicht erst erscheinen — die Preisseite fragt vorher bei `/api/plan` nach, was wirklich hinterlegt ist. Was der Server sieht, steht unter `/health` im Feld `geld`.
+
+### Verwaltungsschlüssel
+
+Nach der Zahlung bekommt der Zahler einen Schlüssel der Form `xxxxx-xxxxx-xxxxx-xxxxx` **einmal** zu sehen. Nur damit lässt sich kündigen oder die Karte wechseln. Bei uns liegt allein der SHA-256-Abdruck — geht die Datenbank verloren, kann trotzdem niemand fremde Abonnements auflösen. Er verhindert außerdem, dass jemand anderes aus demselben Chat die Mitgliedschaft beendet.
+
+Geht der Schlüssel verloren, hilft nur Stripe selbst: Das Abonnement steht dort unter der E-Mail-Adresse des Zahlers.
+
+### Warum ohne die Stripe-Bibliothek
+
+Gebraucht werden drei Aufrufe und eine Unterschriftsprüfung — das sind ein paar Dutzend Zeilen in `bezahlung.js` gegen ein Paket mit hunderten Abhängigkeiten. Auf dem Weg, auf dem das Geld läuft, ist weniger fremder Code das bessere Geschäft.
+
+Der Webhook läuft am JSON-Leser vorbei (`express.raw`), weil seine Unterschrift für den **Rohtext** gilt. Sobald ein Parser ihn einmal zerlegt und wieder zusammensetzt, stimmt sie nicht mehr.
+
+---
+
 ## Was noch fehlt für den Produktivbetrieb
 
 - **Login.** Aktuell reicht der Chat-Code. Wer ihn kennt, liest mit.
 - **Bilder.** Brauchen einen Objektspeicher, siehe oben.
+- **Stripe scharfschalten.** Der Code steht, die Schlüssel fehlen — siehe [Bezahlung mit Stripe](#bezahlung-mit-stripe). Solange `STRIPE_SECRET_KEY` fehlt, läuft die App genau wie vorher.
+- **Auftragsverarbeitungsverträge** mit Anthropic und Render. Die Datenschutzerklärung sagt, dass es sie gibt.
 
 **Ende-zu-Ende-Verschlüsselung wird es nicht geben.** Sie schließt sich mit der Übersetzung auf dem Server aus: Entweder der Server kann den Text lesen, oder er kann ihn nicht übersetzen. Das ist keine offene Aufgabe, sondern eine Entscheidung — und der Hinweis auf der Startseite sagt es den Leuten auch offen.
 

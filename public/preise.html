@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E4E5E9">
+<meta name="robots" content="noindex, nofollow">
+<title>Diralo — Preços</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E;
+    --line:#D2D4DB; --mine:#384C9E; --danger:#9B2C25;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--canvas); color:var(--ink);
+    font-family:'DM Sans', system-ui, sans-serif; font-size:16px; line-height:1.6;
+  }
+  .wrap { max-width:680px; margin:0 auto; padding:24px 16px 60px; }
+  .brandline { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .brandline img { display:block; height:34px; width:auto; }
+  .brandline span { font-size:26px; font-weight:500; }
+  a { color:var(--mine); }
+  .tabs { display:flex; gap:6px; margin:18px 0 20px; }
+  .tabs button {
+    font-family:inherit; font-size:14px; padding:8px 14px; border:1px solid var(--line);
+    background:var(--surface); color:var(--muted); border-radius:9px; cursor:pointer;
+  }
+  .tabs button[aria-selected="true"] { background:var(--mine); border-color:var(--mine); color:#fff; }
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:16px; padding:20px 22px; margin-bottom:16px;
+  }
+  h1 { font-size:22px; font-weight:500; margin:0 0 4px; }
+  h2 { font-size:17px; font-weight:500; margin:26px 0 8px; }
+  h2:first-of-type { margin-top:16px; }
+  p { margin:0 0 12px; }
+  ul { margin:0 0 12px; padding-left:20px; }
+  li { margin-bottom:6px; }
+  .small { font-size:13.5px; color:var(--muted); }
+  .merk { background:#F1F2F5; border-left:3px solid var(--mine); padding:11px 14px; border-radius:10px; margin:0 0 14px; }
+
+  /* Der Umschalter Monat/Jahr. Zwei Knoepfe in einer Huelse. */
+  .zeitraum { display:inline-flex; gap:2px; background:#F1F2F5; border-radius:11px; padding:3px; margin:0 0 16px; }
+  .zeitraum button {
+    font-family:inherit; font-size:14px; padding:7px 15px; border:none;
+    background:transparent; color:var(--muted); border-radius:9px; cursor:pointer;
+  }
+  .zeitraum button[aria-selected="true"] { background:var(--surface); color:var(--ink); font-weight:500; }
+
+  .tarif { border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin:0 0 12px; }
+  .tarif.hebt { border-color:var(--mine); border-width:2px; padding:15px 17px; }
+  .tarif h3 { font-size:16px; font-weight:500; margin:0 0 2px; display:flex; align-items:baseline; gap:8px; }
+  .tarif .fahne { font-size:11.5px; font-weight:400; color:#fff; background:var(--mine); border-radius:20px; padding:2px 9px; }
+  .preis { font-size:27px; font-weight:500; margin:6px 0 2px; }
+  .preis .je { font-size:14px; font-weight:400; color:var(--muted); }
+  .tarif ul { margin:10px 0 14px; }
+  .kaufen {
+    font-family:inherit; width:100%; font-size:15px; font-weight:500; padding:12px;
+    border:none; border-radius:11px; background:var(--mine); color:#fff; cursor:pointer;
+  }
+  .kaufen:disabled { background:var(--line); color:var(--muted); cursor:default; }
+  .kaufen.leer { background:var(--surface); color:var(--mine); border:1px solid var(--line); }
+
+  table { width:100%; border-collapse:collapse; margin:0 0 14px; font-size:14.5px; }
+  th, td { text-align:left; padding:7px 10px 7px 0; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:500; }
+
+  input {
+    width:100%; font-family:inherit; font-size:16px; color:var(--ink);
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px;
+  }
+  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 5px; }
+  .meldung { border-radius:10px; padding:11px 14px; margin:0 0 14px; font-size:14.5px; }
+  .meldung.gut { background:#E8F0E6; border-left:3px solid #3E6B33; }
+  .meldung.schlecht { background:#F6E9E8; border-left:3px solid var(--danger); }
+  .schluessel {
+    font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:17px;
+    background:var(--canvas); border-radius:9px; padding:10px 12px; margin:8px 0;
+    word-break:break-all; user-select:all;
+  }
+  .hide { display:none !important; }
+  .back { display:inline-block; margin-top:8px; font-size:14px; }
+  @media (max-width:460px) {
+    table, tbody, tr, td, th { display:block; }
+    th { padding-bottom:0; border:none; }
+    td { border-bottom:1px solid var(--line); padding-bottom:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brandline">
+    <img src="/brand/logo-mark.svg" alt=""><span>Diralo</span>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-lang="pt" aria-selected="true">Português</button>
+    <button role="tab" data-lang="de" aria-selected="false">Deutsch</button>
+    <button role="tab" data-lang="en" aria-selected="false">English</button>
+  </div>
+
+  <!-- Meldungen nach der Rueckkehr von der Kasse. Steht ueber allem,
+       weil hier der Verwaltungsschluessel erscheint. -->
+  <div id="rueckmeldung"></div>
+
+  <!-- ============================ Português ============================ -->
+  <section data-lang="pt">
+    <div class="card">
+      <h1>Preços</h1>
+      <p class="small">Preços com IVA incluído. Sem contrato de fidelização — cancela quando quiser.</p>
+
+      <div class="merk">
+        <strong>Quem convida, paga.</strong> Uma subscrição pertence a uma conversa, não a uma pessoa. Quem paga abre a conversa para toda a gente que lá está — a sua família no estrangeiro não precisa de pagar nada, nem sequer de criar conta.
+      </div>
+
+      <div class="zeitraum" role="tablist">
+        <button role="tab" data-zeit="monat" aria-selected="true">Mensal</button>
+        <button role="tab" data-zeit="jahr" aria-selected="false">Anual · 2 meses grátis</button>
+      </div>
+
+      <div class="tarif">
+        <h3>Grátis</h3>
+        <div class="preis">0 €</div>
+        <ul>
+          <li><strong>200 traduções por mês</strong> em cada conversa</li>
+          <li>Todas as línguas, sem limite de pessoas</li>
+          <li>Sem conta, sem número de telefone</li>
+          <li>Esgotado o limite, as mensagens continuam a chegar — no original</li>
+        </ul>
+        <button class="kaufen leer" disabled>É o que já tem</button>
+      </div>
+
+      <div class="tarif hebt">
+        <h3>Plus <span class="fahne">mais escolhido</span></h3>
+        <div class="preis" data-preis="plus">4,99 € <span class="je">/ mês</span></div>
+        <ul>
+          <li><strong>1500 traduções por mês</strong> na conversa</li>
+          <li>Vale para toda a gente na conversa</li>
+          <li>Cancelável a qualquer momento</li>
+        </ul>
+        <button class="kaufen" data-plan="plus">Escolher Plus</button>
+      </div>
+
+      <div class="tarif">
+        <h3>Família</h3>
+        <div class="preis" data-preis="familie">9,99 € <span class="je">/ mês</span></div>
+        <ul>
+          <li><strong>5000 traduções por mês</strong> na conversa</li>
+          <li>Para grupos grandes e conversas com muitas línguas</li>
+          <li>Cancelável a qualquer momento</li>
+        </ul>
+        <button class="kaufen" data-plan="familie">Escolher Família</button>
+      </div>
+
+      <h2>Como contamos</h2>
+      <p>Contamos <strong>traduções</strong>, não mensagens. Numa conversa entre duas pessoas com línguas diferentes, uma mensagem dá uma tradução. Num grupo em que se leem três línguas, a mesma mensagem dá duas traduções.</p>
+      <p>O que não conta: mensagens na sua própria língua, mensagens já traduzidas que voltam a ser mostradas, e mensagens só com emojis ou números.</p>
+      <p>O contador reinicia no dia 1 de cada mês.</p>
+
+      <h2>Gerir a subscrição</h2>
+      <p>Depois do pagamento recebe uma <strong>chave de gestão</strong>. Guarde-a: só com ela é possível cancelar, mudar de cartão ou obter faturas. É o que impede que outra pessoa da conversa cancele a sua subscrição.</p>
+      <div data-verwalten>
+        <label>Código da conversa</label>
+        <input data-feld="room" autocomplete="off" spellcheck="false">
+        <label>Chave de gestão</label>
+        <input data-feld="schluessel" autocomplete="off" spellcheck="false" placeholder="xxxxx-xxxxx-xxxxx-xxxxx">
+        <button class="kaufen leer" data-verwaltung style="margin-top:14px">Abrir gestão</button>
+      </div>
+
+      <p class="small">O pagamento é processado pela Stripe. Nunca vemos os dados do seu cartão. Aplicam-se as <a href="/agb">Condições de Utilização</a>; sobre o prazo de 14 dias, ver <a href="/widerruf">Direito de livre resolução</a>.</p>
+
+      <a class="back" href="/">← Voltar ao Diralo</a>
+    </div>
+  </section>
+
+  <!-- ============================= Deutsch ============================= -->
+  <section data-lang="de" class="hide">
+    <div class="card">
+      <h1>Preise</h1>
+      <p class="small">Alle Preise inklusive Mehrwertsteuer. Keine Mindestlaufzeit — jederzeit kündbar.</p>
+
+      <div class="merk">
+        <strong>Wer einlädt, zahlt.</strong> Eine Mitgliedschaft gehört zu einem Chat, nicht zu einer Person. Wer bezahlt, schaltet den Chat für alle darin frei — deine Familie im Ausland zahlt nichts und braucht nicht einmal ein Konto.
+      </div>
+
+      <div class="zeitraum" role="tablist">
+        <button role="tab" data-zeit="monat" aria-selected="true">Monatlich</button>
+        <button role="tab" data-zeit="jahr" aria-selected="false">Jährlich · 2 Monate geschenkt</button>
+      </div>
+
+      <div class="tarif">
+        <h3>Frei</h3>
+        <div class="preis">0 €</div>
+        <ul>
+          <li><strong>200 Übersetzungen im Monat</strong> je Chat</li>
+          <li>Alle Sprachen, beliebig viele Leute</li>
+          <li>Kein Konto, keine Telefonnummer</li>
+          <li>Ist das Kontingent alle, kommen Nachrichten weiter an — im Original</li>
+        </ul>
+        <button class="kaufen leer" disabled>Hast du schon</button>
+      </div>
+
+      <div class="tarif hebt">
+        <h3>Plus <span class="fahne">meistgewählt</span></h3>
+        <div class="preis" data-preis="plus">4,99 € <span class="je">/ Monat</span></div>
+        <ul>
+          <li><strong>1500 Übersetzungen im Monat</strong> im Chat</li>
+          <li>Gilt für alle im Chat</li>
+          <li>Jederzeit kündbar</li>
+        </ul>
+        <button class="kaufen" data-plan="plus">Plus nehmen</button>
+      </div>
+
+      <div class="tarif">
+        <h3>Familie</h3>
+        <div class="preis" data-preis="familie">9,99 € <span class="je">/ Monat</span></div>
+        <ul>
+          <li><strong>5000 Übersetzungen im Monat</strong> im Chat</li>
+          <li>Für große Gruppen und Chats mit vielen Sprachen</li>
+          <li>Jederzeit kündbar</li>
+        </ul>
+        <button class="kaufen" data-plan="familie">Familie nehmen</button>
+      </div>
+
+      <h2>Wie wir zählen</h2>
+      <p>Gezählt werden <strong>Übersetzungen</strong>, nicht Nachrichten. In einem Chat zu zweit mit zwei Sprachen ergibt eine Nachricht eine Übersetzung. In einer Gruppe, in der drei Sprachen gelesen werden, ergibt dieselbe Nachricht zwei Übersetzungen.</p>
+      <p>Nicht gezählt werden: Nachrichten in deiner eigenen Sprache, bereits übersetzte Nachrichten, die noch einmal angezeigt werden, und Nachrichten aus reinen Emojis oder Zahlen.</p>
+      <p>Der Zähler beginnt am Ersten jedes Monats von vorn.</p>
+
+      <h2>Mitgliedschaft verwalten</h2>
+      <p>Nach der Zahlung bekommst du einen <strong>Verwaltungsschlüssel</strong>. Heb ihn auf: Nur damit lässt sich kündigen, die Karte wechseln oder eine Rechnung holen. Er verhindert, dass jemand anderes aus dem Chat deine Mitgliedschaft beendet.</p>
+      <div data-verwalten>
+        <label>Chat-Code</label>
+        <input data-feld="room" autocomplete="off" spellcheck="false">
+        <label>Verwaltungsschlüssel</label>
+        <input data-feld="schluessel" autocomplete="off" spellcheck="false" placeholder="xxxxx-xxxxx-xxxxx-xxxxx">
+        <button class="kaufen leer" data-verwaltung style="margin-top:14px">Verwaltung öffnen</button>
+      </div>
+
+      <p class="small">Die Zahlung wickelt Stripe ab. Deine Kartendaten sehen wir nie. Es gelten die <a href="/agb">Nutzungsbedingungen</a>; zur Frist von 14 Tagen siehe <a href="/widerruf">Widerrufsbelehrung</a>.</p>
+
+      <a class="back" href="/">← Zurück zu Diralo</a>
+    </div>
+  </section>
+
+  <!-- ============================= English ============================= -->
+  <section data-lang="en" class="hide">
+    <div class="card">
+      <h1>Pricing</h1>
+      <p class="small">All prices include VAT. No minimum term — cancel any time.</p>
+
+      <div class="merk">
+        <strong>Whoever invites, pays.</strong> A membership belongs to a chat, not to a person. Paying unlocks that chat for everyone in it — your family abroad pays nothing and doesn't even need an account.
+      </div>
+
+      <div class="zeitraum" role="tablist">
+        <button role="tab" data-zeit="monat" aria-selected="true">Monthly</button>
+        <button role="tab" data-zeit="jahr" aria-selected="false">Yearly · 2 months free</button>
+      </div>
+
+      <div class="tarif">
+        <h3>Free</h3>
+        <div class="preis">€0</div>
+        <ul>
+          <li><strong>200 translations a month</strong> per chat</li>
+          <li>Every language, any number of people</li>
+          <li>No account, no phone number</li>
+          <li>Once it runs out, messages still arrive — in the original</li>
+        </ul>
+        <button class="kaufen leer" disabled>You have this</button>
+      </div>
+
+      <div class="tarif hebt">
+        <h3>Plus <span class="fahne">most chosen</span></h3>
+        <div class="preis" data-preis="plus">€4.99 <span class="je">/ month</span></div>
+        <ul>
+          <li><strong>1500 translations a month</strong> in the chat</li>
+          <li>Covers everyone in the chat</li>
+          <li>Cancel any time</li>
+        </ul>
+        <button class="kaufen" data-plan="plus">Get Plus</button>
+      </div>
+
+      <div class="tarif">
+        <h3>Family</h3>
+        <div class="preis" data-preis="familie">€9.99 <span class="je">/ month</span></div>
+        <ul>
+          <li><strong>5000 translations a month</strong> in the chat</li>
+          <li>For large groups and chats with many languages</li>
+          <li>Cancel any time</li>
+        </ul>
+        <button class="kaufen" data-plan="familie">Get Family</button>
+      </div>
+
+      <h2>How we count</h2>
+      <p>We count <strong>translations</strong>, not messages. In a two-person chat with two languages, one message is one translation. In a group where three languages are read, the same message is two translations.</p>
+      <p>Not counted: messages in your own language, already-translated messages shown again, and messages that are only emoji or numbers.</p>
+      <p>The counter starts again on the first of each month.</p>
+
+      <h2>Manage your membership</h2>
+      <p>After payment you get a <strong>management key</strong>. Keep it: it is the only way to cancel, change card or get invoices. It is what stops someone else in the chat from ending your membership.</p>
+      <div data-verwalten>
+        <label>Chat code</label>
+        <input data-feld="room" autocomplete="off" spellcheck="false">
+        <label>Management key</label>
+        <input data-feld="schluessel" autocomplete="off" spellcheck="false" placeholder="xxxxx-xxxxx-xxxxx-xxxxx">
+        <button class="kaufen leer" data-verwaltung style="margin-top:14px">Open management</button>
+      </div>
+
+      <p class="small">Payment is handled by Stripe. We never see your card details. Our <a href="/agb">Terms of Use</a> apply; on the 14-day period see <a href="/widerruf">Right of withdrawal</a>.</p>
+
+      <a class="back" href="/">← Back to Diralo</a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------------------------------------------------------------------
+   Preise
+
+   Die Zahlen hier sind reine Anzeige. Verrechnet wird immer der Preis,
+   der in Stripe hinter der Preis-Kennung steht. Aendert sich dort etwas,
+   muss es hier mitwandern - sonst steht auf der Seite eine andere Zahl
+   als auf der Rechnung, und das ist nicht nur peinlich, sondern falsch.
+--------------------------------------------------------------------- */
+const TARIFE = {
+  plus:    { monat: "4,99 €",  jahr: "49,90 €",  monatEn: "€4.99", jahrEn: "€49.90" },
+  familie: { monat: "9,99 €",  jahr: "99,90 €",  monatEn: "€9.99", jahrEn: "€99.90" },
+};
+
+const JE = {
+  pt: { monat: "/ mês", jahr: "/ ano" },
+  de: { monat: "/ Monat", jahr: "/ Jahr" },
+  en: { monat: "/ month", jahr: "/ year" },
+};
+
+const WORTE = {
+  pt: { laeuft: "Um momento…", keineKasse: "O pagamento ainda não está disponível. Volte em breve.",
+        fehlt: "Indique primeiro o código da conversa.", schiefe: "Não resultou. Tente novamente.",
+        gekauft: "Obrigado! A conversa <strong>{room}</strong> está agora no plano {plan}.",
+        bewahren: "Guarde esta chave de gestão. Só a mostramos uma vez:",
+        abgebrochen: "Pagamento cancelado. Não foi cobrado nada." },
+  de: { laeuft: "Einen Moment…", keineKasse: "Die Bezahlung ist noch nicht eingerichtet. Schau später noch einmal.",
+        fehlt: "Trag zuerst den Chat-Code ein.", schiefe: "Hat nicht geklappt. Versuch es noch einmal.",
+        gekauft: "Danke! Der Chat <strong>{room}</strong> läuft jetzt mit {plan}.",
+        bewahren: "Heb diesen Verwaltungsschlüssel auf. Wir zeigen ihn nur dieses eine Mal:",
+        abgebrochen: "Zahlung abgebrochen. Es wurde nichts berechnet." },
+  en: { laeuft: "One moment…", keineKasse: "Payment is not set up yet. Please check back soon.",
+        fehlt: "Enter the chat code first.", schiefe: "That didn't work. Please try again.",
+        gekauft: "Thank you! Chat <strong>{room}</strong> is now on {plan}.",
+        bewahren: "Keep this management key. We show it only once:",
+        abgebrochen: "Payment cancelled. Nothing was charged." },
+};
+
+let sprache = "pt";
+let zeitraum = "monat";
+
+/* --------------------------- Sprache und Zeitraum --------------------------- */
+const knoepfe = [...document.querySelectorAll(".tabs button")];
+const teile = [...document.querySelectorAll("section[data-lang]")];
+
+function zeige(code) {
+  sprache = code;
+  knoepfe.forEach((b) => b.setAttribute("aria-selected", b.dataset.lang === code ? "true" : "false"));
+  teile.forEach((s) => s.classList.toggle("hide", s.dataset.lang !== code));
+  document.documentElement.lang = code;
+  preiseSchreiben();
+}
+knoepfe.forEach((b) => { b.onclick = () => zeige(b.dataset.lang); });
+
+function preiseSchreiben() {
+  document.querySelectorAll("section[data-lang]").forEach((teil) => {
+    const l = teil.dataset.lang;
+    teil.querySelectorAll("[data-zeit]").forEach((b) =>
+      b.setAttribute("aria-selected", b.dataset.zeit === zeitraum ? "true" : "false"));
+    teil.querySelectorAll("[data-preis]").forEach((el) => {
+      const t = TARIFE[el.dataset.preis];
+      const zahl = l === "en" ? t[zeitraum === "jahr" ? "jahrEn" : "monatEn"] : t[zeitraum];
+      el.innerHTML = zahl + ' <span class="je">' + JE[l][zeitraum] + "</span>";
+    });
+  });
+}
+
+document.querySelectorAll("[data-zeit]").forEach((b) => {
+  b.onclick = () => { zeitraum = b.dataset.zeit; preiseSchreiben(); knoepfeAnpassen(); };
+});
+
+/* ------------------------- Chat-Code vorbelegen -------------------------
+   Die Preisseite liegt auf derselben Herkunft wie die App und kann
+   deshalb sehen, in welchem Chat jemand zuletzt war. Das erspart das
+   Abtippen - geaendert werden kann es weiterhin von Hand. */
+function gemerkterRaum() {
+  try {
+    const s = JSON.parse(localStorage.getItem("diralo") || "{}");
+    return typeof s.room === "string" ? s.room : "";
+  } catch { return ""; }
+}
+
+const raumFelder = () => [...document.querySelectorAll('[data-feld="room"]')];
+raumFelder().forEach((f) => { f.value = gemerkterRaum(); });
+
+/* Was in einem Feld steht, in alle anderen uebernehmen - sonst tippt man
+   es beim Sprachwechsel noch einmal. */
+document.querySelectorAll("[data-feld]").forEach((f) => {
+  f.oninput = () => {
+    document.querySelectorAll('[data-feld="' + f.dataset.feld + '"]').forEach((a) => {
+      if (a !== f) a.value = f.value;
+    });
+  };
+});
+
+/* --------------------- Was es wirklich zu kaufen gibt ---------------------
+   Solange in Stripe kein Preis hinterlegt ist, darf hier kein Knopf
+   stehen, der beim Druecken absagt. Dasselbe gilt fuer den Tarif, den
+   dieser Chat schon hat. */
+let angebot = null;
+
+async function angebotHolen() {
+  const room = (raumFelder()[0]?.value || gemerkterRaum() || "lobby").trim();
+  try {
+    const a = await fetch("/api/plan?room=" + encodeURIComponent(room));
+    if (!a.ok) return;
+    angebot = await a.json();
+  } catch { return; }
+  knoepfeAnpassen();
+}
+
+function knoepfeAnpassen() {
+  if (!angebot) return;
+  const aus = !angebot.bezahlungAn;
+
+  document.querySelectorAll("[data-plan]").forEach((b) => {
+    const plan = b.dataset.plan;
+    const gibtEs = Boolean(angebot.tarife?.[plan]?.[zeitraum]);
+    const schonDrin = angebot.bezahlt && angebot.plan === plan;
+    b.disabled = aus || !gibtEs || schonDrin;
+    b.dataset.grund = aus ? "aus" : (!gibtEs ? "fehlt" : (schonDrin ? "drin" : ""));
+  });
+
+  /* Den Zeitraum-Umschalter genauso: Gibt es keinen Jahrespreis, soll
+     man nicht darauf umschalten koennen. */
+  document.querySelectorAll("[data-zeit]").forEach((b) => {
+    const irgendwo = Object.values(angebot.tarife || {}).some((t) => t[b.dataset.zeit]);
+    b.disabled = aus || !irgendwo;
+    b.style.opacity = b.disabled ? ".45" : "";
+  });
+
+  if (aus) melden("schlecht", WORTE[sprache].keineKasse);
+}
+
+/* ------------------------------ Meldungen ------------------------------ */
+const melden = (art, html) => {
+  document.getElementById("rueckmeldung").innerHTML =
+    '<div class="meldung ' + art + '">' + html + "</div>";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+/* ------------------------------ Kaufen ------------------------------ */
+async function kaufen(plan, knopf) {
+  const room = (raumFelder()[0]?.value || gemerkterRaum() || "").trim();
+  const w = WORTE[sprache];
+  if (!room) { melden("schlecht", w.fehlt); return; }
+
+  const alt = knopf.textContent;
+  knopf.disabled = true;
+  knopf.textContent = w.laeuft;
+  try {
+    const antwort = await fetch("/api/kasse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ room, plan, zeitraum, sprache }),
+    });
+    const daten = await antwort.json().catch(() => ({}));
+    if (antwort.status === 503) { melden("schlecht", w.keineKasse); return; }
+    if (!antwort.ok || !daten.url) { melden("schlecht", daten.error || w.schiefe); return; }
+    location.href = daten.url;
+  } catch {
+    melden("schlecht", w.schiefe);
+  } finally {
+    knopf.disabled = false;
+    knopf.textContent = alt;
+  }
+}
+document.querySelectorAll("[data-plan]").forEach((b) => { b.onclick = () => kaufen(b.dataset.plan, b); });
+
+/* --------------------------- Verwaltung oeffnen --------------------------- */
+document.querySelectorAll("[data-verwaltung]").forEach((b) => {
+  b.onclick = async () => {
+    const w = WORTE[sprache];
+    const room = (raumFelder()[0]?.value || "").trim();
+    const schluessel = (document.querySelector('[data-feld="schluessel"]')?.value || "").trim();
+    if (!room || !schluessel) { melden("schlecht", w.fehlt); return; }
+    b.disabled = true;
+    try {
+      const antwort = await fetch("/api/verwalten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ room, schluessel }),
+      });
+      const daten = await antwort.json().catch(() => ({}));
+      if (!antwort.ok || !daten.url) { melden("schlecht", daten.error || w.schiefe); return; }
+      location.href = daten.url;
+    } catch {
+      melden("schlecht", w.schiefe);
+    } finally {
+      b.disabled = false;
+    }
+  };
+});
+
+/* ------------------------ Rueckkehr von der Kasse ------------------------
+   Stripe haengt die Kennung des Kassengangs an. Damit holen wir uns den
+   Verwaltungsschluessel - einmal, und nur direkt nach der Zahlung. */
+(async function rueckkehr() {
+  const p = new URLSearchParams(location.search);
+  const erfolg = p.get("erfolg");
+  const w = () => WORTE[sprache];
+
+  if (p.get("abgebrochen")) {
+    melden("schlecht", w().abgebrochen);
+    history.replaceState({}, "", location.pathname);
+    return;
+  }
+  if (!erfolg) return;
+
+  try {
+    const antwort = await fetch("/api/kasse-zurueck?id=" + encodeURIComponent(erfolg));
+    const daten = await antwort.json().catch(() => ({}));
+    if (!antwort.ok || !daten.fertig) { melden("schlecht", daten.error || w().schiefe); return; }
+
+    let html = w().gekauft.replace("{room}", daten.room).replace("{plan}", daten.plan);
+    if (daten.schluessel) {
+      html += "<p>" + w().bewahren + '</p><div class="schluessel">' + daten.schluessel + "</div>";
+    }
+    melden("gut", html);
+    raumFelder().forEach((f) => { f.value = daten.room; });
+  } catch {
+    melden("schlecht", w().schiefe);
+  } finally {
+    /* Die Kennung aus der Adresszeile nehmen: Sie gehoert nicht in den
+       Verlauf und nicht in einen weitergeschickten Link. */
+    history.replaceState({}, "", location.pathname);
+  }
+})();
+
+/* Browsersprache vorwaehlen; Portugiesisch bleibt die Voreinstellung. */
+const browser = (navigator.language || "pt").slice(0, 2).toLowerCase();
+zeige(browser === "de" || browser === "en" ? browser : "pt");
+
+angebotHolen();
+</script>
+</body>
+</html>

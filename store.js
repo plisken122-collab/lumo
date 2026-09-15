@@ -29,6 +29,7 @@ const mem = {
   subs: new Map(),     // endpoint -> sub
   usage: [],           // Verbrauch pro Uebersetzung
   media: new Map(),    // message_id -> { mime, bytes }
+  plans: new Map(),    // room -> Mitgliedschaft
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -104,6 +105,26 @@ export async function init() {
       out_tokens INTEGER NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS usage_at ON usage_log (at);
+
+    /* Bezahlte Mitgliedschaften. Sie haengen am Chat, nicht am Geraet:
+       Wer einlaedt, bezahlt, und alle im Chat schreiben mit. Das passt
+       zum Rest - usage_log zaehlt ohnehin je Chat - und erspart ein
+       Konto, das es hier nicht gibt.
+
+       manage_key ist nur der Abdruck des Verwaltungsschluessels. Den
+       Schluessel selbst bekommt der Zahler einmal zu sehen; ohne ihn
+       kann niemand eine fremde Mitgliedschaft kuendigen. */
+    CREATE TABLE IF NOT EXISTS plans (
+      room        TEXT PRIMARY KEY,
+      plan        TEXT NOT NULL,
+      status      TEXT NOT NULL,
+      customer    TEXT,
+      subscription TEXT,
+      manage_key  TEXT,
+      period_end  BIGINT,
+      at          BIGINT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS plans_sub ON plans (subscription);
   `);
   /* Die nachtraeglich gekommenen Spalten einzeln absichern: Laeuft die
      grosse Anweisung oben aus irgendeinem Grund nicht durch, faellt es
@@ -405,4 +426,66 @@ export async function getSubscriptions(room) {
 export async function deleteSubscription(endpoint) {
   if (!usingDatabase) { mem.subs.delete(endpoint); return; }
   await pool.query(`DELETE FROM subscriptions WHERE endpoint = $1`, [endpoint]);
+}
+
+/* -------------------------- Mitgliedschaften --------------------------
+   Eine Zeile je Chat. Wer nichts bezahlt hat, hat hier keine Zeile und
+   bekommt das freie Kontingent.
+--------------------------------------------------------------------- */
+export async function getPlan(room) {
+  if (!usingDatabase) return mem.plans.get(room) || null;
+  const { rows } = await pool.query(`SELECT * FROM plans WHERE room = $1`, [room]);
+  return rows[0] || null;
+}
+
+export async function getPlanBySubscription(subscription) {
+  if (!usingDatabase) {
+    return [...mem.plans.values()].find((p) => p.subscription === subscription) || null;
+  }
+  const { rows } = await pool.query(`SELECT * FROM plans WHERE subscription = $1`, [subscription]);
+  return rows[0] || null;
+}
+
+export async function savePlan(p) {
+  const zeile = {
+    room: p.room, plan: p.plan, status: p.status,
+    customer: p.customer || null, subscription: p.subscription || null,
+    manage_key: p.manage_key || null, period_end: p.period_end || null,
+    at: Date.now(),
+  };
+  if (!usingDatabase) { mem.plans.set(p.room, zeile); return zeile; }
+
+  /* manage_key nur setzen, wenn einer mitkommt: Eine spaetere Meldung
+     von Stripe darf den Schluessel des Zahlers nicht ueberschreiben. */
+  const { rows } = await pool.query(
+    `INSERT INTO plans (room, plan, status, customer, subscription, manage_key, period_end, at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+     ON CONFLICT (room) DO UPDATE SET
+       plan = EXCLUDED.plan, status = EXCLUDED.status,
+       customer = COALESCE(EXCLUDED.customer, plans.customer),
+       subscription = COALESCE(EXCLUDED.subscription, plans.subscription),
+       manage_key = COALESCE(EXCLUDED.manage_key, plans.manage_key),
+       period_end = EXCLUDED.period_end, at = EXCLUDED.at
+     RETURNING *`,
+    [zeile.room, zeile.plan, zeile.status, zeile.customer, zeile.subscription,
+     zeile.manage_key, zeile.period_end, zeile.at]
+  );
+  return rows[0];
+}
+
+/* Wie viele Uebersetzungen dieser Chat im laufenden Kalendermonat schon
+   verbraucht hat. Zaehlt aus dem Verbrauchsprotokoll - es gibt also
+   keine zweite Zahl, die aus dem Tritt geraten koennte. */
+export async function translationsThisMonth(room) {
+  const jetzt = new Date();
+  const monatsAnfang = Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth(), 1);
+
+  if (!usingDatabase) {
+    return mem.usage.filter((r) => r.room === room && r.at >= monatsAnfang).length;
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM usage_log WHERE room = $1 AND at >= $2`,
+    [room, monatsAnfang]
+  );
+  return rows[0]?.n || 0;
 }

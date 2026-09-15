@@ -8,6 +8,7 @@ import os from "os";
 import crypto from "crypto";
 import webpush from "web-push";
 import * as store from "./store.js";
+import * as geld from "./bezahlung.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -18,9 +19,14 @@ const io = new Server(http);
 /* 64 KB reichen fuer alles Normale. Sprachnachrichten sind die einzige
    Ausnahme und bringen ihre eigene, groessere Grenze mit - deshalb laeuft
    dieser eine Pfad hier vorbei, statt das Limit fuer alles anzuheben. */
+/* Der Stripe-Webhook kommt ebenfalls hier vorbei, aber aus einem anderen
+   Grund: Seine Unterschrift gilt fuer den Rohtext. Sobald ein JSON-Leser
+   ihn einmal zerlegt und wieder zusammensetzt, stimmt sie nicht mehr. */
 const kleinesJson = express.json({ limit: "64kb" });
+const rohesJson = express.raw({ type: "*/*", limit: "1mb" });
 app.use((req, res, next) => {
   if (req.path === "/api/voice") return next();
+  if (req.path === "/api/stripe") return rohesJson(req, res, next);
   return kleinesJson(req, res, next);
 });
 
@@ -66,7 +72,11 @@ function passedGate(req) {
    pruefen, um festzustellen, welche Fassung wirklich ausgeliefert wird. */
 /* Das Impressum muss ohne Zugangswort erreichbar sein - eine
    Pflichtangabe hinter einer Sperre erfuellt ihren Zweck nicht. */
-const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json", "/i18n.js", "/sw.js", "/impressum.html", "/impressum", "/datenschutz.html", "/datenschutz", "/agb.html", "/agb", "/widerruf.html", "/widerruf"]);
+const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg", "/manifest.json", "/i18n.js", "/sw.js", "/impressum.html", "/impressum", "/datenschutz.html", "/datenschutz", "/agb.html", "/agb", "/widerruf.html", "/widerruf",
+  /* Die Preise muss sehen koennen, wer noch gar nicht drin ist - sonst
+     kauft niemand die Katze im Sack. Der Webhook von Stripe bringt kein
+     Cookie mit und muss ebenfalls vorbei. */
+  "/preise.html", "/preise", "/api/stripe", "/api/plan", "/api/kasse", "/api/kasse-zurueck", "/api/verwalten"]);
 const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWith("/icons/");
 
 app.post("/api/gate", (req, res) => {
@@ -105,6 +115,221 @@ app.get("/agb", (_req, res) =>
   res.sendFile(join(__dirname, "public", "agb.html")));
 app.get("/widerruf", (_req, res) =>
   res.sendFile(join(__dirname, "public", "widerruf.html")));
+app.get("/preise", (_req, res) =>
+  res.sendFile(join(__dirname, "public", "preise.html")));
+
+/* --------------------------------------------------------------------
+   Bezahlung
+
+   Eine Mitgliedschaft gehoert zu einem Chat, nicht zu einem Geraet. Wer
+   einlaedt, bezahlt; alle im Chat schreiben mit. Das passt zu einer App
+   ohne Konten - und der Chat-Code ist ohnehin schon der Schluessel zu
+   allem, was drin steht.
+-------------------------------------------------------------------- */
+const raumCode = (r) => String(r || "").trim().toLowerCase().slice(0, 60);
+
+/* Woher der Kaeufer kam. Nicht aus dem Browser uebernehmen: Sonst legt
+   ein Fremder einen Kassengang an, der nach dem Bezahlen auf seine
+   eigene Seite zurueckfuehrt. */
+function eigeneHerkunft(req) {
+  if (process.env.PUBLIC_ORIGIN) return process.env.PUBLIC_ORIGIN.replace(/\/+$/, "");
+  const schema = req.headers["x-forwarded-proto"] || (req.secure ? "https" : "http");
+  return `${schema}://${req.headers.host}`;
+}
+
+/* Was ein Chat im Monat darf und wie viel davon weg ist. */
+async function kontingent(room) {
+  const zeile = await store.getPlan(room);
+  const laeuft = zeile && ["active", "trialing", "past_due"].includes(zeile.status);
+  const plan = laeuft ? zeile.plan : "frei";
+  return {
+    plan,
+    bezahlt: Boolean(laeuft),
+    status: zeile?.status || null,
+    grenze: geld.KONTINGENT[plan] ?? geld.KONTINGENT.frei,
+    bisEnde: zeile?.period_end ? Number(zeile.period_end) : null,
+  };
+}
+
+app.get("/api/plan", async (req, res) => {
+  const room = raumCode(req.query.room);
+  if (!room) return res.status(400).json({ error: "Kein Chat angegeben" });
+  try {
+    const k = await kontingent(room);
+    const benutzt = await store.translationsThisMonth(room);
+    res.json({
+      ...k, benutzt, rest: Math.max(0, k.grenze - benutzt),
+      bezahlungAn: geld.bezahlungAn,
+      /* Welche Tarife wirklich hinterlegt sind. Ohne diese Angabe zeigt
+         die Preisseite einen Knopf, der beim Druecken absagt. */
+      tarife: geld.verfuegbar(),
+      kontingente: geld.KONTINGENT,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message.slice(0, 200) });
+  }
+});
+
+app.post("/api/kasse", async (req, res) => {
+  if (!geld.bezahlungAn) return res.status(503).json({ error: "Bezahlung ist noch nicht eingerichtet." });
+  if (!take(`kasse:${req.ip}`, 10, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu viele Versuche. Spaeter nochmal." });
+  }
+
+  const room = raumCode(req.body?.room);
+  const plan = String(req.body?.plan || "");
+  const zeitraum = String(req.body?.zeitraum || "monat");
+  if (!room) return res.status(400).json({ error: "Kein Chat angegeben" });
+
+  const preisId = geld.PREISE[plan]?.[zeitraum];
+  if (!preisId) return res.status(400).json({ error: "Diesen Tarif gibt es nicht." });
+
+  try {
+    const sitzung = await geld.kassengang({
+      preisId, raum: room, plan,
+      herkunft: eigeneHerkunft(req),
+      sprache: String(req.body?.sprache || ""),
+    });
+    res.json({ url: sitzung.url });
+  } catch (err) {
+    console.error("  Kassengang fehlgeschlagen:", err.message);
+    letzterGeldFehler = err.message.slice(0, 200);
+    res.status(502).json({ error: "Die Kasse antwortet gerade nicht." });
+  }
+});
+
+/* Nach der Rueckkehr von Stripe. Der Webhook ist die eigentliche
+   Wahrheit - dieser Aufruf sorgt nur dafuer, dass der Kaeufer seinen
+   Verwaltungsschluessel sofort sieht, statt auf die Meldung zu warten. */
+app.get("/api/kasse-zurueck", async (req, res) => {
+  if (!geld.bezahlungAn) return res.status(503).json({ error: "Bezahlung ist aus." });
+  const id = String(req.query.id || "");
+  if (!/^cs_[A-Za-z0-9_]+$/.test(id)) return res.status(400).json({ error: "Unbrauchbare Kennung" });
+
+  try {
+    const sitzung = await geld.kassengangLesen(id);
+    if (sitzung.payment_status !== "paid" && sitzung.status !== "complete") {
+      return res.json({ fertig: false });
+    }
+    const room = raumCode(sitzung.client_reference_id || sitzung.metadata?.raum);
+    if (!room) return res.status(400).json({ error: "Kein Chat an der Zahlung" });
+
+    const gespeichert = await eintragen(sitzung, room);
+    res.json({ fertig: true, room, plan: gespeichert.plan, schluessel: gespeichert.schluessel || null });
+  } catch (err) {
+    console.error("  Rueckkehr von der Kasse:", err.message);
+    letzterGeldFehler = err.message.slice(0, 200);
+    res.status(502).json({ error: "Konnte die Zahlung nicht nachschlagen." });
+  }
+});
+
+/* Zu welchem Tarif gehoert diese Preis-Kennung? Umgekehrter Weg, damit
+   der Webhook nicht raten muss. */
+function planZuPreis(preisId) {
+  for (const [plan, zeiten] of Object.entries(geld.PREISE)) {
+    for (const id of Object.values(zeiten)) if (id && id === preisId) return plan;
+  }
+  return null;
+}
+
+/* Eine bezahlte Sitzung in die Datenbank schreiben. Legt beim ersten Mal
+   den Verwaltungsschluessel an und gibt ihn genau dann einmal zurueck. */
+async function eintragen(sitzung, room) {
+  const vorher = await store.getPlan(room);
+  /* Reihenfolge mit Bedacht: Die Metadaten haben wir selbst gesetzt, die
+     Posten kommen nur mit, wenn wir sie ausdruecklich anfordern - und in
+     der Webhook-Meldung fehlen sie ganz. */
+  const preisId = sitzung.line_items?.data?.[0]?.price?.id || null;
+  const plan = (geld.KONTINGENT[sitzung.metadata?.plan] ? sitzung.metadata.plan : null)
+    || planZuPreis(preisId) || vorher?.plan || "plus";
+
+  let schluessel = null;
+  let abdruck = vorher?.manage_key || null;
+  if (!abdruck) {
+    schluessel = geld.neuerVerwaltungsSchluessel();
+    abdruck = geld.schluesselAbdruck(schluessel);
+  }
+
+  await store.savePlan({
+    room, plan, status: "active",
+    customer: typeof sitzung.customer === "string" ? sitzung.customer : sitzung.customer?.id,
+    subscription: typeof sitzung.subscription === "string" ? sitzung.subscription : sitzung.subscription?.id,
+    manage_key: abdruck,
+    period_end: null,
+  });
+  monatsZaehler.delete(room); // Grenze hat sich geaendert, neu nachsehen
+  planZwischen.delete(room);
+  return { plan, schluessel };
+}
+
+app.post("/api/verwalten", async (req, res) => {
+  if (!geld.bezahlungAn) return res.status(503).json({ error: "Bezahlung ist aus." });
+  if (!take(`verw:${req.ip}`, 10, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu viele Versuche. Spaeter nochmal." });
+  }
+  const room = raumCode(req.body?.room);
+  const zeile = await store.getPlan(room);
+  if (!zeile || !zeile.customer) return res.status(404).json({ error: "Fuer diesen Chat gibt es keine Mitgliedschaft." });
+  if (!geld.schluesselStimmt(req.body?.schluessel, zeile.manage_key)) {
+    return res.status(403).json({ error: "Der Verwaltungsschluessel stimmt nicht." });
+  }
+  try {
+    const seite = await geld.verwaltungsSeite({ kunde: zeile.customer, herkunft: eigeneHerkunft(req) });
+    res.json({ url: seite.url });
+  } catch (err) {
+    letzterGeldFehler = err.message.slice(0, 200);
+    res.status(502).json({ error: "Die Verwaltung antwortet gerade nicht." });
+  }
+});
+
+/* --------------------------- Meldungen von Stripe ---------------------
+   Die einzige Stelle, an der eine Mitgliedschaft ablaufen oder wieder
+   aufleben kann. Antwortet absichtlich immer schnell: Stripe wiederholt
+   sonst, und ein langsamer Webhook wird irgendwann abgeschaltet.
+--------------------------------------------------------------------- */
+app.post("/api/stripe", async (req, res) => {
+  if (!geld.webhookAn) return res.status(503).send("Webhook nicht eingerichtet");
+
+  let meldung;
+  try {
+    const roh = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body || "");
+    meldung = geld.webhookPruefen(roh, req.headers["stripe-signature"]);
+  } catch (err) {
+    /* Nicht ins Protokoll mit dem Inhalt - nur, dass und warum. */
+    console.error("  Stripe-Meldung abgewiesen:", err.message);
+    letzterGeldFehler = "Webhook: " + err.message.slice(0, 150);
+    return res.status(400).send("Unterschrift");
+  }
+
+  res.json({ received: true }); // erst quittieren, dann arbeiten
+
+  try {
+    const d = meldung.data?.object || {};
+    if (meldung.type === "checkout.session.completed") {
+      const room = raumCode(d.client_reference_id || d.metadata?.raum);
+      if (room) await eintragen(d, room);
+    } else if (meldung.type?.startsWith("customer.subscription.")) {
+      const zeile = await store.getPlanBySubscription(d.id);
+      const room = raumCode(zeile?.room || d.metadata?.raum);
+      if (room) {
+        await store.savePlan({
+          room,
+          plan: (geld.KONTINGENT[d.metadata?.plan] ? d.metadata.plan : null)
+            || planZuPreis(d.items?.data?.[0]?.price?.id) || zeile?.plan || "plus",
+          status: meldung.type.endsWith("deleted") ? "canceled" : String(d.status || "active"),
+          customer: typeof d.customer === "string" ? d.customer : d.customer?.id,
+          subscription: d.id,
+          period_end: d.current_period_end ? d.current_period_end * 1000 : null,
+        });
+        monatsZaehler.delete(room);
+        planZwischen.delete(room);
+      }
+    }
+  } catch (err) {
+    console.error("  Stripe-Meldung nicht verarbeitet:", err.message);
+    letzterGeldFehler = "Verarbeitung: " + err.message.slice(0, 150);
+  }
+});
 
 app.use(express.static(join(__dirname, "public")));
 
@@ -224,6 +449,18 @@ let lastClient = null;   // letzte Meldung eines Geraets, siehe /health
 let lastSpeech = null;   // wie die letzte Mitschrift ausging, siehe /health
 let letzterLoeschFehler = null; // damit ein gescheitertes Loeschen sichtbar wird
 let letzterLoeschVersuch = null; // erreicht der Versuch den Server ueberhaupt?
+let letzterGeldFehler = null;   // damit ein Fehler bei Stripe sichtbar wird
+
+/* Zwei kleine Zwischenspeicher, damit nicht jede einzelne Uebersetzung
+   zwei Datenbankabfragen ausloest. Bei einer Instanz auf Render reicht
+   das; kaeme je eine zweite dazu, muesste beides in die Datenbank. */
+const monatsZaehler = new Map(); // room -> { monat, n }
+const planZwischen = new Map();  // room -> { bis, wert }
+
+const monatsKennung = () => {
+  const d = new Date();
+  return d.getUTCFullYear() * 100 + d.getUTCMonth();
+};
 
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
@@ -264,6 +501,49 @@ Antworte NUR mit JSON, ohne Markdown: {"detected":"<Sprachcode>","translation":"
 
 const costOf = (u) => (u.inTokens / 1e6) * PRICE_IN + (u.outTokens / 1e6) * PRICE_OUT;
 
+/* Darf dieser Chat noch uebersetzen lassen?
+
+   Zaehlt im Arbeitsspeicher weiter, holt sich den Stand aber einmal je
+   Monat und Chat aus dem Verbrauchsprotokoll. Ein Neustart verliert
+   damit nichts: Die Zahl steht in der Datenbank, nicht hier.
+
+   Schlaegt die Abfrage fehl, wird durchgelassen. Lieber eine Handvoll
+   Uebersetzungen zu viel als ein Chat, der wegen einer klemmenden
+   Datenbank verstummt. */
+async function imKontingent(room) {
+  const monat = monatsKennung();
+
+  let grenze;
+  const gemerkt = planZwischen.get(room);
+  if (gemerkt && gemerkt.bis > Date.now()) {
+    grenze = gemerkt.wert;
+  } else {
+    try {
+      grenze = (await kontingent(room)).grenze;
+    } catch (err) {
+      letzterGeldFehler = "Kontingent: " + err.message.slice(0, 150);
+      return true;
+    }
+    planZwischen.set(room, { bis: Date.now() + 60 * 1000, wert: grenze });
+  }
+  if (!(grenze > 0)) return true; // 0 heisst: keine Grenze
+
+  let stand = monatsZaehler.get(room);
+  if (!stand || stand.monat !== monat) {
+    try {
+      stand = { monat, n: await store.translationsThisMonth(room) };
+    } catch (err) {
+      letzterGeldFehler = "Monatszaehler: " + err.message.slice(0, 150);
+      return true;
+    }
+    monatsZaehler.set(room, stand);
+  }
+
+  if (stand.n >= grenze) return false;
+  stand.n++;
+  return true;
+}
+
 /* Sorgt dafuer, dass eine Uebersetzung existiert. Gibt den Text zurueck. */
 async function ensure(room, msgId, target) {
   const msg = await store.getMessage(msgId);
@@ -284,6 +564,17 @@ async function ensure(room, msgId, target) {
 
   const key = `${msgId}:${target}`;
   if (inFlight.has(key)) return inFlight.get(key);
+
+  /* Monatsgrenze des Chats. Sie steht vor der Tagesgrenze: Ist der Chat
+     am Ende seines Kontingents, soll er nicht auch noch vom gemeinsamen
+     Tagesvorrat abbeissen.
+
+     Die Nachricht kommt trotzdem an - sie wird nur im Original gezeigt.
+     Zustellung darf nie am Geld haengen. */
+  if (!(await imKontingent(room))) {
+    io.to(room).emit("quotaReached", { id: msgId, grund: "monat" });
+    return null;
+  }
 
   /* Erst hier zaehlen: Alles darueber kam aus dem Zwischenspeicher und
      hat nichts gekostet. */
@@ -533,6 +824,13 @@ app.get("/health", (_req, res) =>
       msgPerMin: MSG_PER_MIN,
       translationsPerDay: TRANSLATIONS_PER_DAY > 0 ? TRANSLATIONS_PER_DAY : null,
       translationsLeftToday: leftToday(),
+    },
+    geld: {
+      stripe: geld.bezahlungAn,
+      webhook: geld.webhookAn,
+      preise: geld.verfuegbar(),
+      kontingente: geld.KONTINGENT,
+      letzterFehler: letzterGeldFehler,
     },
   })
 );
