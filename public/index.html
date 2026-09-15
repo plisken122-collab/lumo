@@ -81,6 +81,23 @@
     background:none; color:var(--mine); padding:8px 0 0;
     font-size:13.5px; text-decoration:underline;
   }
+  /* Der Installationshinweis. Sitzt ueber dem Chat, nimmt wenig Platz und
+     laesst sich wegdruecken - er darf niemanden am Schreiben hindern. */
+  .installbar {
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:11px 13px; margin-bottom:10px;
+  }
+  .installbar > div:first-child { flex:1 1 180px; min-width:0; }
+  .installbar strong { font-size:14px; font-weight:500; }
+  .installbar p { margin:3px 0 0; font-size:12.5px; color:var(--muted); }
+  .installbtns { display:flex; gap:6px; flex-shrink:0; }
+  .installbtns button {
+    font-size:13.5px; padding:8px 13px; border-radius:9px;
+    background:var(--mine); color:#fff; white-space:nowrap;
+  }
+  .installbtns button.leer { background:transparent; color:var(--muted); }
+
   /* Hinweis auf der Startseite, wenn jemand ueber einen Link kommt. */
   .invited {
     margin:10px 0 0; padding:9px 12px; border-radius:10px;
@@ -239,6 +256,19 @@
   </section>
 
   <!-- Chat -->
+  <!-- Hinweis zum Installieren. Erscheint erst im Chat, nie vorher:
+       Wer noch nichts gesehen hat, installiert auch nichts. -->
+  <div id="installBar" class="installbar hide">
+    <div>
+      <strong id="installTitle"></strong>
+      <p id="installHint" class="hide"></p>
+    </div>
+    <div class="installbtns">
+      <button id="installGo" class="hide"></button>
+      <button id="installLater" class="leer"></button>
+    </div>
+  </div>
+
   <section id="chat" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="bar">
       <span class="logo-wrap">
@@ -334,11 +364,27 @@ $("lang").value = saved.lang || guessLang();
 /* Ueber einen Einladungslink gekommen? Dann steht der Chat schon fest.
    Das Feld bleibt sichtbar, damit man sieht, wo man landet - aber es
    ist gesetzt und muss nicht abgetippt werden. */
+/* Zwei Dinge sieht nur der Browser: dass jemand ueber einen Link kam und
+   dass jemand auf Einladen gedrueckt hat. Gezaehlt wird nichts weiter -
+   keine Kennung, keine Adresse, nur "ist passiert". Geht es schief, ist
+   es gleichgueltig. */
+function melde(ereignis) {
+  try {
+    fetch("/api/zaehl", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ereignis }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
+}
+
 const eingeladen = codeAusLink();
 if (eingeladen) {
   $("room").value = eingeladen;
   $("invitedNote").classList.remove("hide");
   $("newChat").classList.add("hide");
+  melde("ueber_link");
 }
 
 $("newChat").onclick = () => {
@@ -350,7 +396,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v41";
+const BUILD = "v42";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -402,9 +448,81 @@ $("enter").onclick = () => {
   start();
 };
 
+/* --------------------------------------------------------------------
+   Zum Startbildschirm hinzufuegen
+
+   Der Punkt, an dem die meisten verlorengehen: Wer den Chat nur im
+   Browser offen hat, kommt am naechsten Tag nicht zurueck - und ohne
+   installierte App gibt es auch keine Benachrichtigungen.
+
+   Auf Android gibt uns der Browser mit beforeinstallprompt einen echten
+   Installationsknopf. Auf iPhones gibt es das nicht; dort bleibt nur der
+   Hinweis, wo man tippen muss.
+-------------------------------------------------------------------- */
+let installEreignis = null;
+const schonInstalliert = () =>
+  window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const istIos = () =>
+  /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();          /* sonst zeigt Chrome seinen eigenen Balken */
+  installEreignis = e;
+  zeigeInstallBalken();
+});
+
+window.addEventListener("appinstalled", () => {
+  $("installBar").classList.add("hide");
+  try { localStorage.setItem("diralo-install", "fertig"); } catch {}
+});
+
+function installBalkenWeg(dauerhaft) {
+  $("installBar").classList.add("hide");
+  if (dauerhaft) { try { localStorage.setItem("diralo-install", "spaeter"); } catch {} }
+}
+
+function zeigeInstallBalken() {
+  if (schonInstalliert()) return;
+  if ($("chat").classList.contains("hide")) return;   /* erst im Chat */
+  try { if (localStorage.getItem("diralo-install")) return; } catch {}
+  if (!installEreignis && !istIos()) return;          /* sonst nichts anzubieten */
+
+  $("installTitle").textContent = T("installTitle");
+  $("installLater").textContent = T("later");
+  if (installEreignis) {
+    $("installGo").textContent = T("installBtn");
+    $("installGo").classList.remove("hide");
+    $("installHint").classList.add("hide");
+  } else {
+    /* iPhone: kein Knopf moeglich, nur der Weg ueber Teilen. */
+    $("installGo").classList.add("hide");
+    $("installHint").textContent = T("installIos");
+    $("installHint").classList.remove("hide");
+  }
+  $("installBar").classList.remove("hide");
+}
+
+$("installLater").onclick = () => installBalkenWeg(true);
+$("installGo").onclick = async () => {
+  const e = installEreignis;
+  installEreignis = null;
+  installBalkenWeg(false);
+  if (!e) return;
+  try {
+    await e.prompt();
+    const { outcome } = await e.userChoice;
+    /* Abgelehnt? Dann nicht noch einmal fragen. */
+    if (outcome !== "accepted") { try { localStorage.setItem("diralo-install", "abgelehnt"); } catch {} }
+  } catch { /* Browser hat es verweigert - dann eben nicht. */ }
+};
+
 function start() {
   $("setup").classList.add("hide");
   $("chat").classList.remove("hide");
+  /* Erst jetzt anbieten - und nicht sofort, sondern wenn der erste
+     Eindruck da ist. */
+  setTimeout(zeigeInstallBalken, 20000);
   $("roomLabel").textContent = "#" + me.room;
   $("langSwitch").value = me.lang;
 
@@ -1015,10 +1133,17 @@ function einladungsLink(code) {
 
 async function einladen() {
   const link = einladungsLink(me.room);
-  /* Bewusst immer auf Englisch: Die Einladung geht an jemanden, der eine
-     andere Sprache spricht - sonst braeuchte er Diralo nicht. Deutscher
-     Text waere fuer ihn genau das Hindernis, das die App abschaffen soll. */
-  const text = window.LUMO_T.en("inviteText");
+  /* Zweisprachig und bewusst fest: Die Einladung geht an jemanden, der
+     eine andere Sprache spricht - sonst braeuchte er Diralo nicht. Der
+     Text in *deiner* Sprache waere fuer ihn genau das Hindernis, das die
+     App abschaffen soll.
+
+     Englisch versteht fast jeder wenigstens so weit, dass er den Link
+     anklickt; Portugiesisch steht dabei, weil hier die meisten
+     Eingeladenen sitzen. */
+  const L2 = window.LUMO_T;
+  const text = L2.en("inviteText") + "\n" + L2.inSprache("pt-PT", "inviteText");
+  melde("einladung");
   if (navigator.share) {
     try { await navigator.share({ text: text + " " + link }); return; } catch { /* abgebrochen */ }
   }

@@ -383,6 +383,50 @@ app.post("/api/stripe", async (req, res) => {
   }
 });
 
+/* --------------------------------------------------------------------
+   Trichter
+
+   Fuenf Zahlen, mehr nicht. Sie beantworten die Frage, an der jede
+   Werbung haengt: Wo hoeren die Leute auf?
+
+   Bewusst ohne Zaehlpixel, ohne Cookie, ohne Kennung - gespeichert wird
+   nur "an diesem Tag ist das n-mal passiert". Daraus laesst sich nicht
+   zurueckrechnen, wer es war.
+-------------------------------------------------------------------- */
+const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link"]);
+
+/* Zaehlen darf nie etwas kaputtmachen: Faellt die Datenbank aus, laeuft
+   der Chat weiter und die Zahl ist eben verloren. */
+function zaehle(ereignis) {
+  if (!ZAEHLBAR.has(ereignis)) return;
+  store.zaehle(ereignis).catch(() => {});
+}
+
+/* Die Startseite selbst zaehlen. Muss vor express.static stehen, sonst
+   liefert der die Datei aus, bevor wir sie bemerken. */
+app.get("/", (_req, res) => {
+  zaehle("besuch");
+  res.sendFile(join(__dirname, "public", "index.html"));
+});
+
+/* Zwei Dinge weiss nur der Browser: ob jemand ueber einen Einladungslink
+   kam und ob er auf Einladen gedrueckt hat. */
+app.post("/api/zaehl", (req, res) => {
+  if (!take(`zaehl:${req.ip}`, 60, 60 * 1000)) return res.status(429).end();
+  const e = String(req.body?.ereignis || "");
+  if (e === "einladung" || e === "ueber_link") zaehle(e);
+  res.status(204).end();
+});
+
+app.get("/api/trichter", async (req, res) => {
+  const tage = Math.min(90, Math.max(1, Number(req.query.tage) || 14));
+  try {
+    res.json(await store.trichter(tage));
+  } catch (err) {
+    res.status(500).json({ error: err.message.slice(0, 200) });
+  }
+});
+
 app.use(express.static(join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
@@ -913,6 +957,7 @@ io.on("connection", (socket) => {
        Nachrichten beider Raeume. */
     const vorher = room;
     room = String(roomCode || "lobby").trim().toLowerCase().slice(0, 60);
+    if (vorher !== room) zaehle("eingetreten");
     if (vorher && vorher !== room) {
       socket.leave(vorher);
       socket.to(vorher).emit("system", { type: "left", name: me.name });
@@ -965,6 +1010,7 @@ io.on("connection", (socket) => {
       socket.emit("tooFast");
       return;
     }
+    zaehle("nachricht");
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       room,

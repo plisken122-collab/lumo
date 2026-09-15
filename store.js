@@ -30,6 +30,7 @@ const mem = {
   usage: [],           // Verbrauch pro Uebersetzung
   media: new Map(),    // message_id -> { mime, bytes }
   plans: new Map(),    // room -> Mitgliedschaft
+  funnel: new Map(),   // "tag|ereignis" -> Anzahl
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -125,6 +126,22 @@ export async function init() {
       at          BIGINT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS plans_sub ON plans (subscription);
+
+    /* Trichter: eine Zahl je Tag und Ereignis, sonst nichts. Keine
+       Kennung, keine Adresse, kein Geraet - man kann daraus nicht
+       zurueckrechnen, wer etwas getan hat. Damit ist es kein
+       personenbezogenes Datum und die Datenschutzerklaerung bleibt, wie
+       sie ist.
+
+       Es beantwortet die einzige Frage, die zaehlt: Wo hoeren die Leute
+       auf? Zwischen Ankommen und Eintreten, oder zwischen Eintreten und
+       der ersten Nachricht? */
+    CREATE TABLE IF NOT EXISTS funnel (
+      tag      TEXT NOT NULL,
+      ereignis TEXT NOT NULL,
+      n        INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (tag, ereignis)
+    );
   `);
   /* Die nachtraeglich gekommenen Spalten einzeln absichern: Laeuft die
      grosse Anweisung oben aus irgendeinem Grund nicht durch, faellt es
@@ -488,4 +505,50 @@ export async function translationsThisMonth(room) {
     [room, monatsAnfang]
   );
   return rows[0]?.n || 0;
+}
+
+/* ----------------------------- Trichter -----------------------------
+   Zaehlt, an welcher Stelle Leute aufhoeren. Bewusst grob: eine Zahl je
+   Tag und Ereignis, keine Kennung, keine Adresse. Schlaegt das Zaehlen
+   fehl, ist das gleichgueltig - es darf nie den Betrieb stoeren.
+------------------------------------------------------------------- */
+const heute = () => new Date().toISOString().slice(0, 10);
+
+export async function zaehle(ereignis) {
+  const tag = heute();
+  if (!usingDatabase) {
+    const k = `${tag}|${ereignis}`;
+    mem.funnel.set(k, (mem.funnel.get(k) || 0) + 1);
+    return;
+  }
+  await pool.query(
+    `INSERT INTO funnel (tag, ereignis, n) VALUES ($1,$2,1)
+     ON CONFLICT (tag, ereignis) DO UPDATE SET n = funnel.n + 1`,
+    [tag, ereignis]
+  );
+}
+
+/* Summen der letzten Tage, plus der Verlauf je Tag. */
+export async function trichter(tage = 14) {
+  const grenze = new Date(Date.now() - tage * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  let zeilen;
+  if (!usingDatabase) {
+    zeilen = [...mem.funnel.entries()]
+      .map(([k, n]) => { const [tag, ereignis] = k.split("|"); return { tag, ereignis, n }; })
+      .filter((z) => z.tag >= grenze);
+  } else {
+    const { rows } = await pool.query(
+      `SELECT tag, ereignis, n FROM funnel WHERE tag >= $1 ORDER BY tag DESC`, [grenze]
+    );
+    zeilen = rows.map((r) => ({ tag: r.tag, ereignis: r.ereignis, n: Number(r.n) }));
+  }
+
+  const summe = {};
+  const proTag = {};
+  for (const z of zeilen) {
+    summe[z.ereignis] = (summe[z.ereignis] || 0) + z.n;
+    (proTag[z.tag] ||= {})[z.ereignis] = z.n;
+  }
+  return { tage, summe, proTag };
 }
