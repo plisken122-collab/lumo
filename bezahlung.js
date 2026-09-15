@@ -134,9 +134,11 @@ export async function kassengang({ preisId, raum, plan, herkunft, sprache }) {
        man die Steuer des Kaeuferlandes; dann muss hier wieder
        automatic_tax rein und in Stripe unter Tax eingeschaltet werden.
        Siehe README, Abschnitt Bezahlung mit Stripe. */
-    /* Fuer die Rechnung und als einzige Spur, die der Kaeufer spaeter
-       vorzeigen kann, wenn er den Verwaltungsschluessel verliert. */
-    customer_creation: "always",
+    /* Kein customer_creation: Bei einem Abonnement legt Stripe den Kunden
+       immer an, und die Angabe ist dort ausdruecklich verboten - Stripe
+       weist den ganzen Kassengang sonst zurueck. Die Spur zur Wieder-
+       herstellung, falls jemand den Verwaltungsschluessel verliert,
+       entsteht also von selbst. */
     billing_address_collection: "auto",
     /* Tarif und Chat an beiden Stellen mitgeben. Die Meldung zum
        Kassengang bringt die Posten naemlich nicht mit, und spaetere
