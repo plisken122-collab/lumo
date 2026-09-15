@@ -1,6 +1,6 @@
 {
-  "name": "lumo",
-  "short_name": "lumo",
+  "name": "Diralo",
+  "short_name": "Diralo",
   "description": "Messenger, der jede Nachricht in die Sprache des Lesers uebersetzt",
   "start_url": "/",
   "display": "standalone",

@@ -3,13 +3,13 @@
 
    Zwei Aufgaben:
    1. Die App offline-faehig machen, damit sie installierbar ist.
-   2. Push-Nachrichten annehmen, auch wenn lumo geschlossen ist.
+   2. Push-Nachrichten annehmen, auch wenn Diralo geschlossen ist.
 -------------------------------------------------------------------- */
 /* Diese Nummer bei jeder Aenderung an index.html hochzaehlen. Nur wenn
    sich sw.js selbst aendert, installiert der Browser ihn neu - und nur
    dann wird die alte Seite aus dem Zwischenspeicher geworfen. Sonst
    startet eine installierte App weiter mit der alten Fassung. */
-const CACHE = "lumo-v33";
+const CACHE = "diralo-v34";
 const SHELL = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
@@ -53,7 +53,7 @@ self.addEventListener("message", (e) => {
 
 /* Nachricht vom Server, auch bei geschlossener App. */
 self.addEventListener("push", (e) => {
-  let payload = { title: "lumo", body: "Neue Nachricht" };
+  let payload = { title: "Diralo", body: "Neue Nachricht" };
   try {
     if (e.data) payload = { ...payload, ...e.data.json() };
   } catch {
@@ -65,7 +65,7 @@ self.addEventListener("push", (e) => {
         body: payload.body,
         icon: "/icons/icon-192-v2.png",
         badge: "/icons/icon-192-v2.png",
-        tag: "lumo-" + (payload.id || Date.now()),
+        tag: "diralo-" + (payload.id || Date.now()),
         vibrate: [120, 60, 120],
         data: { url: "/" },
       })
@@ -73,7 +73,7 @@ self.addEventListener("push", (e) => {
   );
 });
 
-/* Tippt jemand auf die Benachrichtigung, kommt lumo nach vorne. */
+/* Tippt jemand auf die Benachrichtigung, kommt Diralo nach vorne. */
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   if (self.navigator.clearAppBadge) self.navigator.clearAppBadge().catch(() => {});

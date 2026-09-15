@@ -691,7 +691,7 @@ setInterval(purge, 60 * 60 * 1000).unref();
 
 http.listen(PORT, "0.0.0.0", async () => {
   const lan = lanAddress();
-  console.log(`\n  lumo laeuft.\n`);
+  console.log(`\n  Diralo laeuft.\n`);
   console.log(`  Auf diesem Rechner:  http://localhost:${PORT}`);
   if (lan) {
     const url = `http://${lan}:${PORT}`;

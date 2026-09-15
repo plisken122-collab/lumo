@@ -1,4 +1,4 @@
-# lumo
+# Diralo
 
 Messenger, bei dem jeder in seiner Sprache schreibt und in seiner eigenen liest.
 Spracherkennung und Übersetzung laufen auf dem Server — der API-Key liegt nie im Browser.
@@ -78,7 +78,7 @@ Die Zähler liegen im Arbeitsspeicher. Bei mehreren Instanzen zählt jede für s
 
 ## Sprachnachrichten — am 14.09.2026 entfernt
 
-Der Mikrofon-Knopf ist raus. Grund: Die Mitschrift während der Aufnahme funktionierte auf Android nicht (siehe unten), und eine Sprachnachricht ohne Text wird nicht übersetzt — womit der Sinn von lumo verfehlt ist. Wer sprechen statt tippen will, nimmt das **Diktat**.
+Der Mikrofon-Knopf ist raus. Grund: Die Mitschrift während der Aufnahme funktionierte auf Android nicht (siehe unten), und eine Sprachnachricht ohne Text wird nicht übersetzt — womit der Sinn von Diralo verfehlt ist. Wer sprechen statt tippen will, nimmt das **Diktat**.
 
 Was bleibt: Schon verschickte Aufnahmen lassen sich weiter abspielen, die Schnittstelle `/api/voice`, die Auslieferung unter `/medien/<kennung>` und die Tabelle `media` sind unangetastet. Wer die Funktion zurückholen will, braucht im Grunde nur wieder einen Knopf.
 
@@ -110,17 +110,17 @@ Auf der Startseite erzeugt **Neuen Chat starten** einen zufälligen Code aus zeh
 
 **Der Code steht hinter der Raute**, also `…/#c=burcx75fmv`. Das ist Absicht: Was hinter der Raute steht, schickt der Browser nie an den Server. Der Code taucht damit in keinem Zugriffsprotokoll auf — weder bei Render noch bei Cloudflare. Stünde er als `?c=` davor, läge er in jeder Logdatei.
 
-Tippt jemand einen Einladungslink an, während lumo schon offen ist, wechselt die App den Raum, statt nichts zu tun. Der Server lässt das Gerät den alten Raum dabei verlassen — sonst bekäme es die Nachrichten beider.
+Tippt jemand einen Einladungslink an, während Diralo schon offen ist, wechselt die App den Raum, statt nichts zu tun. Der Server lässt das Gerät den alten Raum dabei verlassen — sonst bekäme es die Nachrichten beider.
 
 Eine Warnung zur Ehrlichkeit: **Der Link ist das Geheimnis.** Wer ihn hat, ist im Chat. Weitergeleitet ist weitergeleitet — es gibt keine Einladung, die nur für eine Person gilt, und keine Möglichkeit, jemanden wieder hinauszuwerfen.
 
 ## Nachrichten löschen
 
-Unter jeder Nachricht steht `⋯`. Dahinter liegen zwei Möglichkeiten, wie bei WhatsApp:
+Tippe eine Nachricht an — wie bei WhatsApp. Ein Menü klappt von unten auf mit zwei Möglichkeiten:
 
 **Für alle löschen** gibt es nur bei eigenen Nachrichten. Der Server entfernt Text, alle Übersetzungen und eine etwaige Sprachaufnahme wirklich aus der Datenbank. Stehen bleibt „Diese Nachricht wurde gelöscht" — sonst entstünde im Gespräch eine unerklärliche Lücke. Geprüft wird am Gerät, das die Nachricht geschrieben hat, nicht daran, was der Browser behauptet zu dürfen.
 
-**Für mich löschen** geht bei jeder Nachricht und bleibt auf diesem Gerät. Die Kennungen liegen im `localStorage` unter `lumo-hidden`, die letzten 500. Andere sehen die Nachricht weiter — und auf einem zweiten Gerät desselben Menschen taucht sie wieder auf.
+**Für mich löschen** geht bei jeder Nachricht und bleibt auf diesem Gerät. Die Kennungen liegen im `localStorage` unter `Diralo-hidden`, die letzten 500. Andere sehen die Nachricht weiter — und auf einem zweiten Gerät desselben Menschen taucht sie wieder auf.
 
 Eine Frist wie bei WhatsApp, nach der sich nichts mehr für alle löschen lässt, gibt es bewusst nicht.
 
@@ -165,7 +165,7 @@ Der Dienst läuft auf dem Starter-Plan und schläft nicht ein — der erste Aufr
 
 ### Als App auf den Home-Bildschirm
 
-Adresse im Handy-Browser öffnen → Teilen → „Zum Home-Bildschirm hinzufügen". Danach startet lumo ohne Adressleiste wie eine normale App. Funktioniert bei Variante B sauber; bei Variante A nur solange dein Rechner läuft.
+Adresse im Handy-Browser öffnen → Teilen → „Zum Home-Bildschirm hinzufügen". Danach startet Diralo ohne Adressleiste wie eine normale App. Funktioniert bei Variante B sauber; bei Variante A nur solange dein Rechner läuft.
 
 ---
 
@@ -175,9 +175,9 @@ Oben in der Chat-Leiste sitzt der Knopf `Ton aus` / `Ton an`. Beim ersten Antipp
 
 Es gibt zwei Stufen, und der Unterschied ist wichtig:
 
-**Stufe 1 — App im Hintergrund.** Läuft ohne weitere Einrichtung. Solange lumo geöffnet ist, auch hinter anderen Apps, klingelt es.
+**Stufe 1 — App im Hintergrund.** Läuft ohne weitere Einrichtung. Solange Diralo geöffnet ist, auch hinter anderen Apps, klingelt es.
 
-**Stufe 2 — App komplett geschlossen.** Braucht VAPID-Schlüssel und eine Datenbank. Dann verschickt der Server die Benachrichtigung selbst, unabhängig davon, ob lumo läuft.
+**Stufe 2 — App komplett geschlossen.** Braucht VAPID-Schlüssel und eine Datenbank. Dann verschickt der Server die Benachrichtigung selbst, unabhängig davon, ob Diralo läuft.
 
 ### Stufe 2 einrichten
 
@@ -206,16 +206,16 @@ Stehen dort `push` und `database` auf `true`, ist Stufe 2 aktiv.
 Drei Stellen zeigen an, wie viele Nachrichten offen sind:
 
 - ein roter Punkt am Blasen-Logo in der Chat-Leiste
-- die Zahl im Tab-Titel, etwa `(3) lumo`
+- die Zahl im Tab-Titel, etwa `(3) Diralo`
 - die Zahl am App-Symbol auf dem Startbildschirm, wie bei WhatsApp
 
-Der Zähler springt auf null, sobald du die App wieder in den Vordergrund holst. Die Zahl am App-Symbol setzt auch der Service Worker, wenn lumo geschlossen ist — gezählt wird, wie viele Benachrichtigungen offen sind.
+Der Zähler springt auf null, sobald du die App wieder in den Vordergrund holst. Die Zahl am App-Symbol setzt auch der Service Worker, wenn Diralo geschlossen ist — gezählt wird, wie viele Benachrichtigungen offen sind.
 
-Das App-Symbol trägt die Zahl nur, wenn lumo über „Zum Startbildschirm" installiert wurde. Im normalen Browser-Tab gibt es kein Symbol, das eine Zahl tragen könnte; dort bleiben Punkt und Titel. Auf dem iPhone unterstützt Safari das noch nicht zuverlässig.
+Das App-Symbol trägt die Zahl nur, wenn Diralo über „Zum Startbildschirm" installiert wurde. Im normalen Browser-Tab gibt es kein Symbol, das eine Zahl tragen könnte; dort bleiben Punkt und Titel. Auf dem iPhone unterstützt Safari das noch nicht zuverlässig.
 
 ### iPhone
 
-Push funktioniert nur, wenn lumo vorher über Teilen → „Zum Home-Bildschirm" installiert wurde. Im normalen Safari-Tab unterdrückt iOS es. Auf Android reicht der Browser.
+Push funktioniert nur, wenn Diralo vorher über Teilen → „Zum Home-Bildschirm" installiert wurde. Im normalen Safari-Tab unterdrückt iOS es. Auf Android reicht der Browser.
 
 ---
 
@@ -223,7 +223,7 @@ Push funktioniert nur, wenn lumo vorher über Teilen → „Zum Home-Bildschirm"
 
 Nachrichten überleben jetzt jeden Neustart. Wer den Chat neu öffnet, sieht die letzten 200 Nachrichten des Raums. Vorher war nach jedem Server-Neustart alles weg.
 
-Außerdem erkennt lumo Geräte jetzt an einer festen Kennung statt an der Verbindung. Deine eigenen Nachrichten bleiben dadurch auch nach einem Verbindungsabbruch korrekt als deine markiert.
+Außerdem erkennt Diralo Geräte jetzt an einer festen Kennung statt an der Verbindung. Deine eigenen Nachrichten bleiben dadurch auch nach einem Verbindungsabbruch korrekt als deine markiert.
 
 ---
 
@@ -293,7 +293,7 @@ Die Verbrauchszahlen bleiben ein Jahr liegen, nicht nur 30 Tage — sie enthalte
 
 Die Oberfläche folgt der Sprache, die jemand für seine Nachrichten wählt — keine zweite Einstellung. Wer Português (Brasil) auswählt, sieht auch Knöpfe und Hinweise auf brasilianischem Portugiesisch.
 
-Beim ersten Aufruf schlägt lumo die Browsersprache vor. Ein Brasilianer, der den Link bekommt, landet also sofort auf einer portugiesischen Startseite.
+Beim ersten Aufruf schlägt Diralo die Browsersprache vor. Ein Brasilianer, der den Link bekommt, landet also sofort auf einer portugiesischen Startseite.
 
 Fertig übersetzt sind 13 Oberflächensprachen: Deutsch, Englisch, Português (Portugal), Português (Brasil), Spanisch, Französisch, Italienisch, Niederländisch, Polnisch, Russisch, Ukrainisch, Türkisch, Arabisch. Bei Arabisch dreht sich das Layout auf rechts-nach-links.
 

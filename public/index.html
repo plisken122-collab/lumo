@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#E4E5E9">
 <meta name="robots" content="noindex, nofollow">
-<title>lumo</title>
+<title>Diralo</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-192-v2.png">
@@ -26,6 +26,12 @@
     display:flex; flex-direction:column;
     padding:14px 14px calc(14px + env(safe-area-inset-bottom));
   }
+  /* Wortmarke als echter Text statt gezeichneter Pfade: Der Name laesst
+     sich so aendern, ohne das Logo neu zu zeichnen. Die Bildmarke
+     daneben bleibt, wie sie ist. */
+  .brandline { display:flex; align-items:center; gap:10px; }
+  .brandline img { display:block; height:40px; width:auto; }
+  .brandline .wort { font-size:30px; font-weight:500; letter-spacing:-.01em; }
   .brand { display:block; height:42px; width:auto; }
   .brand-small { display:block; height:26px; width:auto; }
   .logo-wrap { position:relative; flex-shrink:0; }
@@ -208,7 +214,7 @@
 
   <!-- Start -->
   <section id="setup">
-    <img class="brand" src="/brand/logo-horizontal.svg" alt="lumo">
+    <div class="brandline"><img src="/brand/logo-mark.svg" alt=""><span class="wort">Diralo</span></div>
     <p class="sub" id="t-tagline"></p>
 
     <div class="card" style="margin-top:18px">
@@ -233,7 +239,7 @@
   <section id="chat" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="bar">
       <span class="logo-wrap">
-        <img class="brand-small" src="/brand/logo-mark.svg" alt="lumo">
+        <img class="brand-small" src="/brand/logo-mark.svg" alt="Diralo">
         <span id="count" class="count">0</span>
       </span>
       <div class="room" id="roomLabel"></div>
@@ -283,7 +289,30 @@ for (const sel of [$("lang"), $("langSwitch")]) {
 }
 
 // Browsersprache und letzte Eingaben vorbelegen
-const saved = JSON.parse(localStorage.getItem("lumo") || "{}");
+/* ------------------------------------------------------------------
+   Umzug der Speicherschluessel von lumo auf diralo
+
+   Wuerden die Schluessel einfach umbenannt, bekaeme jedes Geraet eine
+   neue Kennung: Eigene alte Nachrichten waeren dann nicht mehr als
+   eigene erkennbar und liessen sich nicht mehr fuer alle loeschen.
+   Deshalb werden die alten Werte einmalig uebernommen. Die Zeile kann
+   weg, sobald niemand mehr von der alten Fassung kommt.
+------------------------------------------------------------------ */
+(function umziehen() {
+  const paare = [["lumo", "diralo"], ["lumo-device", "diralo-device"],
+                 ["lumo-hidden", "diralo-hidden"], ["lumoEmoji", "diraloEmoji"],
+                 ["lumo-sound", "diralo-sound"]];
+  for (const [alt, neu] of paare) {
+    try {
+      if (localStorage.getItem(neu) === null) {
+        const wert = localStorage.getItem(alt);
+        if (wert !== null) localStorage.setItem(neu, wert);
+      }
+    } catch {}
+  }
+})();
+
+const saved = JSON.parse(localStorage.getItem("diralo") || "{}");
 function guessLang() {
   const full = (navigator.language || "de");
   const norm = full.replace("_", "-");
@@ -318,12 +347,12 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v33";
+const BUILD = "v34";
 
-let deviceId = localStorage.getItem("lumo-device");
+let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
   deviceId = "d-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-  localStorage.setItem("lumo-device", deviceId);
+  localStorage.setItem("diralo-device", deviceId);
 }
 const msgs = new Map();
 const asked = new Set();
@@ -361,7 +390,7 @@ $("enter").onclick = () => {
   const name = $("name").value.trim() || "Gast";
   const lang = $("lang").value;
   const room = ($("room").value.trim() || "lobby").toLowerCase();
-  localStorage.setItem("lumo", JSON.stringify({ name, lang, room }));
+  localStorage.setItem("diralo", JSON.stringify({ name, lang, room }));
   me = { name, lang, room };
   start();
 };
@@ -435,7 +464,7 @@ function start() {
 
 $("langSwitch").onchange = (e) => {
   me.lang = e.target.value;
-  localStorage.setItem("lumo", JSON.stringify(me));
+  localStorage.setItem("diralo", JSON.stringify(me));
   socket.emit("setLang", { lang: me.lang });
   applyLanguage(me.lang);
   if (soundOn()) registerPush().catch(() => {});
@@ -621,11 +650,11 @@ const emojiTabs = $("emojiTabs"), emojiGrid = $("emojiGrid");
 
 /* Zuletzt benutzte, wie bei WhatsApp. Liegt nur im Browser. */
 function recentEmoji() {
-  try { return JSON.parse(localStorage.getItem("lumoEmoji") || "[]"); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem("diraloEmoji") || "[]"); } catch { return []; }
 }
 function rememberEmoji(ch) {
   const list = [ch, ...recentEmoji().filter((c) => c !== ch)].slice(0, 24);
-  try { localStorage.setItem("lumoEmoji", JSON.stringify(list)); } catch {}
+  try { localStorage.setItem("diraloEmoji", JSON.stringify(list)); } catch {}
   EMOJI[0][1] = list.join(" ");
 }
 
@@ -680,7 +709,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleEmoji(false); });
 
 /* Sprachnachrichten wurden am 14.09.2026 entfernt: Ohne Mitschrift
-   blieben sie unuebersetzt, und genau dafuer gibt es lumo. Das
+   blieben sie unuebersetzt, und genau dafuer gibt es Diralo. Das
    Abspielen schon verschickter Aufnahmen bleibt erhalten, ebenso die
    Schnittstelle auf dem Server - wer sie zurueckholen will, braucht
    nur wieder einen Knopf. Wer sprechen statt tippen will, nimmt das
@@ -899,14 +928,14 @@ composerButtons();
    localStorage - andere sehen die Nachricht weiter.
 ------------------------------------------------------------------ */
 function versteckte() {
-  try { return new Set(JSON.parse(localStorage.getItem("lumo-hidden") || "[]")); }
+  try { return new Set(JSON.parse(localStorage.getItem("diralo-hidden") || "[]")); }
   catch { return new Set(); }
 }
 let verborgen = versteckte();
 
 function versteckeLokal(id) {
   verborgen.add(id);
-  try { localStorage.setItem("lumo-hidden", JSON.stringify([...verborgen].slice(-500))); } catch {}
+  try { localStorage.setItem("diralo-hidden", JSON.stringify([...verborgen].slice(-500))); } catch {}
   const row = $("m" + id);
   if (row) row.remove();
   msgs.delete(id);
@@ -1018,7 +1047,7 @@ let unread = 0;
 const baseTitle = document.title;
 
 function soundOn() {
-  return localStorage.getItem("lumo-sound") === "1";
+  return localStorage.getItem("diralo-sound") === "1";
 }
 
 function updateBell() {
@@ -1031,14 +1060,14 @@ function updateBell() {
 
 $("inviteBtn").onclick = einladen;
 
-/* Tippt jemand einen Einladungslink an, waehrend lumo schon offen ist,
+/* Tippt jemand einen Einladungslink an, waehrend Diralo schon offen ist,
    aendert sich nur die Adresse hinter der Raute - die Seite laedt nicht
    neu, und ohne das hier passierte gar nichts. */
 window.addEventListener("hashchange", () => {
   const code = codeAusLink();
   if (!code || !me.room || code === me.room) return;
   me.room = code;
-  try { localStorage.setItem("lumo", JSON.stringify(me)); } catch {}
+  try { localStorage.setItem("diralo", JSON.stringify(me)); } catch {}
   $("log").textContent = "";
   msgs.clear();
   asked.clear();
@@ -1057,7 +1086,7 @@ $("bell").onclick = async () => {
     return;
   }
   if (soundOn() && Notification.permission === "granted") {
-    localStorage.setItem("lumo-sound", "0");
+    localStorage.setItem("diralo-sound", "0");
     updateBell();
     unregisterPush().catch(() => {});
     return;
@@ -1065,7 +1094,7 @@ $("bell").onclick = async () => {
   let perm = Notification.permission;
   if (perm !== "granted") perm = await Notification.requestPermission();
   if (perm === "granted") {
-    localStorage.setItem("lumo-sound", "1");
+    localStorage.setItem("diralo-sound", "1");
     beep();
     registerPush()
       .then((ok) => {
@@ -1132,7 +1161,7 @@ function notify(m, text) {
     body: text,
     icon: "/icons/icon-192-v2.png",
     badge: "/icons/icon-192-v2.png",
-    tag: "lumo-" + m.id,
+    tag: "diralo-" + m.id,
     lang: me.lang,
   };
   try {

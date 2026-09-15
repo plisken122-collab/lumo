@@ -1,4 +1,4 @@
-# lumo — Logo und Farben
+# Diralo — Logo und Farben
 
 ## Die Idee
 
