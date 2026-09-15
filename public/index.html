@@ -83,6 +83,11 @@
     text-decoration-color:var(--line); text-underline-offset:3px;
   }
   .meine-chats { margin:14px 0 0; }
+  .quotabar {
+    background:#FBF3E4; border:1px solid #E4D5B0; border-radius:12px;
+    padding:11px 13px; margin-bottom:10px; font-size:13.5px; line-height:1.45;
+  }
+  .quotabar a { display:inline-block; margin-top:4px; color:var(--mine); font-weight:500; }
   .neu {
     display:inline-block; min-width:20px; height:20px; padding:0 6px;
     margin-left:8px; border-radius:10px; background:#C0392B; color:#fff;
@@ -296,6 +301,14 @@
     </div>
   </div>
 
+  <!-- Bleibt stehen, bis der Chat gewechselt wird: Hier entscheidet
+       jemand, ob er bezahlt. Eine Meldung, die nach fuenf Sekunden
+       verschwindet, taugt dafuer nicht. -->
+  <div id="quotaBar" class="quotabar hide">
+    <span id="quotaText"></span>
+    <a id="quotaLink" href="/preise"></a>
+  </div>
+
   <section id="chat" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="bar">
       <span class="logo-wrap">
@@ -455,7 +468,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v44";
+const BUILD = "v45";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -648,8 +661,13 @@ function start() {
       composerButtons();
     }
   });
-  socket.on("quotaReached", ({ id }) => {
-    showErr(T("errQuota"));
+  socket.on("quotaReached", ({ id, grund }) => {
+    /* Zwei verschiedene Grenzen, zwei verschiedene Antworten. Die
+       Tagesgrenze geht morgen vorbei - da reicht ein Hinweis. Die
+       Monatsgrenze geht nicht vorbei, und sie ist der Moment, in dem
+       jemand entscheidet, ob er bezahlt. */
+    if (grund === "monat") zeigeQuotaLeiste();
+    else showErr(T("errQuota"));
     const m = msgs.get(id); if (m) { m.failed = true; render(m); }
   });
 }
@@ -1396,6 +1414,16 @@ function codeAusLink() {
 }
 
 function scrollDown() { $("log").scrollTop = $("log").scrollHeight; }
+/* Die Monatsgrenze bleibt sichtbar, bis der Chat gewechselt wird. */
+function zeigeQuotaLeiste() {
+  $("quotaText").textContent = T("errQuotaMonat");
+  $("quotaLink").textContent = T("quotaLink");
+  $("quotaBar").classList.remove("hide");
+}
+function versteckeQuotaLeiste() {
+  $("quotaBar").classList.add("hide");
+}
+
 function showErr(t) {
   const e = $("err"); e.textContent = t; e.classList.remove("hide");
   setTimeout(() => e.classList.add("hide"), 5000);
@@ -1436,6 +1464,7 @@ function wechsleZu(code) {
   try { localStorage.setItem("diralo", JSON.stringify(me)); } catch {}
   chatMerken(code);
   gelesenSetzen(code);
+  versteckeQuotaLeiste();
   $("log").textContent = "";
   msgs.clear();
   asked.clear();
