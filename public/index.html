@@ -75,6 +75,24 @@
     border-radius:9px; padding:7px 10px; font-size:13px; white-space:nowrap;
   }
   .bell.on { background:var(--mine); border-color:var(--mine); color:#fff; }
+  /* Der Chat-Code ist jetzt ein Knopf - er soll aber aussehen wie
+     vorher, nur anklickbar. */
+  .bar button.room {
+    background:none; border:none; text-align:left; padding:4px 0;
+    font-family:inherit; cursor:pointer; text-decoration:underline;
+    text-decoration-color:var(--line); text-underline-offset:3px;
+  }
+  .meine-chats { margin:14px 0 0; }
+  .meine-chats .kopf { font-size:13px; color:var(--muted); margin:0 0 6px; }
+  .meine-chats button {
+    display:block; width:100%; text-align:left; background:var(--surface);
+    border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+    margin-bottom:6px; font-size:14.5px; color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .sheet-kopf { margin:6px 12px 8px; font-size:13px; color:var(--muted); }
+  .sheet-hinweis { margin:8px 14px 4px; font-size:12px; color:var(--muted); line-height:1.4; }
+  .sheet-trenner { height:1px; background:var(--line); margin:8px 12px; }
   .fuss { margin:14px 0 0; text-align:center; font-size:12.5px; }
   .fuss a { color:var(--muted); }
   .linkish {
@@ -248,6 +266,10 @@
       <p class="sub" id="t-roomHint" style="font-size:12.5px;margin-top:6px"></p>
       <button id="newChat" class="linkish" type="button"></button>
       <p class="invited hide" id="invitedNote"></p>
+
+      <!-- Die Chats, in denen man schon war. Ohne sie muesste man sich
+           jeden Code merken - und Einladungscodes sind Zufallsfolgen. -->
+      <div id="meineChats" class="meine-chats hide"></div>
       <p class="note" id="t-privacy"></p>
 
       <button class="primary" id="enter"></button>
@@ -275,7 +297,7 @@
         <img class="brand-small" src="/brand/logo-mark.svg" alt="Diralo">
         <span id="count" class="count">0</span>
       </span>
-      <div class="room" id="roomLabel"></div>
+      <button class="room" id="roomLabel" type="button"></button>
       <button id="inviteBtn" class="bell"></button>
       <button id="bell" class="bell"></button>
       <select id="langSwitch"></select>
@@ -387,6 +409,31 @@ if (eingeladen) {
   melde("ueber_link");
 }
 
+/* Die gemerkten Chats auf der Startseite anbieten. Ein Tippen genuegt. */
+function zeigeStartListe() {
+  const feld = $("meineChats");
+  const liste = chatsLaden();
+  if (!liste.length) { feld.classList.add("hide"); return; }
+  feld.textContent = "";
+
+  const kopf = document.createElement("p");
+  kopf.className = "kopf";
+  kopf.textContent = T("myChats");
+  feld.appendChild(kopf);
+
+  for (const c of liste.slice(0, 8)) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = chatAnzeige(c);
+    b.onclick = () => {
+      $("room").value = c.code;
+      $("enter").click();
+    };
+    feld.appendChild(b);
+  }
+  feld.classList.remove("hide");
+}
+
 $("newChat").onclick = () => {
   $("room").value = neuerCode();
   $("room").focus();
@@ -396,7 +443,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v42";
+const BUILD = "v43";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -429,6 +476,9 @@ function applyLanguage(code) {
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
   $("invitedNote").textContent = L.t("invitedTo");
+  /* Die Chatliste traegt uebersetzte Ueberschriften - sie muss also mit
+     der Sprache mitwandern. */
+  zeigeStartListe();
   updateBell();
   msgs.forEach(render);
 }
@@ -523,7 +573,8 @@ function start() {
   /* Erst jetzt anbieten - und nicht sofort, sondern wenn der erste
      Eindruck da ist. */
   setTimeout(zeigeInstallBalken, 20000);
-  $("roomLabel").textContent = "#" + me.room;
+  chatMerken(me.room);
+  zeigeRaumLabel();
   $("langSwitch").value = me.lang;
 
   socket = io();
@@ -1071,6 +1122,130 @@ function schliesseSheet() {
   if (sheet) { sheet.remove(); sheet = null; }
 }
 
+/* --------------------------------------------------------------------
+   Meine Chats
+
+   Frueher merkte sich der Browser genau einen Chat - wer zum naechsten
+   wechselte, verlor den vorigen. Das ging, solange eine Mitgliedschaft
+   einen Chat bedeutete. Seit sie mehrere freischaltet, passt es nicht
+   mehr: Man bezahlt drei und konnte sich einen merken.
+
+   Die Liste liegt nur in diesem Browser. Darauf weist die App hin, und
+   sie laesst sich kopieren - fuer bezahlte Chats holt man sie sonst
+   ueber den Verwaltungsschluessel auf der Preisseite zurueck.
+-------------------------------------------------------------------- */
+const CHATS = "diralo-chats";
+
+function chatsLaden() {
+  try {
+    const roh = JSON.parse(localStorage.getItem(CHATS) || "[]");
+    return Array.isArray(roh) ? roh.filter((c) => c && typeof c.code === "string") : [];
+  } catch { return []; }
+}
+
+function chatsSpeichern(liste) {
+  try { localStorage.setItem(CHATS, JSON.stringify(liste.slice(0, 50))); } catch {}
+}
+
+/* Zuletzt benutzter nach oben - so steht der wichtigste immer vorn. */
+function chatMerken(code, name) {
+  if (!code) return;
+  const liste = chatsLaden();
+  const da = liste.find((c) => c.code === code);
+  if (da) {
+    da.zuletzt = Date.now();
+    if (name) da.name = name;
+  } else {
+    liste.push({ code, name: name || "", zuletzt: Date.now() });
+  }
+  liste.sort((a, b) => (b.zuletzt || 0) - (a.zuletzt || 0));
+  chatsSpeichern(liste);
+}
+
+function chatVergessen(code) {
+  chatsSpeichern(chatsLaden().filter((c) => c.code !== code));
+}
+
+const chatAnzeige = (c) => (c.name ? c.name : "#" + c.code);
+
+function zeigeChatListe() {
+  schliesseSheet();
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  const box = document.createElement("div");
+  box.className = "sheet-inner";
+
+  const kopf = document.createElement("p");
+  kopf.className = "sheet-kopf";
+  kopf.textContent = T("myChats");
+  box.appendChild(kopf);
+
+  const andere = chatsLaden().filter((c) => c.code !== me.room);
+  if (!andere.length) {
+    const leer = document.createElement("p");
+    leer.className = "sheet-hinweis";
+    leer.textContent = T("noChats");
+    box.appendChild(leer);
+  }
+  for (const c of andere) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = chatAnzeige(c);
+    b.onclick = () => { schliesseSheet(); wechsleZu(c.code); };
+    box.appendChild(b);
+  }
+
+  const trenner = document.createElement("div");
+  trenner.className = "sheet-trenner";
+  box.appendChild(trenner);
+
+  const um = document.createElement("button");
+  um.type = "button";
+  um.textContent = T("renameChat");
+  um.onclick = () => {
+    const jetzt = chatsLaden().find((c) => c.code === me.room);
+    const name = prompt(T("chatNameFrage"), jetzt?.name || "");
+    if (name !== null) { chatMerken(me.room, name.trim().slice(0, 40)); zeigeRaumLabel(); }
+    schliesseSheet();
+  };
+  box.appendChild(um);
+
+  const kopie = document.createElement("button");
+  kopie.type = "button";
+  kopie.textContent = T("copyList");
+  kopie.onclick = async () => {
+    const text = chatsLaden()
+      .map((c) => (c.name ? c.name + ": " : "") + location.origin + "/#c=" + c.code)
+      .join("\n");
+    try { await navigator.clipboard.writeText(text); showErr(T("listCopied")); }
+    catch { prompt(T("copyList"), text); }
+    schliesseSheet();
+  };
+  box.appendChild(kopie);
+
+  const weg = document.createElement("button");
+  weg.type = "button";
+  weg.className = "danger";
+  weg.textContent = T("forgetChat");
+  weg.onclick = () => { chatVergessen(me.room); schliesseSheet(); };
+  box.appendChild(weg);
+
+  const hinweis = document.createElement("p");
+  hinweis.className = "sheet-hinweis";
+  hinweis.textContent = T("onlyThisBrowser");
+  box.appendChild(hinweis);
+
+  sheet.appendChild(box);
+  sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
+  document.body.appendChild(sheet);
+}
+
+/* Der Name, wenn es einen gibt - sonst der Code. */
+function zeigeRaumLabel() {
+  const c = chatsLaden().find((x) => x.code === me.room);
+  $("roomLabel").textContent = c && c.name ? c.name : "#" + me.room;
+}
+
 function zeigeMenue(m) {
   schliesseSheet();
   sheet = document.createElement("div");
@@ -1198,22 +1373,30 @@ $("inviteBtn").onclick = einladen;
 /* Tippt jemand einen Einladungslink an, waehrend Diralo schon offen ist,
    aendert sich nur die Adresse hinter der Raute - die Seite laedt nicht
    neu, und ohne das hier passierte gar nichts. */
-window.addEventListener("hashchange", () => {
-  const code = codeAusLink();
+/* In einen anderen Chat umziehen. Kommt von zwei Seiten: ueber einen
+   Einladungslink und ueber die eigene Chatliste. */
+function wechsleZu(code) {
   if (!code || !me.room || code === me.room) return;
   me.room = code;
   try { localStorage.setItem("diralo", JSON.stringify(me)); } catch {}
+  chatMerken(code);
   $("log").textContent = "";
   msgs.clear();
   asked.clear();
-  $("roomLabel").textContent = "#" + code;
+  zeigeRaumLabel();
   schliesseSheet();
   socket.emit("join", {
     roomCode: code, name: me.name, lang: me.lang, device: deviceId,
     build: BUILD,
     speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
   });
+}
+
+window.addEventListener("hashchange", () => {
+  wechsleZu(codeAusLink());
 });
+
+$("roomLabel").onclick = () => zeigeChatListe();
 
 $("bell").onclick = async () => {
   if (!("Notification" in window)) {
