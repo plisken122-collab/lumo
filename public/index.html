@@ -350,7 +350,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v39";
+const BUILD = "v40";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -392,7 +392,11 @@ $("lang").onchange = (e) => applyLanguage(e.target.value);
 $("enter").onclick = () => {
   const name = $("name").value.trim() || "Gast";
   const lang = $("lang").value;
-  const room = ($("room").value.trim() || "lobby").toLowerCase();
+  /* Leeres Feld heisst "neuer, eigener Chat" - niemals ein gemeinsamer.
+     Frueher landete man dann in "lobby", und solange nur Eingeladene
+     hereinkamen, fiel das nicht auf. Ohne Zugangswort saessen dort zwei
+     Fremde im selben Gespraech und laesen die Nachrichten des anderen. */
+  const room = ($("room").value.trim() || neuerCode()).toLowerCase();
   localStorage.setItem("diralo", JSON.stringify({ name, lang, room }));
   me = { name, lang, room };
   start();
