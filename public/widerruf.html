@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E4E5E9">
+<meta name="robots" content="noindex, nofollow">
+<title>Diralo — Livre resolução</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E;
+    --line:#D2D4DB; --mine:#384C9E;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--canvas); color:var(--ink);
+    font-family:'DM Sans', system-ui, sans-serif; font-size:16px; line-height:1.6;
+  }
+  .wrap { max-width:680px; margin:0 auto; padding:24px 16px 60px; }
+  .brandline { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .brandline img { display:block; height:34px; width:auto; }
+  .brandline span { font-size:26px; font-weight:500; }
+  a { color:var(--mine); }
+  .tabs { display:flex; gap:6px; margin:18px 0 20px; }
+  .tabs button {
+    font-family:inherit; font-size:14px; padding:8px 14px; border:1px solid var(--line);
+    background:var(--surface); color:var(--muted); border-radius:9px; cursor:pointer;
+  }
+  .tabs button[aria-selected="true"] { background:var(--mine); border-color:var(--mine); color:#fff; }
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:16px; padding:20px 22px; margin-bottom:16px;
+  }
+  h1 { font-size:22px; font-weight:500; margin:0 0 4px; }
+  h2 { font-size:17px; font-weight:500; margin:26px 0 8px; }
+  h2:first-of-type { margin-top:16px; }
+  p { margin:0 0 12px; }
+  ul { margin:0 0 12px; padding-left:20px; }
+  li { margin-bottom:6px; }
+  .small { font-size:13.5px; color:var(--muted); }
+  .merk { background:#F1F2F5; border-left:3px solid var(--mine); padding:11px 14px; border-radius:10px; margin:0 0 14px; }
+  /* Das Muster-Formular soll wie ein Formular aussehen, nicht wie
+     Fliesstext - deshalb feste Zeilenfuehrung und Rahmen. */
+  .formular {
+    border:1px solid var(--line); border-radius:10px; padding:14px 16px;
+    margin:0 0 12px; font-size:14.5px; line-height:1.85;
+  }
+  .formular p { margin:0 0 10px; }
+  .formular .zeile { border-bottom:1px dotted var(--line); display:block; margin-bottom:8px; }
+  .formular strong { font-weight:500; }
+  .knopf {
+    font-family:inherit; font-size:14px; padding:9px 14px; border:1px solid var(--mine);
+    background:var(--mine); color:#fff; border-radius:9px; cursor:pointer;
+    display:inline-block; text-decoration:none; margin:0 8px 12px 0;
+  }
+  .knopf.leer { background:var(--surface); color:var(--mine); }
+  .hide { display:none !important; }
+  .back { display:inline-block; margin-top:8px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brandline">
+    <img src="/brand/logo-mark.svg" alt=""><span>Diralo</span>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-lang="pt" aria-selected="true">Português</button>
+    <button role="tab" data-lang="de" aria-selected="false">Deutsch</button>
+    <button role="tab" data-lang="en" aria-selected="false">English</button>
+  </div>
+
+  <!-- ============================ Português ============================
+       Massgebliche Fassung. Wortlaut nach Decreto-Lei n.o 24/2014,
+       Anexo A (Belehrung) und Anexo B (Muster-Formular).
+  =================================================================== -->
+  <section data-lang="pt">
+    <div class="card">
+      <h1>Direito de livre resolução</h1>
+      <p class="small">Última atualização: 15 de setembro de 2026</p>
+
+      <div class="merk">
+        <strong>Neste momento não se aplica na prática.</strong> O Diralo é gratuito, não há qualquer pagamento e, por isso, nada há a resolver. Esta informação vale a partir do momento em que celebre connosco um contrato pago.
+      </div>
+
+      <h2>Informação sobre o direito de livre resolução</h2>
+      <p><strong>Direito de livre resolução.</strong> Tem o direito de resolver o presente contrato no prazo de 14 dias, sem necessidade de indicar qualquer motivo.</p>
+      <p>O prazo de livre resolução expira 14 dias após o dia da celebração do contrato.</p>
+      <p>Para exercer o seu direito de livre resolução, tem de nos comunicar a sua decisão através de uma declaração inequívoca — por exemplo, carta enviada pelo correio ou mensagem de correio eletrónico:</p>
+      <p>Carsten Herziger<br>
+      Areias de Pera 700A<br>
+      8365-201 Pêra, concelho de Silves<br>
+      Portugal<br>
+      <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a></p>
+      <p>Pode utilizar o modelo de formulário abaixo, mas tal não é obrigatório. Para que o prazo de livre resolução seja respeitado, basta que a sua comunicação seja enviada antes do termo do prazo.</p>
+
+      <h2>Efeitos da livre resolução</h2>
+      <p>Em caso de resolução do contrato, reembolsamos todos os pagamentos recebidos, sem demora injustificada e, em qualquer caso, no prazo de 14 dias a contar da data em que recebermos a sua comunicação.</p>
+      <p>O reembolso é efetuado através do mesmo meio de pagamento que utilizou na transação inicial, salvo acordo expresso em contrário; em nenhum caso lhe serão cobrados custos por esse reembolso.</p>
+
+      <h2>Início antecipado da prestação</h2>
+      <p>Se pedir que a prestação do serviço tenha início durante o prazo de livre resolução, pagar-nos-á um montante proporcional ao que lhe foi efetivamente prestado até ao momento em que nos comunicou a sua decisão, em relação ao conjunto das prestações previstas no contrato.</p>
+      <p>O direito de livre resolução <strong>extingue-se</strong> se pedir expressamente o início da prestação durante o prazo e reconhecer que perde esse direito depois de o serviço ter sido integralmente prestado por nós.</p>
+
+      <h2>Modelo de formulário de livre resolução</h2>
+      <p class="small">Só deve preencher e devolver o presente formulário se quiser resolver o contrato.</p>
+      <div class="formular">
+        <p><strong>Para:</strong> Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, Portugal, kontakt@diralo.app</p>
+        <p>Venho por este meio comunicar (*) que resolvo o meu/nosso (*) contrato relativo à prestação do seguinte serviço:</p>
+        <p><span class="zeile">&nbsp;</span>
+        <span class="zeile">&nbsp;</span></p>
+        <p>Solicitado em (*) / recebido em (*): <span class="zeile">&nbsp;</span>
+        Nome do(s) consumidor(es): <span class="zeile">&nbsp;</span>
+        Morada do(s) consumidor(es): <span class="zeile">&nbsp;</span>
+        Assinatura do(s) consumidor(es) (só no caso de o presente formulário ser notificado em papel): <span class="zeile">&nbsp;</span>
+        Data: <span class="zeile">&nbsp;</span></p>
+        <p class="small">(*) Riscar o que não interessa.</p>
+      </div>
+      <a class="knopf" href="#" data-mail="pt">Enviar por email</a>
+      <button class="knopf leer" data-kopie="pt">Copiar texto</button>
+
+      <p class="small">Estes termos fazem parte das nossas <a href="/agb">Condições de Utilização</a>. Decreto-Lei n.º 24/2014, de 14 de fevereiro.</p>
+
+      <a class="back" href="/">← Voltar ao Diralo</a>
+    </div>
+  </section>
+
+  <!-- ============================= Deutsch ============================= -->
+  <section data-lang="de" class="hide">
+    <div class="card">
+      <h1>Widerrufsbelehrung</h1>
+      <p class="small">Stand: 15. September 2026</p>
+
+      <div class="merk">
+        <strong>Derzeit ohne praktische Bedeutung.</strong> Diralo ist kostenlos, es gibt keine Zahlung und damit nichts zu widerrufen. Diese Belehrung gilt ab dem Moment, in dem du einen kostenpflichtigen Vertrag mit uns schließt.
+      </div>
+
+      <h2>Widerrufsrecht</h2>
+      <p>Du hast das Recht, binnen 14 Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.</p>
+      <p>Die Widerrufsfrist beträgt 14 Tage ab dem Tag des Vertragsschlusses.</p>
+      <p>Um dein Widerrufsrecht auszuüben, musst du uns mittels einer eindeutigen Erklärung — etwa per Brief oder E-Mail — über deinen Entschluss unterrichten:</p>
+      <p>Carsten Herziger<br>
+      Areias de Pera 700A<br>
+      8365-201 Pêra, Kreis Silves<br>
+      Portugal<br>
+      <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a></p>
+      <p>Du kannst dafür das unten stehende Muster-Formular verwenden, musst es aber nicht. Zur Wahrung der Frist reicht es, dass du die Mitteilung vor Ablauf der Frist absendest.</p>
+
+      <h2>Folgen des Widerrufs</h2>
+      <p>Wenn du diesen Vertrag widerrufst, erstatten wir alle Zahlungen, die wir von dir erhalten haben, unverzüglich und spätestens binnen 14 Tagen ab dem Tag, an dem deine Mitteilung bei uns eingegangen ist.</p>
+      <p>Für die Rückzahlung verwenden wir dasselbe Zahlungsmittel, das du bei der ursprünglichen Zahlung eingesetzt hast, außer wir haben ausdrücklich etwas anderes vereinbart; Entgelte werden dir wegen dieser Rückzahlung in keinem Fall berechnet.</p>
+
+      <h2>Vorzeitiger Beginn der Leistung</h2>
+      <p>Verlangst du, dass die Leistung schon während der Widerrufsfrist beginnen soll, so zahlst du uns einen angemessenen Betrag für den Teil, der bis zu deiner Mitteilung bereits erbracht wurde — gemessen am Gesamtumfang der im Vertrag vorgesehenen Leistungen.</p>
+      <p>Das Widerrufsrecht <strong>erlischt</strong>, wenn du ausdrücklich verlangst, dass die Leistung während der Frist beginnt, und zugleich bestätigst, dass du dein Widerrufsrecht verlierst, sobald wir die Leistung vollständig erbracht haben.</p>
+
+      <h2>Muster-Widerrufsformular</h2>
+      <p class="small">Dieses Formular nur ausfüllen und zurücksenden, wenn du den Vertrag widerrufen willst.</p>
+      <div class="formular">
+        <p><strong>An:</strong> Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, Portugal, kontakt@diralo.app</p>
+        <p>Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über die Erbringung der folgenden Dienstleistung:</p>
+        <p><span class="zeile">&nbsp;</span>
+        <span class="zeile">&nbsp;</span></p>
+        <p>Bestellt am (*) / erhalten am (*): <span class="zeile">&nbsp;</span>
+        Name des/der Verbraucher(s): <span class="zeile">&nbsp;</span>
+        Anschrift des/der Verbraucher(s): <span class="zeile">&nbsp;</span>
+        Unterschrift des/der Verbraucher(s) (nur bei Mitteilung auf Papier): <span class="zeile">&nbsp;</span>
+        Datum: <span class="zeile">&nbsp;</span></p>
+        <p class="small">(*) Unzutreffendes streichen.</p>
+      </div>
+      <a class="knopf" href="#" data-mail="de">Per E-Mail senden</a>
+      <button class="knopf leer" data-kopie="de">Text kopieren</button>
+
+      <p class="small">Diese Belehrung ist Teil unserer <a href="/agb">Nutzungsbedingungen</a>. Decreto-Lei n.º 24/2014 vom 14. Februar 2014. Verbindlich ist die portugiesische Fassung.</p>
+
+      <a class="back" href="/">← Zurück zu Diralo</a>
+    </div>
+  </section>
+
+  <!-- ============================= English ============================= -->
+  <section data-lang="en" class="hide">
+    <div class="card">
+      <h1>Right of withdrawal</h1>
+      <p class="small">Last updated: 15 September 2026</p>
+
+      <div class="merk">
+        <strong>No practical effect at the moment.</strong> Diralo is free, there is no payment and therefore nothing to withdraw from. This notice applies from the moment you enter into a paid contract with us.
+      </div>
+
+      <h2>Right of withdrawal</h2>
+      <p>You have the right to withdraw from this contract within 14 days without giving any reason.</p>
+      <p>The withdrawal period expires 14 days from the day the contract was concluded.</p>
+      <p>To exercise the right of withdrawal, you must inform us of your decision by an unequivocal statement — for example a letter sent by post or an email:</p>
+      <p>Carsten Herziger<br>
+      Areias de Pera 700A<br>
+      8365-201 Pêra, municipality of Silves<br>
+      Portugal<br>
+      <a href="mailto:kontakt@diralo.app">kontakt@diralo.app</a></p>
+      <p>You may use the model form below, but it is not obligatory. To meet the deadline, it is enough for you to send your communication before the period has expired.</p>
+
+      <h2>Effects of withdrawal</h2>
+      <p>If you withdraw from this contract, we will reimburse all payments received from you without undue delay and in any event no later than 14 days from the day on which we are informed of your decision.</p>
+      <p>We will make the reimbursement using the same means of payment as you used for the initial transaction, unless you have expressly agreed otherwise; you will not incur any fees as a result of the reimbursement.</p>
+
+      <h2>Performance started early</h2>
+      <p>If you requested that the service begin during the withdrawal period, you shall pay us an amount proportionate to what has been provided until you informed us of your withdrawal, in comparison with the full coverage of the contract.</p>
+      <p>The right of withdrawal <strong>is lost</strong> if you expressly request performance to begin during the period and acknowledge that you lose that right once the service has been fully performed by us.</p>
+
+      <h2>Model withdrawal form</h2>
+      <p class="small">Complete and return this form only if you wish to withdraw from the contract.</p>
+      <div class="formular">
+        <p><strong>To:</strong> Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, Portugal, kontakt@diralo.app</p>
+        <p>I/We (*) hereby give notice that I/we (*) withdraw from my/our (*) contract for the supply of the following service:</p>
+        <p><span class="zeile">&nbsp;</span>
+        <span class="zeile">&nbsp;</span></p>
+        <p>Ordered on (*) / received on (*): <span class="zeile">&nbsp;</span>
+        Name of consumer(s): <span class="zeile">&nbsp;</span>
+        Address of consumer(s): <span class="zeile">&nbsp;</span>
+        Signature of consumer(s) (only if this form is notified on paper): <span class="zeile">&nbsp;</span>
+        Date: <span class="zeile">&nbsp;</span></p>
+        <p class="small">(*) Delete as appropriate.</p>
+      </div>
+      <a class="knopf" href="#" data-mail="en">Send by email</a>
+      <button class="knopf leer" data-kopie="en">Copy text</button>
+
+      <p class="small">This notice forms part of our <a href="/agb">Terms of Use</a>. Decreto-Lei n.º 24/2014 of 14 February 2014. The Portuguese version is the binding one.</p>
+
+      <a class="back" href="/">← Back to Diralo</a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  /* Gleiche Umschaltung wie in den uebrigen Rechtstexten. */
+  const knoepfe = [...document.querySelectorAll(".tabs button")];
+  const teile = [...document.querySelectorAll("section[data-lang]")];
+
+  function zeige(code) {
+    knoepfe.forEach((b) => b.setAttribute("aria-selected", b.dataset.lang === code ? "true" : "false"));
+    teile.forEach((s) => s.classList.toggle("hide", s.dataset.lang !== code));
+    document.documentElement.lang = code;
+  }
+
+  knoepfe.forEach((b) => { b.onclick = () => zeige(b.dataset.lang); });
+
+  const browser = (navigator.language || "pt").slice(0, 2).toLowerCase();
+  if (browser === "de" || browser === "en") zeige(browser);
+
+  /* --------- Das Formular abschickbar machen ---------
+     Abtippen ist der Punkt, an dem die meisten aufgeben. Beide Knoepfe
+     legen denselben Text vor: einmal fertig im Mailprogramm, einmal in
+     der Zwischenablage, falls kein Mailprogramm eingerichtet ist. */
+  const BETREFF = { pt: "Livre resolução do contrato", de: "Widerruf des Vertrags", en: "Withdrawal from the contract" };
+
+  const TEXTE = {
+    pt: ["Para: Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, Portugal",
+         "",
+         "Venho por este meio comunicar que resolvo o meu contrato relativo à prestação do seguinte serviço:",
+         "",
+         "Serviço: Diralo",
+         "Solicitado em: ",
+         "Nome do consumidor: ",
+         "Morada do consumidor: ",
+         "Data: "],
+    de: ["An: Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, Portugal",
+         "",
+         "Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über die Erbringung der folgenden Dienstleistung:",
+         "",
+         "Dienstleistung: Diralo",
+         "Bestellt am: ",
+         "Name: ",
+         "Anschrift: ",
+         "Datum: "],
+    en: ["To: Carsten Herziger, Areias de Pera 700A, 8365-201 Pêra, Portugal",
+         "",
+         "I hereby give notice that I withdraw from my contract for the supply of the following service:",
+         "",
+         "Service: Diralo",
+         "Ordered on: ",
+         "Name: ",
+         "Address: ",
+         "Date: "],
+  };
+
+  const alsText = (code) => TEXTE[code].join("\n");
+
+  /* Den mailto-Verweis erst beim Klick bauen: so steht die Adresse nicht
+     fertig verlinkt im Quelltext und wird seltener abgegriffen. */
+  document.querySelectorAll("[data-mail]").forEach((a) => {
+    a.onclick = (e) => {
+      e.preventDefault();
+      const code = a.dataset.mail;
+      location.href = "mailto:kontakt@diralo.app"
+        + "?subject=" + encodeURIComponent(BETREFF[code])
+        + "&body=" + encodeURIComponent(alsText(code));
+    };
+  });
+
+  /* Der neuere Weg ueber navigator.clipboard ist in manchen Browsern
+     gesperrt, auch bei einem echten Fingertipp. Dann noch der alte Weg
+     ueber ein kurz eingehaengtes Feld - der braucht keine Erlaubnis. */
+  async function inDieZwischenablage(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch { /* weiter unten nochmal versuchen */ }
+
+    const feld = document.createElement("textarea");
+    feld.value = text;
+    feld.setAttribute("readonly", "");
+    feld.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(feld);
+    feld.select();
+    feld.setSelectionRange(0, text.length);
+    let hat = false;
+    try { hat = document.execCommand("copy"); } catch { hat = false; }
+    feld.remove();
+    return hat;
+  }
+
+  document.querySelectorAll("[data-kopie]").forEach((b) => {
+    const wort = b.textContent;
+    b.onclick = async () => {
+      /* Klappt gar nichts, bleibt der Text im Formular darueber stehen
+         und laesst sich von Hand markieren. */
+      b.textContent = (await inDieZwischenablage(alsText(b.dataset.kopie))) ? "✓" : "✕";
+      setTimeout(() => { b.textContent = wort; }, 1600);
+    };
+  });
+</script>
+</body>
+</html>
