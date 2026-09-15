@@ -98,6 +98,11 @@ export async function init() {
       at       BIGINT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS subscriptions_room ON subscriptions (room);
+    /* Frueher war der Endpunkt allein der Schluessel. Damit konnte ein
+       Geraet nur einen Chat abonnieren - jede neue Anmeldung warf die
+       vorige hinaus. Jetzt zaehlt das Paar aus Endpunkt und Chat. */
+    ALTER TABLE subscriptions DROP CONSTRAINT IF EXISTS subscriptions_pkey;
+    ALTER TABLE subscriptions ADD PRIMARY KEY (endpoint, room);
 
     CREATE TABLE IF NOT EXISTS usage_log (
       id         BIGSERIAL PRIMARY KEY,
@@ -455,16 +460,20 @@ export async function purgeOlderThan(days) {
 }
 
 /* ------------------------ Push-Anmeldungen ------------------------ */
+/* Der Schluessel ist Endpunkt *und* Chat: Ein Geraet kann mehrere Chats
+   abonnieren. Frueher war der Endpunkt allein der Schluessel - dann
+   ueberschrieb jede neue Anmeldung die vorige, und die Glocke galt immer
+   nur fuer den zuletzt geoeffneten Chat. */
 export async function saveSubscription({ endpoint, room, device, name, lang, data }) {
   if (!usingDatabase) {
-    mem.subs.set(endpoint, { endpoint, room, device, name, lang, data, at: Date.now() });
+    mem.subs.set(endpoint + "|" + room, { endpoint, room, device, name, lang, data, at: Date.now() });
     return;
   }
   await pool.query(
     `INSERT INTO subscriptions (endpoint, room, device, name, lang, data, at)
      VALUES ($1,$2,$3,$4,$5,$6,$7)
-     ON CONFLICT (endpoint) DO UPDATE
-       SET room = EXCLUDED.room, device = EXCLUDED.device,
+     ON CONFLICT (endpoint, room) DO UPDATE
+       SET device = EXCLUDED.device,
            name = EXCLUDED.name, lang = EXCLUDED.lang, data = EXCLUDED.data`,
     [endpoint, room, device, name, lang, JSON.stringify(data), Date.now()]
   );
@@ -481,8 +490,12 @@ export async function getSubscriptions(room) {
   }));
 }
 
+/* Ein toter Endpunkt ist fuer alle seine Chats tot. */
 export async function deleteSubscription(endpoint) {
-  if (!usingDatabase) { mem.subs.delete(endpoint); return; }
+  if (!usingDatabase) {
+    for (const k of [...mem.subs.keys()]) if (k.startsWith(endpoint + "|")) mem.subs.delete(k);
+    return;
+  }
   await pool.query(`DELETE FROM subscriptions WHERE endpoint = $1`, [endpoint]);
 }
 
@@ -745,4 +758,31 @@ export async function umzugAltePlaene() {
   }
   if (n) console.log(`  ${n} alte Mitgliedschaft(en) in Abos umgezogen.`);
   return n;
+}
+
+/* ------------------------- Was ist neu? -----------------------------
+   Zaehlt je Chat, wie viele fremde Nachrichten seit einem Zeitpunkt
+   dazugekommen sind. Gibt nur Zahlen zurueck, nie Inhalte - so kann die
+   Abfrage niemandem etwas verraten, der einen Chat-Code errechnet.
+------------------------------------------------------------------- */
+export async function neueNachrichten(paare, device) {
+  const raus = {};
+  for (const { room, seit } of (paare || []).slice(0, 20)) {
+    if (!room) continue;
+    const ab = Number(seit) || 0;
+    if (!usingDatabase) {
+      const ids = mem.rooms.get(room) || [];
+      raus[room] = ids
+        .map((id) => mem.messages.get(id))
+        .filter((m) => m && m.at > ab && m.device !== device && !m.deleted).length;
+      continue;
+    }
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM messages
+       WHERE room = $1 AND at > $2 AND device <> $3 AND deleted = FALSE`,
+      [room, ab, device || ""]
+    );
+    raus[room] = rows[0]?.n || 0;
+  }
+  return raus;
 }

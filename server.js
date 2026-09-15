@@ -506,6 +506,22 @@ app.post("/api/zaehl", (req, res) => {
   res.status(204).end();
 });
 
+/* Was ist neu? Der Browser schickt seine Chats mit dem Zeitpunkt, an
+   dem er sie zuletzt gelesen hat, und bekommt Zahlen zurueck - nie
+   Inhalte. So verraet die Abfrage nichts, auch wenn jemand fremde
+   Chat-Codes durchprobiert. */
+app.post("/api/neues", async (req, res) => {
+  if (!take(`neues:${req.ip}`, 60, 60 * 1000)) return res.status(429).json({});
+  const paare = (Array.isArray(req.body?.chats) ? req.body.chats : [])
+    .map((c) => ({ room: raumCode(c?.room), seit: Number(c?.seit) || 0 }))
+    .filter((c) => c.room);
+  try {
+    res.json(await store.neueNachrichten(paare, String(req.body?.device || "").slice(0, 60)));
+  } catch (err) {
+    res.status(500).json({ error: err.message.slice(0, 150) });
+  }
+});
+
 app.get("/api/trichter", async (req, res) => {
   const tage = Math.min(90, Math.max(1, Number(req.query.tage) || 14));
   try {
@@ -848,21 +864,36 @@ app.get("/api/push-key", (_req, res) => {
 });
 
 app.post("/api/subscribe", async (req, res) => {
-  const { subscription, room, device, name, lang } = req.body || {};
+  const { subscription, room, rooms, device, name, lang } = req.body || {};
   if (!pushReady) return res.status(503).json({ error: "Push ist nicht eingerichtet" });
-  if (!subscription?.endpoint || !room || !device) {
+  if (!subscription?.endpoint || !device) {
     return res.status(400).json({ error: "Angaben unvollstaendig" });
   }
+
+  /* Die Glocke gilt fuer alle Chats, die der Browser mitschickt - nicht
+     nur fuer den gerade offenen. Wer sie einmal einschaltet, will von
+     allen seinen Gespraechen hoeren, nicht von einem. */
+  const liste = [...new Set(
+    (Array.isArray(rooms) ? rooms : [])
+      .concat(room ? [room] : [])
+      .map((r) => String(r || "").toLowerCase().trim().slice(0, 60))
+      .filter(Boolean)
+  )].slice(0, 20);
+
+  if (!liste.length) return res.status(400).json({ error: "Kein Chat angegeben" });
+
   try {
-    await store.saveSubscription({
-      endpoint: subscription.endpoint,
-      room: String(room).toLowerCase().slice(0, 60),
-      device: String(device).slice(0, 60),
-      name: String(name || "Gast").slice(0, 40),
-      lang: clean(lang),
-      data: subscription,
-    });
-    res.json({ ok: true });
+    for (const r of liste) {
+      await store.saveSubscription({
+        endpoint: subscription.endpoint,
+        room: r,
+        device: String(device).slice(0, 60),
+        name: String(name || "Gast").slice(0, 40),
+        lang: clean(lang),
+        data: subscription,
+      });
+    }
+    res.json({ ok: true, chats: liste.length });
   } catch (err) {
     console.error("Anmeldung fehlgeschlagen:", err.message);
     res.status(500).json({ error: "Anmeldung fehlgeschlagen" });

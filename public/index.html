@@ -83,6 +83,11 @@
     text-decoration-color:var(--line); text-underline-offset:3px;
   }
   .meine-chats { margin:14px 0 0; }
+  .neu {
+    display:inline-block; min-width:20px; height:20px; padding:0 6px;
+    margin-left:8px; border-radius:10px; background:#C0392B; color:#fff;
+    font-size:11.5px; line-height:20px; text-align:center; vertical-align:middle;
+  }
   .meine-chats .kopf { font-size:13px; color:var(--muted); margin:0 0 6px; }
   .meine-chats button {
     display:block; width:100%; text-align:left; background:var(--surface);
@@ -424,7 +429,14 @@ function zeigeStartListe() {
   for (const c of liste.slice(0, 8)) {
     const b = document.createElement("button");
     b.type = "button";
-    b.textContent = chatAnzeige(c);
+    b.appendChild(document.createTextNode(chatAnzeige(c)));
+    const neu = neuesStand[c.code] || 0;
+    if (neu > 0) {
+      const punkt = document.createElement("span");
+      punkt.className = "neu";
+      punkt.textContent = neu > 99 ? "99+" : String(neu);
+      b.appendChild(punkt);
+    }
     b.onclick = () => {
       $("room").value = c.code;
       $("enter").click();
@@ -443,7 +455,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v43";
+const BUILD = "v44";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -574,6 +586,7 @@ function start() {
      Eindruck da ist. */
   setTimeout(zeigeInstallBalken, 20000);
   chatMerken(me.room);
+  gelesenSetzen(me.room);
   zeigeRaumLabel();
   $("langSwitch").value = me.lang;
 
@@ -594,7 +607,10 @@ function start() {
   });
 
   socket.on("history", (list) => { list.forEach((m) => add(m, false)); });
-  socket.on("message", (m) => add(m, true));
+  socket.on("message", (m) => {
+    add(m, true);
+    if (document.visibilityState === "visible") gelesenSetzen(me.room);
+  });
   socket.on("deleteFailed", () => { showErr(T("delFailed")); });
   socket.on("deleted", ({ id }) => {
     const m = msgs.get(id);
@@ -1135,6 +1151,37 @@ function schliesseSheet() {
    ueber den Verwaltungsschluessel auf der Preisseite zurueck.
 -------------------------------------------------------------------- */
 const CHATS = "diralo-chats";
+const GELESEN = "diralo-gelesen";
+
+/* Wann ein Chat zuletzt offen war. Daraus ergibt sich, was neu ist. */
+function gelesenLaden() {
+  try { return JSON.parse(localStorage.getItem(GELESEN) || "{}") || {}; } catch { return {}; }
+}
+function gelesenSetzen(code, wann) {
+  if (!code) return;
+  const g = gelesenLaden();
+  g[code] = wann || Date.now();
+  try { localStorage.setItem(GELESEN, JSON.stringify(g)); } catch {}
+}
+
+/* Zahlen je Chat vom Server holen. Nur Zahlen - der Server schickt nie
+   Inhalte, damit die Abfrage nichts ueber fremde Chats verraet. */
+let neuesStand = {};
+async function neuesHolen() {
+  const g = gelesenLaden();
+  const chats = chatsLaden().map((c) => ({ room: c.code, seit: g[c.code] || 0 }));
+  if (!chats.length) return {};
+  try {
+    const a = await fetch("/api/neues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chats, device: deviceId }),
+    });
+    if (!a.ok) return neuesStand;
+    neuesStand = await a.json();
+  } catch { /* ohne Netz eben nicht */ }
+  return neuesStand;
+}
 
 function chatsLaden() {
   try {
@@ -1168,7 +1215,8 @@ function chatVergessen(code) {
 
 const chatAnzeige = (c) => (c.name ? c.name : "#" + c.code);
 
-function zeigeChatListe() {
+async function zeigeChatListe() {
+  await neuesHolen();
   schliesseSheet();
   sheet = document.createElement("div");
   sheet.className = "sheet";
@@ -1190,7 +1238,14 @@ function zeigeChatListe() {
   for (const c of andere) {
     const b = document.createElement("button");
     b.type = "button";
-    b.textContent = chatAnzeige(c);
+    b.appendChild(document.createTextNode(chatAnzeige(c)));
+    const neu = neuesStand[c.code] || 0;
+    if (neu > 0) {
+      const punkt = document.createElement("span");
+      punkt.className = "neu";
+      punkt.textContent = neu > 99 ? "99+" : String(neu);
+      b.appendChild(punkt);
+    }
     b.onclick = () => { schliesseSheet(); wechsleZu(c.code); };
     box.appendChild(b);
   }
@@ -1380,6 +1435,7 @@ function wechsleZu(code) {
   me.room = code;
   try { localStorage.setItem("diralo", JSON.stringify(me)); } catch {}
   chatMerken(code);
+  gelesenSetzen(code);
   $("log").textContent = "";
   msgs.clear();
   asked.clear();
@@ -1539,6 +1595,10 @@ async function registerPush() {
     body: JSON.stringify({
       subscription: sub,
       room: me.room,
+      /* Alle gemerkten Chats mitschicken: Wer die Glocke einschaltet,
+         will von allen seinen Gespraechen hoeren, nicht nur von dem,
+         der gerade offen ist. */
+      rooms: chatsLaden().map((c) => c.code),
       device: deviceId,
       name: me.name,
       lang: me.lang,
@@ -1561,7 +1621,16 @@ async function unregisterPush() {
   await sub.unsubscribe().catch(() => {});
 }
 
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && me.room && !$("chat").classList.contains("hide")) {
+    gelesenSetzen(me.room);
+  }
+});
+
 applyLanguage($("lang").value);
+
+/* Auf der Startseite gleich zeigen, wo etwas Neues liegt. */
+neuesHolen().then(() => { if (!$("setup").classList.contains("hide")) zeigeStartListe(); });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 </script>
