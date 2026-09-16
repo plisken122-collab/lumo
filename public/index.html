@@ -283,7 +283,7 @@
       <p class="note" id="t-privacy"></p>
 
       <button class="primary" id="enter"></button>
-      <p class="fuss"><a href="/impressum">Impressum</a> &middot; <a href="/datenschutz">Datenschutz</a> &middot; <a href="/agb">AGB</a> &middot; <a href="/widerruf">Widerruf</a> &middot; <a href="/preise">Preise</a></p>
+      <p class="fuss"><a href="/impressum" id="f-impressum">Impressum</a> &middot; <a href="/datenschutz" id="f-daten">Datenschutz</a> &middot; <a href="/agb" id="f-agb">AGB</a> &middot; <a href="/widerruf" id="f-widerruf">Widerruf</a> &middot; <a href="/preise" id="f-preise">Preise</a></p>
     </div>
   </section>
 
@@ -468,7 +468,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v46";
+const BUILD = "v47";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -501,6 +501,12 @@ function applyLanguage(code) {
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
   $("invitedNote").textContent = L.t("invitedTo");
+  /* Die Fusszeilen-Links: Beschriftung folgt der App-Sprache. Der Link
+     selbst bleibt, die Zielseite waehlt ihre Fassung dann selbst. */
+  for (const [id, key] of [["f-impressum","fImpressum"],["f-daten","fDaten"],
+                           ["f-agb","fAGB"],["f-widerruf","fWiderruf"],["f-preise","fPreise"]]) {
+    const el = $(id); if (el) el.textContent = L.t(key);
+  }
   /* Die Chatliste traegt uebersetzte Ueberschriften - sie muss also mit
      der Sprache mitwandern. */
   zeigeStartListe();
