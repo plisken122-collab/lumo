@@ -295,6 +295,20 @@
   .voice audio { height:34px; max-width:200px; }
   .voice-len { font-size:12px; opacity:.75; font-variant-numeric:tabular-nums; }
   .no-text { display:block; margin-top:5px; font-size:12px; opacity:.7; }
+  /* Bild im Chat */
+  .foto {
+    display:block; max-width:100%; max-height:320px; border-radius:12px;
+    cursor:pointer; background:rgba(0,0,0,.04);
+  }
+  .foto + span:not(:empty) { display:block; margin-top:6px; }
+  /* Vorschau, bevor das Bild rausgeht */
+  .bild-vorschau { padding:4px 4px 6px; }
+  .bild-vorschau img { display:block; max-width:100%; max-height:48vh; margin:0 auto 12px; border-radius:12px; }
+  .bild-vorschau input { width:100%; }
+  .bild-vorschau .knoepfe { display:flex; gap:8px; margin-top:12px; }
+  .bild-vorschau .knoepfe button { flex:1; border-radius:11px; padding:12px; font-size:15px; font-weight:500; }
+  .bild-vorschau .knoepfe .abbruch { background:var(--surface); border:1px solid var(--line); color:var(--muted); }
+  .bild-vorschau .knoepfe .los { background:var(--mine); color:#fff; }
   .err { color:var(--danger); font-size:13px; margin:8px 2px 0; }
   .hide { display:none !important; }
   .note {
@@ -404,6 +418,8 @@
     </div>
     <div class="composer" id="composer">
       <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
+      <button id="bildBtn" class="mic-btn" type="button">📷</button>
+      <input id="bildInput" type="file" accept="image/*" hidden>
       <textarea id="draft" rows="1"></textarea>
       <button id="dictBtn" class="mic-btn" type="button">🗣️</button>
       <button id="send" disabled></button>
@@ -554,7 +570,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v51";
+const BUILD = "v52";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -585,6 +601,7 @@ function applyLanguage(code) {
   $("draft").placeholder = L.t("write");
   $("send").textContent = L.t("send");
   $("dictBtn").title = L.t("dictateTitle");
+  $("bildBtn").title = L.t("bildTitle");
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
@@ -813,6 +830,17 @@ function aktualisiereLeer() {
   if (leer) leer.classList.toggle("hide", msgs.size > 0);
 }
 
+/* Das Bild in eine Blase setzen. Tippen oeffnet es gross im neuen Tab. */
+function bildEinsetzen(m, bubble) {
+  const img = document.createElement("img");
+  img.className = "foto";
+  img.loading = "lazy";
+  img.alt = "";
+  img.src = "/medien/" + encodeURIComponent(m.id);
+  img.onclick = () => window.open(img.src, "_blank", "noopener");
+  bubble.appendChild(img);
+}
+
 function render(m) {
   const row = $("m" + m.id); if (!row) return;
   const bubble = row.querySelector(".bubble");
@@ -841,11 +869,16 @@ function render(m) {
   if (needs && !shown && !m.failed) {
     const key = m.id + ":" + me.lang;
     if (!asked.has(key)) { asked.add(key); socket.emit("need", { id: m.id, lang: me.lang }); }
-    bubble.innerHTML = '<span class="waiting"></span>';
-    bubble.firstChild.textContent = T("translating");
+    bubble.textContent = "";
+    if (m.bild) bildEinsetzen(m, bubble);   /* Bild sofort, auch waehrend die Unterschrift uebersetzt wird */
+    const w = document.createElement("span");
+    w.className = "waiting";
+    w.textContent = T("translating");
+    bubble.appendChild(w);
   } else {
     const text = shown || m.text;
     bubble.textContent = "";
+    if (m.bild) bildEinsetzen(m, bubble);
     /* Sprachnachricht: Abspieler zuerst, die Mitschrift darunter. Ohne
        Mitschrift bleibt es beim Abspieler mit einem Hinweis. */
     if (m.audioSeconds != null) {
@@ -881,7 +914,7 @@ function render(m) {
       o.textContent = m.text;
       bubble.appendChild(o);
     }
-    if (m.live) notify(m, text);
+    if (m.live) notify(m, text || (m.bild ? "📷" : text));
   }
 
   meta.textContent = "";
@@ -1231,6 +1264,112 @@ function toggleDiktat() {
 
 dictBtn.onclick = toggleDiktat;
 composerButtons();
+
+/* ------------------------------------------------------------------
+   Bilder senden
+
+   Das Bild wird im Browser verkleinert und neu als JPEG kodiert - das
+   Neukodieren ueber die Leinwand wirft versteckte Daten (auch den
+   Standort aus EXIF) automatisch weg. Erst dann geht es hoch, mit einer
+   optionalen Unterschrift, die wie jeder Text uebersetzt wird.
+------------------------------------------------------------------- */
+const BILD_MAX = 2_500_000;   /* muss zur Grenze im Server passen */
+const bildBtn = $("bildBtn"), bildInput = $("bildInput");
+
+bildBtn.onclick = () => bildInput.click();
+bildInput.onchange = () => {
+  const datei = bildInput.files && bildInput.files[0];
+  bildInput.value = "";   /* damit dasselbe Bild danach erneut waehlbar ist */
+  if (!datei) return;
+  if (!datei.type.startsWith("image/")) { showErr(T("bildBad")); return; }
+  verkleinereBild(datei)
+    .then((res) => res ? zeigeBildVorschau(res) : showErr(T("bildFailed")))
+    .catch(() => showErr(T("bildFailed")));
+};
+
+function verkleinereBild(datei) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(datei);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const max = 1600;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > max || h > max) {
+        const f = Math.min(max / w, max / h);
+        w = Math.round(w * f); h = Math.round(h * f);
+      }
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      let q = 0.82, dataUrl = c.toDataURL("image/jpeg", q);
+      /* Notfalls die Qualitaet senken, bis es unter die Grenze passt. */
+      while (dataUrl.length * 0.75 > BILD_MAX && q > 0.4) {
+        q -= 0.12; dataUrl = c.toDataURL("image/jpeg", q);
+      }
+      resolve({ dataUrl, base64: dataUrl.split(",")[1] });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+function zeigeBildVorschau({ dataUrl, base64 }) {
+  schliesseSheet();
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  const box = document.createElement("div");
+  box.className = "sheet-inner bild-vorschau";
+
+  const img = document.createElement("img");
+  img.src = dataUrl;
+  box.appendChild(img);
+
+  const cap = document.createElement("input");
+  cap.type = "text";
+  cap.maxLength = 200;
+  cap.placeholder = T("bildCaption");
+  box.appendChild(cap);
+
+  const knoepfe = document.createElement("div");
+  knoepfe.className = "knoepfe";
+  const ab = document.createElement("button");
+  ab.type = "button"; ab.className = "abbruch"; ab.textContent = T("cancel");
+  ab.onclick = () => schliesseSheet();
+  const los = document.createElement("button");
+  los.type = "button"; los.className = "los"; los.textContent = T("send");
+  los.onclick = () => { los.disabled = true; sendeBild(base64, cap.value, los); };
+  knoepfe.appendChild(ab); knoepfe.appendChild(los);
+  box.appendChild(knoepfe);
+
+  sheet.appendChild(box);
+  sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
+  document.body.appendChild(sheet);
+  cap.focus();
+}
+
+async function sendeBild(base64, caption, knopf) {
+  try {
+    const r = await fetch("/api/bild", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        room: me.room, device: deviceId, name: me.name, lang: me.lang,
+        caption: String(caption || "").slice(0, 200), mime: "image/jpeg", bild: base64,
+      }),
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      if (knopf) knopf.disabled = false;
+      showErr(r.status === 413 ? T("bildTooBig") : (d.error || T("bildFailed")));
+      return;
+    }
+    schliesseSheet();   /* Das Bild kommt ueber den Socket zurueck und zeigt sich selbst. */
+  } catch {
+    if (knopf) knopf.disabled = false;
+    showErr(T("bildFailed"));
+  }
+}
 
 /* ------------------------------------------------------------------
    Loeschen

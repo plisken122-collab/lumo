@@ -35,7 +35,7 @@ app.use((_req, res, next) => {
     "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src https://fonts.gstatic.com",
-    "img-src 'self' data:",
+    "img-src 'self' data: blob:",
     "media-src 'self'",
     "connect-src 'self'",
     "frame-ancestors 'none'",
@@ -59,7 +59,7 @@ const io = new Server(http);
 const kleinesJson = express.json({ limit: "64kb" });
 const rohesJson = express.raw({ type: "*/*", limit: "1mb" });
 app.use((req, res, next) => {
-  if (req.path === "/api/voice") return next();
+  if (req.path === "/api/voice" || req.path === "/api/bild") return next();
   if (req.path === "/api/stripe") return rohesJson(req, res, next);
   return kleinesJson(req, res, next);
 });
@@ -1110,6 +1110,73 @@ app.post("/api/voice", express.json({ limit: "3mb" }), async (req, res) => {
     await store.addMedia(msg.id, { mime: type, bytes });
   } catch (err) {
     console.error("Sprachnachricht nicht speicherbar:", err.message);
+    return res.status(500).json({ error: "Nicht speicherbar" });
+  }
+
+  io.to(raum).emit("message", msg);
+  pushToRoom(raum, msg).catch((e) => console.error("Push-Lauf:", e.message));
+  res.json({ ok: true, id: msg.id });
+});
+
+/* ------------------------------ Bilder ------------------------------
+   Wie die Sprachnachricht kommt das Bild als base64 in JSON. Verkleinert
+   und von EXIF befreit hat es schon der Browser des Absenders - der
+   Server prueft nur Format und Groesse und legt es in dieselbe
+   media-Tabelle. Die Loeschfrist raeumt es ueber ON DELETE CASCADE mit
+   der Nachricht wieder weg.
+
+   Eine etwaige Bildunterschrift ist gewoehnlicher Nachrichtentext und
+   laeuft danach durch dieselbe Uebersetzung wie alles andere.
+------------------------------------------------------------------- */
+const BILD_MAX_BYTES = Number(process.env.BILD_MAX_BYTES || 2_500_000);
+const BILD_MIME = {
+  "image/jpeg": "image/jpeg",
+  "image/webp": "image/webp",
+  "image/png": "image/png",
+};
+
+app.post("/api/bild", express.json({ limit: "5mb" }), async (req, res) => {
+  const { room, device, name, lang, caption, mime, bild } = req.body || {};
+  if (!room || !device || !bild) {
+    return res.status(400).json({ error: "Angaben unvollstaendig" });
+  }
+  const type = BILD_MIME[String(mime || "").split(";")[0].trim()];
+  if (!type) return res.status(415).json({ error: "Format nicht unterstuetzt" });
+
+  let bytes;
+  try {
+    bytes = Buffer.from(String(bild), "base64");
+  } catch {
+    return res.status(400).json({ error: "Bild unlesbar" });
+  }
+  if (!bytes.length || bytes.length > BILD_MAX_BYTES) {
+    return res.status(413).json({ error: "Bild zu gross" });
+  }
+
+  const raum = String(room).trim().toLowerCase().slice(0, 60);
+  const geraet = String(device).slice(0, 60);
+  if (!take(`msg:${geraet}`, MSG_PER_MIN, 60 * 1000)) {
+    return res.status(429).json({ error: "Zu schnell" });
+  }
+
+  const msg = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    room: raum,
+    device: geraet,
+    name: String(name || "Gast").slice(0, 40),
+    text: String(caption || "").trim().slice(0, 4000),
+    lang: clean(lang),
+    detected: false,
+    tr: {},
+    at: Date.now(),
+    bild: true,
+  };
+
+  try {
+    await store.addMessage(msg);
+    await store.addMedia(msg.id, { mime: type, bytes });
+  } catch (err) {
+    console.error("Bild nicht speicherbar:", err.message);
     return res.status(500).json({ error: "Nicht speicherbar" });
   }
 

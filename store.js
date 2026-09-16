@@ -76,6 +76,11 @@ export async function init() {
        Loch entsteht. */
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
 
+    /* Wie audio_seconds, nur fuer Bilder: TRUE heisst, zu dieser Nachricht
+       liegt ein Bild in der media-Tabelle. Der Text ist dann die (optionale)
+       Bildunterschrift. */
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS has_image BOOLEAN NOT NULL DEFAULT FALSE;
+
     /* Die Aufnahme selbst. Opus ist klein - eine halbe Minute sind rund
        40 KB, das traegt die Datenbank ohne Muehe. Bilder gehoeren spaeter
        nicht hierher, die sind hundertmal groesser.
@@ -185,7 +190,8 @@ export async function init() {
      grosse Anweisung oben aus irgendeinem Grund nicht durch, faellt es
      sonst erst auf, wenn jemand etwas loeschen will. */
   for (const [spalte, art] of [["audio_seconds", "INTEGER"],
-                               ["deleted", "BOOLEAN NOT NULL DEFAULT FALSE"]]) {
+                               ["deleted", "BOOLEAN NOT NULL DEFAULT FALSE"],
+                               ["has_image", "BOOLEAN NOT NULL DEFAULT FALSE"]]) {
     try {
       await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS ${spalte} ${art}`);
     } catch (err) {
@@ -227,10 +233,10 @@ export async function addMessage(msg) {
     return msg;
   }
   await pool.query(
-    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING`,
     [msg.id, msg.room, msg.device, msg.name, msg.text, msg.lang, msg.detected, msg.at,
-     msg.audioSeconds ?? null]
+     msg.audioSeconds ?? null, Boolean(msg.bild)]
   );
   return msg;
 }
@@ -261,12 +267,12 @@ export async function deleteForAll(id, device) {
   if (!usingDatabase) {
     const m = mem.messages.get(id);
     if (!m || m.device !== device) return false;
-    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null;
+    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false;
     mem.media.delete(id);
     return true;
   }
   const { rowCount } = await pool.query(
-    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL
+    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL, has_image = FALSE
      WHERE id = $1 AND device = $2 AND deleted = FALSE`,
     [id, device]
   );
@@ -347,6 +353,7 @@ function rowToMsg(r, translations) {
     id: r.id, room: r.room, device: r.device, name: r.name,
     text: r.body, lang: r.lang, detected: r.detected, at: Number(r.at), tr,
     audioSeconds: r.audio_seconds ?? null,
+    bild: Boolean(r.has_image),
     deleted: Boolean(r.deleted),
   };
 }
