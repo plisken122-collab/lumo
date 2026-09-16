@@ -156,10 +156,22 @@
     background:#EAEEF9; color:var(--mine); font-size:13px;
   }
 
+  #logWrap { position:relative; flex:1; min-height:0; display:flex; }
   #log {
     flex:1; overflow-y:auto; background:var(--surface); border:1px solid var(--line);
     border-radius:18px; padding:14px; display:flex; flex-direction:column; gap:12px;
   }
+  /* Der Hinweis im leeren Chat. Liegt ueber dem Verlauf, mittig, und laesst
+     Klicks nur auf seinen Inhalt durch. */
+  .leer {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    padding:24px; text-align:center; pointer-events:none;
+  }
+  .leer.hide { display:none; }
+  .leer-inner { max-width:320px; pointer-events:auto; }
+  .leer-titel { margin:0 0 8px; font-size:16px; font-weight:500; }
+  .leer-text { margin:0 0 18px; font-size:14px; color:var(--muted); line-height:1.5; }
+  .leer-inner .primary { margin-top:0; max-width:280px; margin-left:auto; margin-right:auto; }
   .row { max-width:85%; display:flex; flex-direction:column; gap:4px; }
   .row.mine { align-self:flex-end; align-items:flex-end; }
   .row.theirs { align-self:flex-start; align-items:flex-start; }
@@ -360,7 +372,19 @@
       <button id="bell" class="bell"></button>
       <select id="langSwitch"></select>
     </div>
-    <div id="log"></div>
+    <div id="logWrap">
+      <div id="log"></div>
+      <!-- Was ein allein Angekommener sonst nicht sieht: dass jetzt jemand
+           dazukommen muss. Liegt ueber dem leeren Verlauf und verschwindet,
+           sobald die erste Nachricht da ist. -->
+      <div id="leer" class="leer hide">
+        <div class="leer-inner">
+          <p class="leer-titel" id="t-leerTitel"></p>
+          <p class="leer-text" id="t-leerText"></p>
+          <button id="leerEinladen" class="primary"></button>
+        </div>
+      </div>
+    </div>
     <div id="err" class="err hide"></div>
     <div id="emojiPanel" class="emoji-panel hide">
       <div id="emojiTabs" class="emoji-tabs"></div>
@@ -513,7 +537,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v49";
+const BUILD = "v50";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -534,7 +558,7 @@ function applyLanguage(code) {
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
   for (const key of ["tagline", "freeStart", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
-                      "howTitle", "howStep1", "howStep2", "howStep3"]) {
+                      "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
   }
@@ -546,6 +570,7 @@ function applyLanguage(code) {
   $("dictBtn").title = L.t("dictateTitle");
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
+  $("leerEinladen").textContent = L.t("invite");
   $("invitedNote").textContent = L.t("invitedTo");
   /* Die Fusszeilen-Links: Beschriftung folgt der App-Sprache. Der Link
      selbst bleibt, die Zielseite waehlt ihre Fassung dann selbst. */
@@ -647,6 +672,7 @@ $("installGo").onclick = async () => {
 function start() {
   $("setup").classList.add("hide");
   $("chat").classList.remove("hide");
+  aktualisiereLeer();
   /* Erst jetzt anbieten - und nicht sofort, sondern wenn der erste
      Eindruck da ist. */
   setTimeout(zeigeInstallBalken, 20000);
@@ -671,7 +697,7 @@ function start() {
     }
   });
 
-  socket.on("history", (list) => { list.forEach((m) => add(m, false)); });
+  socket.on("history", (list) => { list.forEach((m) => add(m, false)); aktualisiereLeer(); });
   socket.on("message", (m) => {
     add(m, true);
     if (document.visibilityState === "visible") gelesenSetzen(me.room);
@@ -761,6 +787,13 @@ function add(m, live) {
   $("log").appendChild(row);
   render(m);
   scrollDown();
+  aktualisiereLeer();
+}
+
+/* Der Hinweis im leeren Chat: sichtbar, solange keine Nachricht da ist. */
+function aktualisiereLeer() {
+  const leer = $("leer");
+  if (leer) leer.classList.toggle("hide", msgs.size > 0);
 }
 
 function render(m) {
@@ -1509,6 +1542,7 @@ function updateBell() {
 }
 
 $("inviteBtn").onclick = einladen;
+$("leerEinladen").onclick = einladen;
 
 /* Tippt jemand einen Einladungslink an, waehrend Diralo schon offen ist,
    aendert sich nur die Adresse hinter der Raute - die Seite laedt nicht
@@ -1524,6 +1558,7 @@ function wechsleZu(code) {
   versteckeQuotaLeiste();
   $("log").textContent = "";
   msgs.clear();
+  aktualisiereLeer();
   asked.clear();
   zeigeRaumLabel();
   schliesseSheet();
