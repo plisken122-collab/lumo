@@ -179,8 +179,22 @@
 
   knoepfe.forEach((b) => { b.onclick = () => zeige(b.dataset.lang); });
 
-  const browser = (navigator.language || "pt").slice(0, 2).toLowerCase();
-  if (browser === "de" || browser === "en") zeige(browser);
+  /* Sprache aus der App uebernehmen, nicht die des Browsers. Wer die App
+     auf Portugiesisch nutzt, soll auch diese Seite auf Portugiesisch
+     sehen - frueher richtete sie sich nach der Browsersprache, und fuer
+     einen deutschen Browser kam so immer Deutsch. Es gibt drei Fassungen
+     (pt verbindlich, de und en zum Verstaendnis); alle anderen
+     App-Sprachen bekommen Englisch als gemeinsamen Nenner. */
+  function appSprache() {
+    let q = "";
+    try { const s = JSON.parse(localStorage.getItem("diralo") || "{}"); if (typeof s.lang === "string") q = s.lang; } catch {}
+    if (!q) q = navigator.language || "pt";
+    q = q.toLowerCase();
+    if (q.startsWith("de")) return "de";
+    if (q.startsWith("pt")) return "pt";
+    return "en";
+  }
+  zeige(appSprache());
 </script>
 </body>
 </html>
