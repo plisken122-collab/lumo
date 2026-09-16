@@ -301,6 +301,19 @@
     cursor:pointer; background:rgba(0,0,0,.04);
   }
   .foto + span:not(:empty) { display:block; margin-top:6px; }
+  /* Bild gross - im eigenen Overlay, nicht in einem neuen Tab. Sonst
+     kaeme man in der installierten App nicht mehr zurueck. */
+  .lightbox {
+    position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.92);
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .lightbox img { max-width:100%; max-height:100%; border-radius:8px; }
+  .lightbox-zu {
+    position:absolute; top:calc(10px + env(safe-area-inset-top)); right:14px;
+    width:40px; height:40px; border-radius:20px; padding:0;
+    background:rgba(0,0,0,.5); color:#fff; font-size:18px; line-height:1;
+    border:1px solid rgba(255,255,255,.35);
+  }
   /* Vorschau, bevor das Bild rausgeht */
   .bild-vorschau { padding:4px 4px 6px; }
   .bild-vorschau img { display:block; max-width:100%; max-height:48vh; margin:0 auto 12px; border-radius:12px; }
@@ -571,7 +584,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v53";
+const BUILD = "v54";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -816,7 +829,10 @@ function add(m, live) {
   const blase = row.querySelector(".bubble");
   blase.style.cursor = "pointer";
   blase.onclick = (e) => {
-    if (e.target.closest("audio, button, a")) return;
+    /* Ein Tippen aufs Bild vergroessert es, oeffnet aber nicht das Menue -
+       sonst kaeme beides zugleich. Das Menue erreicht man beim Bild ueber
+       die Namenszeile darunter. */
+    if (e.target.closest("audio, button, a, .foto")) return;
     zeigeMenue(m);
   };
   $("log").appendChild(row);
@@ -831,15 +847,47 @@ function aktualisiereLeer() {
   if (leer) leer.classList.toggle("hide", msgs.size > 0);
 }
 
-/* Das Bild in eine Blase setzen. Tippen oeffnet es gross im neuen Tab. */
+/* Das Bild in eine Blase setzen. Tippen zeigt es gross im eigenen
+   Overlay - nicht in einem neuen Tab, sonst kaeme man in der
+   installierten App nicht mehr zurueck. */
 function bildEinsetzen(m, bubble) {
   const img = document.createElement("img");
   img.className = "foto";
   img.loading = "lazy";
   img.alt = "";
   img.src = "/medien/" + encodeURIComponent(m.id);
-  img.onclick = () => window.open(img.src, "_blank", "noopener");
+  img.onclick = (e) => { e.stopPropagation(); zeigeBildGross(img.src); };
   bubble.appendChild(img);
+}
+
+/* Vollbild-Ansicht eines Bildes. Schliesst per Tippen und - wichtig auf
+   dem Handy - auch ueber die Zurueck-Geste: dazu legen wir einen
+   Verlaufseintrag an und hoeren auf popstate, statt die Seite zu
+   verlassen. */
+function zeigeBildGross(src) {
+  const overlay = document.createElement("div");
+  overlay.className = "lightbox";
+  const gross = document.createElement("img");
+  gross.src = src;
+  gross.alt = "";
+  overlay.appendChild(gross);
+  const zu = document.createElement("button");
+  zu.type = "button";
+  zu.className = "lightbox-zu";
+  zu.setAttribute("aria-label", T("cancel"));
+  zu.textContent = "✕";
+  overlay.appendChild(zu);
+
+  const weg = () => {
+    overlay.remove();
+    window.removeEventListener("popstate", weg);
+  };
+  /* Tippen schliesst ueber die Historie - so verhaelt sich die
+     Zurueck-Geste genauso und verlaesst nicht die App. */
+  overlay.onclick = () => history.back();
+  history.pushState({ lightbox: true }, "");
+  window.addEventListener("popstate", weg);
+  document.body.appendChild(overlay);
 }
 
 function render(m) {
@@ -931,6 +979,12 @@ function render(m) {
     b.textContent = m.open ? T("hideOriginal") : T("original", { lang: nice });
     b.onclick = () => { m.open = !m.open; render(m); };
     meta.appendChild(b);
+  }
+  /* Beim Bild ist das Antippen der Blase fuers Vergroessern belegt - das
+     Menue (z.B. Loeschen) erreicht man deshalb ueber die Namenszeile. */
+  if (m.bild) {
+    meta.style.cursor = "pointer";
+    meta.onclick = (e) => { if (e.target.closest("button, a")) return; zeigeMenue(m); };
   }
 }
 
