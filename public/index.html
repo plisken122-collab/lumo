@@ -420,6 +420,7 @@
       <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
       <button id="bildBtn" class="mic-btn" type="button">📷</button>
       <input id="bildInput" type="file" accept="image/*" hidden>
+      <input id="bildKamera" type="file" accept="image/*" capture="environment" hidden>
       <textarea id="draft" rows="1"></textarea>
       <button id="dictBtn" class="mic-btn" type="button">🗣️</button>
       <button id="send" disabled></button>
@@ -570,7 +571,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v52";
+const BUILD = "v53";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1274,18 +1275,53 @@ composerButtons();
    optionalen Unterschrift, die wie jeder Text uebersetzt wird.
 ------------------------------------------------------------------- */
 const BILD_MAX = 2_500_000;   /* muss zur Grenze im Server passen */
-const bildBtn = $("bildBtn"), bildInput = $("bildInput");
+const bildBtn = $("bildBtn"), bildInput = $("bildInput"), bildKamera = $("bildKamera");
 
-bildBtn.onclick = () => bildInput.click();
-bildInput.onchange = () => {
-  const datei = bildInput.files && bildInput.files[0];
-  bildInput.value = "";   /* damit dasselbe Bild danach erneut waehlbar ist */
+/* Auf Geraeten mit Kamera zuerst fragen: aufnehmen oder aus der Galerie?
+   Manche Handys bieten von sich aus nur die Galerie an - mit dem eigenen
+   Kamera-Feld (capture) kommt wirklich die Kamera. Am Rechner (feiner
+   Zeiger, kein Touch) gibt es keine Kamera; da direkt die Dateiauswahl. */
+const hatKamera = (navigator.maxTouchPoints || 0) > 0 ||
+                  (window.matchMedia && matchMedia("(pointer: coarse)").matches);
+
+bildBtn.onclick = () => { if (hatKamera) zeigeBildQuelle(); else bildInput.click(); };
+
+function zeigeBildQuelle() {
+  schliesseSheet();
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  const box = document.createElement("div");
+  box.className = "sheet-inner";
+  const kopf = document.createElement("p");
+  kopf.className = "sheet-kopf";
+  kopf.textContent = T("bildTitle");
+  box.appendChild(kopf);
+  const kam = document.createElement("button");
+  kam.type = "button";
+  kam.textContent = T("bildKamera");
+  kam.onclick = () => { schliesseSheet(); bildKamera.click(); };
+  const gal = document.createElement("button");
+  gal.type = "button";
+  gal.textContent = T("bildGalerie");
+  gal.onclick = () => { schliesseSheet(); bildInput.click(); };
+  box.appendChild(kam);
+  box.appendChild(gal);
+  sheet.appendChild(box);
+  sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
+  document.body.appendChild(sheet);
+}
+
+function bildGewaehlt(inp) {
+  const datei = inp.files && inp.files[0];
+  inp.value = "";   /* damit dasselbe Bild danach erneut waehlbar ist */
   if (!datei) return;
   if (!datei.type.startsWith("image/")) { showErr(T("bildBad")); return; }
   verkleinereBild(datei)
     .then((res) => res ? zeigeBildVorschau(res) : showErr(T("bildFailed")))
     .catch(() => showErr(T("bildFailed")));
-};
+}
+bildInput.onchange = () => bildGewaehlt(bildInput);
+bildKamera.onchange = () => bildGewaehlt(bildKamera);
 
 function verkleinereBild(datei) {
   return new Promise((resolve) => {
