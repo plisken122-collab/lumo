@@ -57,6 +57,24 @@
     border-radius:12px; padding:14px; font-size:16px; font-weight:500;
   }
   .primary:disabled { background:var(--line); cursor:default; }
+  .secondary {
+    width:100%; margin-top:10px; background:var(--surface); color:var(--mine);
+    border:1px solid var(--mine); border-radius:12px; padding:12px;
+    font-size:15px; font-weight:500;
+  }
+
+  /* Die drei Schritte unter der Tagline. Sagen dem, der allein kommt, dass
+     Diralo zu zweit gedacht ist - kompakt, damit das Formular sichtbar bleibt. */
+  .howto { margin:16px 0 0; }
+  .howto .titel { margin:0 0 8px; font-size:13px; color:var(--muted); }
+  .howto ol { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .howto li { display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--ink); }
+  .howto li b {
+    flex-shrink:0; width:22px; height:22px; border-radius:11px;
+    background:var(--mine); color:#fff; font-size:12.5px; font-weight:500;
+    line-height:22px; text-align:center;
+  }
+  html[dir="rtl"] .howto li { flex-direction:row; }
 
   .bar { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
   /* Der Chat-Code muss schrumpfen duerfen, sonst schiebt er die Knoepfe
@@ -264,6 +282,17 @@
     <div class="brandline"><img src="/brand/logo-mark.svg" alt=""><span class="wort">Diralo</span></div>
     <p class="sub" id="t-tagline"></p>
 
+    <!-- Kurz erklaert, dass man zu zweit ist: ein kalter Besucher allein
+         sieht sonst einen leeren Raum und geht wieder. -->
+    <div class="howto" id="howto">
+      <p class="titel" id="t-howTitle"></p>
+      <ol>
+        <li><b>1</b><span id="t-howStep1"></span></li>
+        <li><b>2</b><span id="t-howStep2"></span></li>
+        <li><b>3</b><span id="t-howStep3"></span></li>
+      </ol>
+    </div>
+
     <div class="card" style="margin-top:18px">
       <label for="name" id="t-nameLabel"></label>
       <input id="name" autocomplete="nickname">
@@ -274,7 +303,7 @@
       <label for="room" id="t-roomLabel"></label>
       <input id="room" autocapitalize="none" autocorrect="off">
       <p class="sub" id="t-roomHint" style="font-size:12.5px;margin-top:6px"></p>
-      <button id="newChat" class="linkish" type="button"></button>
+      <button id="newChat" class="secondary" type="button"></button>
       <p class="invited hide" id="invitedNote"></p>
 
       <!-- Die Chats, in denen man schon war. Ohne sie muesste man sich
@@ -425,6 +454,11 @@ if (eingeladen) {
   $("invitedNote").classList.remove("hide");
   $("newChat").classList.add("hide");
   melde("ueber_link");
+} else if (!chatsLaden().length && !$("room").value) {
+  /* Frischer Besucher ohne Link und ohne gemerkte Chats: schon einen Code
+     ins Feld, damit niemand am leeren Feld haengt und "Chat betreten"
+     sofort in einen eigenen Raum fuehrt, den man dann teilen kann. */
+  $("room").value = neuerCode();
 }
 
 /* Die gemerkten Chats auf der Startseite anbieten. Ein Tippen genuegt. */
@@ -468,7 +502,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v47";
+const BUILD = "v48";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -488,7 +522,8 @@ function applyLanguage(code) {
   document.documentElement.lang = code;
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
-  for (const key of ["tagline", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy"]) {
+  for (const key of ["tagline", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
+                      "howTitle", "howStep1", "howStep2", "howStep3"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
   }
