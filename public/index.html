@@ -94,6 +94,11 @@
     flex:0 1 auto; min-width:0; max-width:34vw;
   }
   .bar .bell { flex-shrink:0; padding:7px 9px; }
+  .bar .zurueck {
+    flex-shrink:0; background:none; border:none; color:var(--muted);
+    font-size:22px; line-height:1; padding:4px 8px 4px 0; cursor:pointer;
+  }
+  html[dir="rtl"] .bar .zurueck { transform:scaleX(-1); }
   .bell {
     background:var(--surface); border:1px solid var(--line); color:var(--muted);
     border-radius:9px; padding:7px 10px; font-size:13px; white-space:nowrap;
@@ -402,6 +407,7 @@
 
   <section id="chat" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="bar">
+      <button id="zurueckBtn" class="zurueck" type="button" aria-label="">←</button>
       <span class="logo-wrap">
         <img class="brand-small" src="/brand/logo-mark.svg" alt="Diralo">
         <span id="count" class="count">0</span>
@@ -584,7 +590,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v54";
+const BUILD = "v55";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -616,6 +622,7 @@ function applyLanguage(code) {
   $("send").textContent = L.t("send");
   $("dictBtn").title = L.t("dictateTitle");
   $("bildBtn").title = L.t("bildTitle");
+  $("zurueckBtn").setAttribute("aria-label", L.t("back"));
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
@@ -729,6 +736,25 @@ function start() {
   zeigeRaumLabel();
   $("langSwitch").value = me.lang;
 
+  /* Schon verbunden? Das passiert, wenn man ueber den Zurueck-Knopf auf
+     die Startseite ging und erneut einen Chat betritt. Dann den
+     vorhandenen Socket wiederverwenden - ein zweiter wuerde doppelt
+     empfangen und Verbindungen liegenlassen. Nur Verlauf leeren und in
+     den (evtl. neuen) Raum beitreten. */
+  if (socket) {
+    $("log").textContent = "";
+    msgs.clear();
+    asked.clear();
+    aktualisiereLeer();
+    versteckeQuotaLeiste();
+    socket.emit("join", {
+      roomCode: me.room, name: me.name, lang: me.lang, device: deviceId,
+      build: BUILD,
+      speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    });
+    return;
+  }
+
   socket = io();
   socket.on("connect", () => {
     socket.emit("join", {
@@ -810,6 +836,23 @@ $("langSwitch").onchange = (e) => {
   applyLanguage(me.lang);
   if (soundOn()) registerPush().catch(() => {});
 };
+
+/* Zurueck zur Startseite - von dort kann man einen neuen Chat starten,
+   die eigene Liste sehen oder installieren. Die Verbindung bleibt bestehen,
+   damit Benachrichtigungen weiterlaufen; betritt man erneut einen Chat,
+   nutzt start() denselben Socket weiter. */
+function zurStartseite() {
+  $("chat").classList.add("hide");
+  $("setup").classList.remove("hide");
+  $("installBar").classList.add("hide");
+  versteckeQuotaLeiste();
+  schliesseSheet();
+  $("room").value = "";
+  if (me.name) $("name").value = me.name;
+  if (me.lang) $("lang").value = me.lang;
+  zeigeStartListe();
+}
+$("zurueckBtn").onclick = zurStartseite;
 
 function add(m, live) {
   if (msgs.has(m.id)) return;
