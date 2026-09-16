@@ -548,10 +548,32 @@ function zaehle(ereignis) {
   store.zaehle(ereignis).catch(() => {});
 }
 
+/* Eigene Aufrufe nicht mitzaehlen. Wer die App selbst zum Ausprobieren
+   oeffnet, wuerde den Trichter aufblaehen. Ein Aufruf von /?intern=1 setzt
+   auf dem Geraet ein Cookie; von da an zaehlt dieses Geraet nicht mehr mit.
+   /?intern=aus nimmt es zurueck. Das Cookie sagt nur "nicht zaehlen" - es
+   steht kein Name drin, und normale Besucher bekommen es nie. */
+const INTERN_COOKIE = "diralo_intern";
+const istIntern = (req) => cookieValue(req, INTERN_COOKIE) === "1";
+
+function internSetzen(res, an, secure) {
+  const rest = an ? "Max-Age=31536000" : "Max-Age=0";
+  res.setHeader(
+    "Set-Cookie",
+    `${INTERN_COOKIE}=${an ? "1" : ""}; Path=/; ${rest}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`
+  );
+}
+
 /* Die Startseite selbst zaehlen. Muss vor express.static stehen, sonst
    liefert der die Datei aus, bevor wir sie bemerken. */
-app.get("/", (_req, res) => {
-  zaehle("besuch");
+app.get("/", (req, res) => {
+  if (req.query.intern !== undefined) {
+    const an = req.query.intern !== "aus" && req.query.intern !== "0";
+    const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
+    internSetzen(res, an, secure);
+    return res.redirect("/");
+  }
+  if (!istIntern(req)) zaehle("besuch");
   res.sendFile(join(__dirname, "public", "index.html"));
 });
 
@@ -560,7 +582,7 @@ app.get("/", (_req, res) => {
 app.post("/api/zaehl", (req, res) => {
   if (!take(`zaehl:${req.ip}`, 60, 60 * 1000)) return res.status(429).end();
   const e = String(req.body?.ereignis || "");
-  if (e === "einladung" || e === "ueber_link") zaehle(e);
+  if (!istIntern(req) && (e === "einladung" || e === "ueber_link")) zaehle(e);
   res.status(204).end();
 });
 
@@ -1188,6 +1210,9 @@ io.on("connection", (socket) => {
   let room = null;
   let me = { name: "Gast", lang: "de", device: null };
   const ip = sockAdresse(socket);
+  /* Dasselbe "nicht zaehlen"-Cookie wie oben - der Handschlag traegt es
+     mit, also bleiben auch Eintritt und Nachricht dieses Geraets draussen. */
+  const internSock = istIntern({ headers: { cookie: socket.handshake.headers.cookie || "" } });
 
   socket.on("join", async ({ roomCode, name, lang, device, build, speech }) => {
     /* Zur Fehlersuche: Welche Fassung hat das Geraet geladen, und kann
@@ -1215,7 +1240,7 @@ io.on("connection", (socket) => {
     }
 
     room = gewuenscht;
-    if (vorher !== room) zaehle("eingetreten");
+    if (vorher !== room && !internSock) zaehle("eingetreten");
     if (vorher && vorher !== room) {
       socket.leave(vorher);
       socket.to(vorher).emit("system", { type: "left", name: me.name });
@@ -1268,7 +1293,7 @@ io.on("connection", (socket) => {
       socket.emit("tooFast");
       return;
     }
-    zaehle("nachricht");
+    if (!internSock) zaehle("nachricht");
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       room,
