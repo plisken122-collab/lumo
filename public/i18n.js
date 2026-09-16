@@ -12,6 +12,7 @@ window.LUMO_T = (function () {
   const S = {
     de: {
       tagline: "Jeder schreibt in seiner Sprache. Jeder liest in seiner eigenen.",
+      freeStart: "Kostenlos starten",
       nameLabel: "Dein Name", namePlaceholder: "Name",
       langLabel: "Deine Sprache", roomLabel: "Chat-Code", roomPlaceholder: "algarve",
       roomHint: "Wer denselben Code eingibt, landet im selben Chat. Teil ihn mit der Person, mit der du schreiben willst.",
@@ -71,6 +72,7 @@ window.LUMO_T = (function () {
     },
     en: {
       tagline: "Everyone writes in their own language. Everyone reads in theirs.",
+      freeStart: "Free to start",
       nameLabel: "Your name", namePlaceholder: "Name",
       langLabel: "Your language", roomLabel: "Chat code", roomPlaceholder: "algarve",
       roomHint: "Anyone who enters the same code lands in the same chat. Share it with the person you want to talk to.",
@@ -130,6 +132,7 @@ window.LUMO_T = (function () {
     },
     "pt-PT": {
       tagline: "Cada um escreve na sua língua. Cada um lê na sua.",
+      freeStart: "Começa grátis",
       nameLabel: "O teu nome", namePlaceholder: "Nome",
       langLabel: "A tua língua", roomLabel: "Código do chat", roomPlaceholder: "algarve",
       roomHint: "Quem escrever o mesmo código entra no mesmo chat. Partilha-o com a pessoa com quem queres falar.",
@@ -189,6 +192,7 @@ window.LUMO_T = (function () {
     },
     "pt-BR": {
       tagline: "Cada um escreve no seu idioma. Cada um lê no seu.",
+      freeStart: "Comece grátis",
       nameLabel: "Seu nome", namePlaceholder: "Nome",
       langLabel: "Seu idioma", roomLabel: "Código do chat", roomPlaceholder: "algarve",
       roomHint: "Quem digitar o mesmo código cai no mesmo chat. Compartilhe com a pessoa com quem você quer conversar.",
@@ -248,6 +252,7 @@ window.LUMO_T = (function () {
     },
     es: {
       tagline: "Cada uno escribe en su idioma. Cada uno lee en el suyo.",
+      freeStart: "Empieza gratis",
       nameLabel: "Tu nombre", namePlaceholder: "Nombre",
       langLabel: "Tu idioma", roomLabel: "Código del chat", roomPlaceholder: "algarve",
       roomHint: "Quien escriba el mismo código entra en el mismo chat. Compártelo con la persona con la que quieras hablar.",
@@ -307,6 +312,7 @@ window.LUMO_T = (function () {
     },
     fr: {
       tagline: "Chacun écrit dans sa langue. Chacun lit dans la sienne.",
+      freeStart: "Commence gratuitement",
       nameLabel: "Ton nom", namePlaceholder: "Nom",
       langLabel: "Ta langue", roomLabel: "Code du chat", roomPlaceholder: "algarve",
       roomHint: "Celui qui saisit le même code arrive dans le même chat. Partage-le avec la personne à qui tu veux parler.",
@@ -366,6 +372,7 @@ window.LUMO_T = (function () {
     },
     it: {
       tagline: "Ognuno scrive nella sua lingua. Ognuno legge nella propria.",
+      freeStart: "Inizia gratis",
       nameLabel: "Il tuo nome", namePlaceholder: "Nome",
       langLabel: "La tua lingua", roomLabel: "Codice della chat", roomPlaceholder: "algarve",
       roomHint: "Chi inserisce lo stesso codice finisce nella stessa chat. Condividilo con la persona con cui vuoi parlare.",
@@ -425,6 +432,7 @@ window.LUMO_T = (function () {
     },
     nl: {
       tagline: "Iedereen schrijft in zijn eigen taal. Iedereen leest in de zijne.",
+      freeStart: "Gratis beginnen",
       nameLabel: "Je naam", namePlaceholder: "Naam",
       langLabel: "Je taal", roomLabel: "Chatcode", roomPlaceholder: "algarve",
       roomHint: "Wie dezelfde code invoert, komt in dezelfde chat. Deel hem met degene met wie je wilt praten.",
@@ -484,6 +492,7 @@ window.LUMO_T = (function () {
     },
     pl: {
       tagline: "Każdy pisze w swoim języku. Każdy czyta w swoim.",
+      freeStart: "Zacznij za darmo",
       nameLabel: "Twoje imię", namePlaceholder: "Imię",
       langLabel: "Twój język", roomLabel: "Kod czatu", roomPlaceholder: "algarve",
       roomHint: "Kto wpisze ten sam kod, trafi na ten sam czat. Podaj go osobie, z którą chcesz rozmawiać.",
@@ -543,6 +552,7 @@ window.LUMO_T = (function () {
     },
     ru: {
       tagline: "Каждый пишет на своём языке. Каждый читает на своём.",
+      freeStart: "Начать бесплатно",
       nameLabel: "Ваше имя", namePlaceholder: "Имя",
       langLabel: "Ваш язык", roomLabel: "Код чата", roomPlaceholder: "algarve",
       roomHint: "Кто введёт тот же код, попадёт в тот же чат. Передайте его тому, с кем хотите общаться.",
@@ -602,6 +612,7 @@ window.LUMO_T = (function () {
     },
     uk: {
       tagline: "Кожен пише своєю мовою. Кожен читає своєю.",
+      freeStart: "Почати безкоштовно",
       nameLabel: "Ваше ім'я", namePlaceholder: "Ім'я",
       langLabel: "Ваша мова", roomLabel: "Код чату", roomPlaceholder: "algarve",
       roomHint: "Хто введе той самий код, потрапить у той самий чат. Поділіться ним з тим, з ким хочете говорити.",
@@ -661,6 +672,7 @@ window.LUMO_T = (function () {
     },
     tr: {
       tagline: "Herkes kendi dilinde yazar. Herkes kendi dilinde okur.",
+      freeStart: "Ücretsiz başla",
       nameLabel: "Adın", namePlaceholder: "Ad",
       langLabel: "Dilin", roomLabel: "Sohbet kodu", roomPlaceholder: "algarve",
       roomHint: "Aynı kodu giren aynı sohbete düşer. Konuşmak istediğin kişiyle paylaş.",
@@ -720,6 +732,7 @@ window.LUMO_T = (function () {
     },
     ar: {
       tagline: "كل واحد يكتب بلغته. وكل واحد يقرأ بلغته.",
+      freeStart: "ابدأ مجانًا",
       nameLabel: "اسمك", namePlaceholder: "الاسم",
       langLabel: "لغتك", roomLabel: "رمز المحادثة", roomPlaceholder: "algarve",
       roomHint: "من يُدخل الرمز نفسه يصل إلى المحادثة نفسها. شاركه مع الشخص الذي تريد الكتابة إليه.",

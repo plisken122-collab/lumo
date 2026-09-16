@@ -63,6 +63,12 @@
     font-size:15px; font-weight:500;
   }
 
+  .freebadge {
+    display:inline-block; margin:12px 0 0; padding:4px 12px;
+    background:#E7F0E4; color:#3E6B33; border-radius:999px;
+    font-size:12.5px; font-weight:500;
+  }
+
   /* Die drei Schritte unter der Tagline. Sagen dem, der allein kommt, dass
      Diralo zu zweit gedacht ist - kompakt, damit das Formular sichtbar bleibt. */
   .howto { margin:16px 0 0; }
@@ -281,6 +287,11 @@
   <section id="setup">
     <div class="brandline"><img src="/brand/logo-mark.svg" alt=""><span class="wort">Diralo</span></div>
     <p class="sub" id="t-tagline"></p>
+
+    <!-- Nimmt gleich oben den Zweifel "kostet das was?" - ohne eine
+         Preistabelle vor die Nase zu setzen. Der Preis kommt spaeter, wenn
+         das Kontingent erreicht ist. -->
+    <p class="freebadge" id="t-freeStart"></p>
 
     <!-- Kurz erklaert, dass man zu zweit ist: ein kalter Besucher allein
          sieht sonst einen leeren Raum und geht wieder. -->
@@ -502,7 +513,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v48";
+const BUILD = "v49";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -522,7 +533,7 @@ function applyLanguage(code) {
   document.documentElement.lang = code;
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
-  for (const key of ["tagline", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
+  for (const key of ["tagline", "freeStart", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
