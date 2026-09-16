@@ -86,12 +86,23 @@
   /* Der Chat-Code muss schrumpfen duerfen, sonst schiebt er die Knoepfe
      auf einem schmalen Handy aus der Zeile. */
   .bar .room {
-    font-size:13px; color:var(--muted); flex:1 1 auto; min-width:0;
+    font-size:12px; color:var(--muted); flex:1 1 auto; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .bar select {
     width:auto; padding:7px 8px; font-size:13px; border-radius:9px;
     flex:0 1 auto; min-width:0; max-width:34vw;
+  }
+  /* Sprachwahl als kompakte Weltkugel: die native Auswahl liegt unsichtbar
+     darueber und bleibt voll bedienbar. */
+  .bar .langwrap {
+    position:relative; flex-shrink:0; display:inline-flex; align-items:center;
+    justify-content:center; font-size:19px; width:38px; height:34px;
+    border:1px solid var(--line); border-radius:9px; background:var(--surface);
+  }
+  .bar .langwrap select {
+    position:absolute; inset:0; width:100%; height:100%; max-width:none;
+    margin:0; padding:0; opacity:0; border:none; cursor:pointer;
   }
   .bar .bell { flex-shrink:0; padding:7px 9px; }
   .bar .zurueck {
@@ -417,8 +428,8 @@
       </span>
       <button class="room" id="roomLabel" type="button"></button>
       <button id="inviteBtn" class="bell"></button>
-      <button id="bell" class="bell"></button>
-      <select id="langSwitch"></select>
+      <button id="bell" class="bell" type="button"></button>
+      <span class="langwrap" id="langwrap">🌐<select id="langSwitch" aria-label=""></select></span>
     </div>
     <div id="logWrap">
       <div id="log"></div>
@@ -540,7 +551,6 @@ const eingeladen = codeAusLink();
 if (eingeladen) {
   $("room").value = eingeladen;
   $("invitedNote").classList.remove("hide");
-  $("newChat").classList.add("hide");
   melde("ueber_link");
 } else if (!chatsLaden().length && !$("room").value) {
   /* Frischer Besucher ohne Link und ohne gemerkte Chats: schon einen Code
@@ -548,6 +558,16 @@ if (eingeladen) {
      sofort in einen eigenen Raum fuehrt, den man dann teilen kann. */
   $("room").value = neuerCode();
 }
+
+/* "Neuen Chat starten" nur zeigen, wenn das Feld leer ist. Steht schon ein
+   Code drin (vorausgefuellt oder ueber einen Link), waere der Knopf daneben
+   nur verwirrend - dann fuehrt "Chat betreten" ohnehin hinein. Bei leerem
+   Feld (z.B. Rueckkehrer mit Chatliste) ist er der Weg zum neuen Chat. */
+function neuChatKnopf() {
+  $("newChat").classList.toggle("hide", Boolean($("room").value.trim()));
+}
+neuChatKnopf();
+$("room").addEventListener("input", neuChatKnopf);
 
 /* Die gemerkten Chats auf der Startseite anbieten. Ein Tippen genuegt. */
 function zeigeStartListe() {
@@ -587,15 +607,17 @@ function zeigeStartListe() {
 }
 
 $("newChat").onclick = () => {
+  /* Direkt in einen frischen Chat - "einen neuen starten" soll genau das
+     tun, nicht nur das Feld fuellen. */
   $("room").value = neuerCode();
-  $("room").focus();
+  $("enter").click();
 };
 
 let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v58";
+const BUILD = "v59";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -891,8 +913,11 @@ function add(m, live) {
 
 /* Der Hinweis im leeren Chat: sichtbar, solange keine Nachricht da ist. */
 function aktualisiereLeer() {
+  const istLeer = msgs.size === 0;
   const leer = $("leer");
-  if (leer) leer.classList.toggle("hide", msgs.size > 0);
+  if (leer) leer.classList.toggle("hide", !istLeer);
+  /* Solange die Mitte einlaedt, waere der Einladen-Knopf oben doppelt. */
+  $("inviteBtn").classList.toggle("hide", istLeer);
 }
 
 /* Das Bild in eine Blase setzen. Tippen zeigt es gross im eigenen
@@ -1871,7 +1896,11 @@ function updateBell() {
   const granted = ("Notification" in window) && Notification.permission === "granted";
   const on = granted && soundOn();
   b.classList.toggle("on", on);
-  b.textContent = on ? T("soundOn") : T("soundOff");
+  /* Symbol statt Text: spart Platz in der Leiste und ist eindeutiger als
+     "Ton an/aus" (Zustand oder Aktion?). Der Text steht als Tooltip dran. */
+  b.textContent = on ? "🔔" : "🔕";
+  b.title = on ? T("soundOn") : T("soundOff");
+  b.setAttribute("aria-label", on ? T("soundOn") : T("soundOff"));
 }
 
 $("inviteBtn").onclick = einladen;
