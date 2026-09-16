@@ -738,10 +738,25 @@ export async function translationsThisMonthForRooms(rooms) {
 ------------------------------------------------------------------- */
 export async function umzugAltePlaene() {
   if (!usingDatabase) return 0;
-  const { rows: schon } = await pool.query(`SELECT COUNT(*)::int AS n FROM abos`);
-  if (schon[0].n > 0) return 0;               /* schon umgezogen */
 
-  const { rows: alt } = await pool.query(`SELECT * FROM plans`);
+  /* Ein dauerhafter Merker, dass der Umzug lief - er laeuft genau einmal.
+     Frueher galt "abos ist leer" als "noch nicht umgezogen". Das ist eine
+     Falle: Wird der Abo-Bestand spaeter leer (etwa nach einer Kuendigung
+     oder beim Aufraeumen von Testdaten), holt der naechste Neustart die
+     alten plans-Zeilen zurueck. Der Merker verhindert das fuer immer. */
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS meta (schluessel TEXT PRIMARY KEY, wert TEXT)`
+  );
+  const { rows: fertig } = await pool.query(
+    `SELECT 1 FROM meta WHERE schluessel = 'umzug_plaene'`
+  );
+  if (fertig.length) return 0;                /* schon einmal gelaufen */
+
+  let alt = [];
+  try {
+    const r = await pool.query(`SELECT * FROM plans`);
+    alt = r.rows;
+  } catch { alt = []; }                        /* keine alte Tabelle - nichts zu tun */
   let n = 0;
   for (const p of alt) {
     const id = neueAboId();
@@ -756,6 +771,11 @@ export async function umzugAltePlaene() {
     );
     n++;
   }
+  await pool.query(
+    `INSERT INTO meta (schluessel, wert) VALUES ('umzug_plaene', $1)
+     ON CONFLICT (schluessel) DO NOTHING`,
+    [new Date().toISOString()]
+  );
   if (n) console.log(`  ${n} alte Mitgliedschaft(en) in Abos umgezogen.`);
   return n;
 }
