@@ -502,7 +502,7 @@ for (const sel of [$("lang"), $("langSwitch")]) {
 
 const saved = JSON.parse(localStorage.getItem("diralo") || "{}");
 function guessLang() {
-  const full = (navigator.language || "de");
+  const full = (navigator.language || "en");
   const norm = full.replace("_", "-");
   const codes = LANGS.map(([c]) => c);
   // Erst die volle Kennung (pt-BR), dann die Basissprache, dann die erste passende Variante.
@@ -510,7 +510,9 @@ function guessLang() {
   const base = norm.slice(0, 2);
   if (codes.includes(base)) return base;
   const variant = codes.find((c) => c.startsWith(base + "-"));
-  return variant || "de";
+  // Not-Nagel Englisch: versteht fast jeder, Deutsch nicht. Betrifft nur
+  // Besucher, deren Geraetesprache gar nicht in der Liste steht.
+  return variant || "en";
 }
 $("name").value = saved.name || "";
 $("room").value = saved.room || "";
@@ -593,7 +595,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v57";
+const BUILD = "v58";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
