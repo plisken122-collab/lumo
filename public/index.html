@@ -124,6 +124,18 @@
     margin-bottom:6px; font-size:14.5px; color:var(--ink);
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
+  /* Eine Chatzeile: der Chat zum Oeffnen, daneben ein x zum Entfernen. */
+  .chat-zeile { display:flex; align-items:stretch; gap:6px; margin-bottom:6px; }
+  .chat-zeile .chat-offen { flex:1; width:auto; min-width:0; margin-bottom:0; }
+  .chat-zeile .chat-weg {
+    flex-shrink:0; width:42px; background:var(--surface);
+    border:1px solid var(--line); border-radius:10px; color:var(--muted);
+    font-size:16px; line-height:1; margin-bottom:0; padding:0; text-align:center;
+  }
+  .chat-zeile .chat-weg:hover { color:var(--danger); border-color:var(--danger); }
+  .sheet-inner .chat-zeile { margin-bottom:2px; }
+  .sheet-inner .chat-weg { border:none; background:transparent; }
+  .sheet-inner .chat-weg:hover { background:var(--canvas); color:var(--danger); }
   .sheet-kopf { margin:6px 12px 8px; font-size:13px; color:var(--muted); }
   .sheet-hinweis { margin:8px 14px 4px; font-size:12px; color:var(--muted); line-height:1.4; }
   .sheet-trenner { height:1px; background:var(--line); margin:8px 12px; }
@@ -509,8 +521,11 @@ function zeigeStartListe() {
   feld.appendChild(kopf);
 
   for (const c of liste.slice(0, 8)) {
+    const zeile = document.createElement("div");
+    zeile.className = "chat-zeile";
     const b = document.createElement("button");
     b.type = "button";
+    b.className = "chat-offen";
     b.appendChild(document.createTextNode(chatAnzeige(c)));
     const neu = neuesStand[c.code] || 0;
     if (neu > 0) {
@@ -523,7 +538,9 @@ function zeigeStartListe() {
       $("room").value = c.code;
       $("enter").click();
     };
-    feld.appendChild(b);
+    zeile.appendChild(b);
+    zeile.appendChild(chatWegKnopf(c, zeigeStartListe));
+    feld.appendChild(zeile);
   }
   feld.classList.remove("hide");
 }
@@ -537,7 +554,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v50";
+const BUILD = "v51";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1323,6 +1340,25 @@ function chatVergessen(code) {
 
 const chatAnzeige = (c) => (c.name ? c.name : "#" + c.code);
 
+/* Ein x neben einem Chat: nimmt genau diesen aus der Liste - erst nach
+   Rueckfrage, damit niemand aus Versehen einen Chat verliert. `danach`
+   frischt die jeweilige Liste auf. */
+function chatWegKnopf(c, danach) {
+  const x = document.createElement("button");
+  x.type = "button";
+  x.className = "chat-weg";
+  x.textContent = "✕";
+  x.setAttribute("aria-label", T("forgetChat"));
+  x.onclick = (e) => {
+    e.stopPropagation();
+    if (confirm(T("forgetChatFrage", { name: chatAnzeige(c) }))) {
+      chatVergessen(c.code);
+      danach();
+    }
+  };
+  return x;
+}
+
 async function zeigeChatListe() {
   await neuesHolen();
   schliesseSheet();
@@ -1344,8 +1380,11 @@ async function zeigeChatListe() {
     box.appendChild(leer);
   }
   for (const c of andere) {
+    const zeile = document.createElement("div");
+    zeile.className = "chat-zeile";
     const b = document.createElement("button");
     b.type = "button";
+    b.className = "chat-offen";
     b.appendChild(document.createTextNode(chatAnzeige(c)));
     const neu = neuesStand[c.code] || 0;
     if (neu > 0) {
@@ -1355,7 +1394,9 @@ async function zeigeChatListe() {
       b.appendChild(punkt);
     }
     b.onclick = () => { schliesseSheet(); wechsleZu(c.code); };
-    box.appendChild(b);
+    zeile.appendChild(b);
+    zeile.appendChild(chatWegKnopf(c, () => zeile.remove()));
+    box.appendChild(zeile);
   }
 
   const trenner = document.createElement("div");
