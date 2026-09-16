@@ -313,12 +313,14 @@
     display:flex; align-items:center; justify-content:center; padding:16px;
   }
   .lightbox img { max-width:100%; max-height:100%; border-radius:8px; }
-  .lightbox-zu {
-    position:absolute; top:calc(10px + env(safe-area-inset-top)); right:14px;
+  .lightbox-zu, .lightbox-loesch {
+    position:absolute; top:calc(10px + env(safe-area-inset-top));
     width:40px; height:40px; border-radius:20px; padding:0;
     background:rgba(0,0,0,.5); color:#fff; font-size:18px; line-height:1;
     border:1px solid rgba(255,255,255,.35);
   }
+  .lightbox-zu { right:14px; }
+  .lightbox-loesch { left:14px; }
   /* Vorschau, bevor das Bild rausgeht */
   .bild-vorschau { padding:4px 4px 6px; }
   .bild-vorschau img { display:block; max-width:100%; max-height:48vh; margin:0 auto 12px; border-radius:12px; }
@@ -590,7 +592,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v55";
+const BUILD = "v56";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -899,7 +901,7 @@ function bildEinsetzen(m, bubble) {
   img.loading = "lazy";
   img.alt = "";
   img.src = "/medien/" + encodeURIComponent(m.id);
-  img.onclick = (e) => { e.stopPropagation(); zeigeBildGross(img.src); };
+  img.onclick = (e) => { e.stopPropagation(); zeigeBildGross(m); };
   bubble.appendChild(img);
 }
 
@@ -907,11 +909,11 @@ function bildEinsetzen(m, bubble) {
    dem Handy - auch ueber die Zurueck-Geste: dazu legen wir einen
    Verlaufseintrag an und hoeren auf popstate, statt die Seite zu
    verlassen. */
-function zeigeBildGross(src) {
+function zeigeBildGross(m) {
   const overlay = document.createElement("div");
   overlay.className = "lightbox";
   const gross = document.createElement("img");
-  gross.src = src;
+  gross.src = "/medien/" + encodeURIComponent(m.id);
   gross.alt = "";
   overlay.appendChild(gross);
   const zu = document.createElement("button");
@@ -920,6 +922,21 @@ function zeigeBildGross(src) {
   zu.setAttribute("aria-label", T("cancel"));
   zu.textContent = "✕";
   overlay.appendChild(zu);
+
+  /* Loeschen dort anbieten, wo man das Bild anschaut - ueber die
+     Namenszeile in der Blase findet es sonst niemand. Der Papierkorb
+     schliesst die Ansicht und oeffnet das gewohnte Loesch-Menue. */
+  const loesch = document.createElement("button");
+  loesch.type = "button";
+  loesch.className = "lightbox-loesch";
+  loesch.setAttribute("aria-label", T("options"));
+  loesch.textContent = "🗑";
+  loesch.onclick = (e) => {
+    e.stopPropagation();
+    history.back();
+    setTimeout(() => zeigeMenue(m), 60);
+  };
+  overlay.appendChild(loesch);
 
   const weg = () => {
     overlay.remove();
