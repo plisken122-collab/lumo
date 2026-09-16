@@ -617,7 +617,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v59";
+const BUILD = "v60";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -716,6 +716,16 @@ function installBalkenWeg(dauerhaft) {
   if (dauerhaft) { try { localStorage.setItem("diralo-install", "spaeter"); } catch {} }
 }
 
+/* Nach der ersten gesendeten Nachricht - Text wie Bild - einmal den
+   Installationshinweis anbieten. Kurz verzoegert, damit er nicht abrupt
+   ueber die gerade gesendete Nachricht springt. */
+let beitragGesehen = false;
+function installNachBeitrag() {
+  if (beitragGesehen) return;
+  beitragGesehen = true;
+  setTimeout(zeigeInstallBalken, 1500);
+}
+
 function zeigeInstallBalken() {
   if (schonInstalliert()) return;
   if ($("chat").classList.contains("hide")) return;   /* erst im Chat */
@@ -755,9 +765,9 @@ function start() {
   $("setup").classList.add("hide");
   $("chat").classList.remove("hide");
   aktualisiereLeer();
-  /* Erst jetzt anbieten - und nicht sofort, sondern wenn der erste
-     Eindruck da ist. */
-  setTimeout(zeigeInstallBalken, 20000);
+  /* Der Installationshinweis kommt nicht mehr nach einem Timer, sondern
+     erst nach der ersten gesendeten Nachricht (siehe installNachBeitrag):
+     dann hat die Person den Wert erlebt und installiert eher. */
   chatMerken(me.room);
   gelesenSetzen(me.room);
   zeigeRaumLabel();
@@ -1114,6 +1124,7 @@ function sendMsg() {
   /* Das Feld ist wieder leer - also gehoeren Sprechen und Mikrofon
      zurueck an die Stelle des Senden-Knopfes. */
   composerButtons();
+  installNachBeitrag();
 }
 
 /* ------------------------------------------------------------------
@@ -1543,6 +1554,7 @@ async function sendeBild(base64, caption, knopf) {
       return;
     }
     schliesseSheet();   /* Das Bild kommt ueber den Socket zurueck und zeigt sich selbst. */
+    installNachBeitrag();
   } catch {
     if (knopf) knopf.disabled = false;
     showErr(T("bildFailed"));
