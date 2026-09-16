@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E4E5E9">
+<meta name="robots" content="noindex, nofollow">
+<title>Diralo — Übersicht</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E;
+    --line:#D2D4DB; --mine:#384C9E; --gut:#3E6B33;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--canvas); color:var(--ink);
+    font-family:'DM Sans', system-ui, sans-serif; font-size:16px; line-height:1.5; }
+  .wrap { max-width:720px; margin:0 auto; padding:24px 16px 60px; }
+  .brandline { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .brandline img { display:block; height:32px; width:auto; }
+  .brandline span { font-size:24px; font-weight:500; }
+  h1 { font-size:20px; font-weight:500; margin:0 0 2px; }
+  .small { font-size:13px; color:var(--muted); }
+  input { width:100%; font-family:inherit; font-size:16px; color:var(--ink);
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px; }
+  button { font-family:inherit; cursor:pointer; }
+  .primary { width:100%; margin-top:12px; background:var(--mine); color:#fff;
+    border:none; border-radius:11px; padding:13px; font-size:15px; font-weight:500; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin-bottom:14px; }
+  .fehler { color:#9B2C25; font-size:14px; margin-top:8px; }
+
+  /* Kacheln */
+  .kacheln { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+  .kachel { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+  .kachel .zahl { font-size:26px; font-weight:500; }
+  .kachel .zahl.klein { font-size:20px; }
+  .kachel .titel { font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .kachel .neben { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* Trichter-Balken */
+  h2 { font-size:15px; font-weight:500; margin:0 0 12px; }
+  .reihe { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+  .reihe .name { width:110px; flex-shrink:0; font-size:13.5px; }
+  .balken { flex:1; height:22px; background:var(--canvas); border-radius:6px; overflow:hidden; }
+  .balken span { display:block; height:100%; background:var(--mine); border-radius:6px; }
+  .reihe .wert { width:52px; text-align:right; font-size:13.5px; font-variant-numeric:tabular-nums; }
+  .quote { font-size:12.5px; color:var(--muted); margin:2px 0 14px 120px; }
+
+  /* Tagesverlauf */
+  .tage { display:flex; align-items:flex-end; gap:3px; height:70px; margin-top:6px; }
+  .tag { flex:1; display:flex; flex-direction:column; justify-content:flex-end; gap:2px; }
+  .tag i { display:block; background:var(--mine); border-radius:2px 2px 0 0; min-height:1px; }
+  .tag .d { font-size:9px; color:var(--muted); text-align:center; }
+  .hide { display:none !important; }
+  .aktualisiert { font-size:12px; color:var(--muted); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandline">
+    <img src="/brand/logo-mark.svg" alt=""><span>Diralo · Übersicht</span>
+  </div>
+
+  <!-- Anmeldung -->
+  <div id="login" class="card">
+    <h1>Anmelden</h1>
+    <p class="small">Das Admin-Wort eingeben.</p>
+    <input id="wort" type="password" autocomplete="current-password" placeholder="Admin-Wort">
+    <button class="primary" id="go">Anmelden</button>
+    <p id="loginFehler" class="fehler hide"></p>
+  </div>
+
+  <!-- Übersicht -->
+  <div id="dash" class="hide">
+    <div class="kacheln" id="kacheln"></div>
+
+    <div class="card">
+      <h2>Letzte 14 Tage</h2>
+      <div id="trichter"></div>
+      <div class="small" style="margin-top:10px">Besuche pro Tag</div>
+      <div class="tage" id="tage"></div>
+    </div>
+
+    <p class="aktualisiert" id="stand"></p>
+    <p class="small">Es werden nur Summen gezeigt — keine Chat-Codes, keine Nachrichten.</p>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+async function anmelden() {
+  const wort = $("wort").value;
+  $("go").disabled = true;
+  try {
+    const a = await fetch("/api/admin/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wort }),
+    });
+    const d = await a.json().catch(() => ({}));
+    if (!a.ok) { zeigeFehler(d.error || "Hat nicht geklappt."); return; }
+    $("login").classList.add("hide");
+    $("dash").classList.remove("hide");
+    laden();
+  } catch { zeigeFehler("Keine Verbindung."); }
+  finally { $("go").disabled = false; }
+}
+function zeigeFehler(t) { const e = $("loginFehler"); e.textContent = t; e.classList.remove("hide"); }
+
+$("go").onclick = anmelden;
+$("wort").addEventListener("keydown", (e) => { if (e.key === "Enter") anmelden(); });
+
+const nf = new Intl.NumberFormat("de-DE");
+
+function kachel(zahl, titel, neben, klein) {
+  return `<div class="kachel"><div class="zahl${klein ? " klein" : ""}">${zahl}</div>` +
+    `<div class="titel">${titel}</div>${neben ? `<div class="neben">${neben}</div>` : ""}</div>`;
+}
+
+function zeichneTrichter(summe) {
+  const reihen = [
+    ["Besuche", "besuch"],
+    ["Chat betreten", "eingetreten"],
+    ["Nachricht", "nachricht"],
+    ["Eingeladen", "einladung"],
+    ["Über Link", "ueber_link"],
+  ];
+  const max = Math.max(1, ...reihen.map(([, k]) => summe[k] || 0));
+  let html = "";
+  reihen.forEach(([name, k], i) => {
+    const n = summe[k] || 0;
+    html += `<div class="reihe"><div class="name">${name}</div>` +
+      `<div class="balken"><span style="width:${Math.round((n / max) * 100)}%"></span></div>` +
+      `<div class="wert">${nf.format(n)}</div></div>`;
+    /* Quote zwischen den ersten drei Stufen - da faellt der Trichter ab. */
+    if (i === 0 && (summe.besuch || 0) > 0) {
+      const q = Math.round(((summe.eingetreten || 0) / summe.besuch) * 100);
+      html += `<div class="quote">${q}% treten ein</div>`;
+    }
+    if (i === 1 && (summe.eingetreten || 0) > 0) {
+      const q = Math.round(((summe.nachricht || 0) / summe.eingetreten) * 100);
+      html += `<div class="quote">${q}% schreiben etwas</div>`;
+    }
+  });
+  $("trichter").innerHTML = html;
+}
+
+function zeichneTage(proTag) {
+  const tage = Object.keys(proTag).sort();
+  const werte = tage.map((t) => proTag[t].besuch || 0);
+  const max = Math.max(1, ...werte);
+  $("tage").innerHTML = tage.map((t, i) => {
+    const h = Math.round((werte[i] / max) * 56);
+    const tag = t.slice(8);
+    return `<div class="tag" title="${t}: ${werte[i]} Besuche">` +
+      `<i style="height:${h}px"></i><div class="d">${tag}</div></div>`;
+  }).join("");
+}
+
+async function laden() {
+  try {
+    const a = await fetch("/api/admin/daten");
+    if (a.status === 401) { location.reload(); return; }
+    const d = await a.json();
+
+    $("kacheln").innerHTML =
+      kachel(nf.format(d.chats.aktiv7), "Aktive Chats", "7 Tage · " + nf.format(d.chats.aktiv30) + " in 30") +
+      kachel(nf.format(d.abos.plus + d.abos.familie), "Zahlende Abos",
+             d.abos.plus + "× Plus · " + d.abos.familie + "× Familie") +
+      kachel(d.umsatzMonatEur.toFixed(2) + " €", "Umsatz / Monat", "wiederkehrend", true) +
+      kachel(nf.format(d.uebersetzungen.monat), "Übersetzungen", "diesen Monat") +
+      kachel("$" + d.kostenMonatUsd.toFixed(2), "Kosten / Monat", "Übersetzung", true) +
+      kachel(nf.format(d.push), "Benachrichtigungen", "Geräte");
+
+    zeichneTrichter(d.trichter.summe);
+    zeichneTage(d.trichter.proTag);
+    $("stand").textContent = "Stand: " + new Date().toLocaleString("de-DE");
+  } catch {
+    $("stand").textContent = "Die Zahlen ließen sich nicht laden.";
+  }
+}
+
+/* Falls das Cookie schon steht, direkt die Übersicht versuchen. */
+fetch("/api/admin/daten").then((a) => {
+  if (a.ok) { $("login").classList.add("hide"); $("dash").classList.remove("hide"); laden(); }
+});
+</script>
+</body>
+</html>

@@ -786,3 +786,44 @@ export async function neueNachrichten(paare, device) {
   }
   return raus;
 }
+
+/* --------------------------- Admin-Zahlen ---------------------------
+   Reine Aggregate fuer die Uebersicht - niemals Chat-Codes oder
+   Nachrichteninhalte. Ein Chat-Code ist ein Zugangsschluessel; ihn
+   anzuzeigen hiesse, dem Admin Zutritt zu fremden Gespraechen zu geben.
+------------------------------------------------------------------- */
+export async function aktiveChats(days = 7) {
+  const seit = Date.now() - days * 24 * 60 * 60 * 1000;
+  if (!usingDatabase) {
+    return new Set([...mem.messages.values()].filter((m) => m.at >= seit).map((m) => m.room)).size;
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(DISTINCT room)::int AS n FROM messages WHERE at >= $1`, [seit]
+  );
+  return rows[0]?.n || 0;
+}
+
+/* Aktive Abos nach Tarif. "canceled" zaehlt nicht mehr. */
+export async function aboZaehlung() {
+  const laeuft = ["active", "trialing", "past_due", "gekuendigt"];
+  if (!usingDatabase) {
+    const z = { plus: 0, familie: 0 };
+    for (const a of mem.abos.values()) if (laeuft.includes(a.status)) z[a.plan] = (z[a.plan] || 0) + 1;
+    return z;
+  }
+  const { rows } = await pool.query(
+    `SELECT plan, COUNT(*)::int AS n FROM abos WHERE status = ANY($1) GROUP BY plan`, [laeuft]
+  );
+  const z = { plus: 0, familie: 0 };
+  for (const r of rows) z[r.plan] = Number(r.n);
+  return z;
+}
+
+/* Wie viele Geraete Benachrichtigungen eingeschaltet haben. */
+export async function pushZaehlung() {
+  if (!usingDatabase) {
+    return new Set([...mem.subs.values()].map((s) => s.device)).size;
+  }
+  const { rows } = await pool.query(`SELECT COUNT(DISTINCT device)::int AS n FROM subscriptions`);
+  return rows[0]?.n || 0;
+}

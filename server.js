@@ -99,6 +99,30 @@ function passedGate(req) {
   return crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));
 }
 
+/* --------------------------------------------------------------------
+   Admin-Wort
+
+   Schuetzt die Uebersichtsseite und die Zahlen dahinter. Wie beim
+   Zugangswort landet das Wort selbst nie im Browser: Wer es richtig
+   eingibt, bekommt ein Cookie mit einem abgeleiteten Wert. Fehlt
+   ADMIN_TOKEN, ist der ganze Admin-Bereich aus.
+-------------------------------------------------------------------- */
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
+const adminOn = Boolean(ADMIN_TOKEN);
+const ADMIN_COOKIE = "diralo_admin";
+
+const adminToken = () =>
+  crypto.createHmac("sha256", ADMIN_TOKEN).update("diralo-admin-v1").digest("hex");
+
+function adminOk(req) {
+  if (!adminOn) return false;
+  const got = cookieValue(req, ADMIN_COOKIE);
+  if (!got) return false;
+  const want = adminToken();
+  if (got.length !== want.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));
+}
+
 /* Diese Pfade muessen ohne Zugangswort erreichbar sein, sonst laesst sich
    die Eingabeseite nicht darstellen. */
 /* /sw.js gehoert dazu: Der Service Worker enthaelt nichts Vertrauliches,
@@ -556,10 +580,64 @@ app.post("/api/neues", async (req, res) => {
   }
 });
 
+/* Die Admin-Seite selbst. Ohne Cookie zeigt sie nur ein Eingabefeld -
+   die Zahlen holt sie ueber die geschuetzten Endpunkte unten. */
+app.get("/admin", (_req, res) =>
+  res.sendFile(join(__dirname, "public", "admin.html")));
+
+app.post("/api/admin/login", (req, res) => {
+  if (!adminOn) return res.status(503).json({ error: "Admin ist nicht eingerichtet." });
+  if (!take(`admin:${req.ip}`, 8, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu viele Versuche. Spaeter nochmal." });
+  }
+  const given = String(req.body?.wort || "");
+  const a = crypto.createHash("sha256").update(given).digest();
+  const b = crypto.createHash("sha256").update(ADMIN_TOKEN).digest();
+  if (!crypto.timingSafeEqual(a, b)) {
+    return res.status(401).json({ error: "Das Wort stimmt nicht." });
+  }
+  const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
+  res.setHeader(
+    "Set-Cookie",
+    `${ADMIN_COOKIE}=${adminToken()}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`
+  );
+  res.json({ ok: true });
+});
+
 app.get("/api/trichter", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   const tage = Math.min(90, Math.max(1, Number(req.query.tage) || 14));
   try {
     res.json(await store.trichter(tage));
+  } catch (err) {
+    res.status(500).json({ error: err.message.slice(0, 200) });
+  }
+});
+
+/* Alle Zahlen fuer die Uebersicht in einem Rutsch. Nur Aggregate -
+   keine Chat-Codes, keine Nachrichteninhalte. */
+app.get("/api/admin/daten", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
+  try {
+    const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt] = await Promise.all([
+      store.trichter(14),
+      store.aktiveChats(7),
+      store.aktiveChats(30),
+      store.aboZaehlung(),
+      store.pushZaehlung(),
+      store.getUsage(30),
+      store.getUsage(365),
+    ]);
+    const kostenMonat = costOf(monat.total);
+    res.json({
+      trichter,
+      chats: { aktiv7, aktiv30 },
+      abos,
+      push,
+      uebersetzungen: { monat: monat.total.count, jahr: gesamt.total.count },
+      kostenMonatUsd: Number(kostenMonat.toFixed(2)),
+      umsatzMonatEur: abos.plus * 4.99 + abos.familie * 9.99,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message.slice(0, 200) });
   }
