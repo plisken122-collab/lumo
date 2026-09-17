@@ -343,6 +343,10 @@
   .bild-vorschau .knoepfe .los { background:var(--mine); color:#fff; }
   .err { color:var(--danger); font-size:13px; margin:8px 2px 0; }
   .hide { display:none !important; }
+  /* Datei-Felder unsichtbar, aber NICHT display:none - sonst feuert iOS
+     Safari nach dem Kamerafoto kein change-Ereignis und es kommt nichts
+     zurueck. Off-Screen mit Groesse 1px ist der sichere Weg. */
+  .datei-versteckt { position:fixed; left:0; top:0; width:1px; height:1px; opacity:0; z-index:-1; }
   .note {
     margin:16px 0 0; padding:11px 13px; border-radius:11px;
     background:#F1F2F5; border-left:3px solid var(--mine);
@@ -452,8 +456,8 @@
     <div class="composer" id="composer">
       <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
       <button id="bildBtn" class="mic-btn" type="button">📷</button>
-      <input id="bildInput" type="file" accept="image/*" hidden>
-      <input id="bildKamera" type="file" accept="image/*" capture="environment" hidden>
+      <input id="bildInput" type="file" accept="image/*" class="datei-versteckt">
+      <input id="bildKamera" type="file" accept="image/*" capture="environment" class="datei-versteckt">
       <textarea id="draft" rows="1"></textarea>
       <button id="dictBtn" class="mic-btn" type="button">🗣️</button>
       <button id="send" disabled></button>
@@ -617,7 +621,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v60";
+const BUILD = "v61";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1476,31 +1480,50 @@ function bildGewaehlt(inp) {
 bildInput.onchange = () => bildGewaehlt(bildInput);
 bildKamera.onchange = () => bildGewaehlt(bildKamera);
 
-function verkleinereBild(datei) {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(datei);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const max = 1600;
-      let w = img.naturalWidth, h = img.naturalHeight;
-      if (w > max || h > max) {
-        const f = Math.min(max / w, max / h);
-        w = Math.round(w * f); h = Math.round(h * f);
-      }
-      const c = document.createElement("canvas");
-      c.width = w; c.height = h;
-      c.getContext("2d").drawImage(img, 0, 0, w, h);
-      let q = 0.82, dataUrl = c.toDataURL("image/jpeg", q);
-      /* Notfalls die Qualitaet senken, bis es unter die Grenze passt. */
-      while (dataUrl.length * 0.75 > BILD_MAX && q > 0.4) {
-        q -= 0.12; dataUrl = c.toDataURL("image/jpeg", q);
-      }
-      resolve({ dataUrl, base64: dataUrl.split(",")[1] });
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+/* Das Bild zuverlaessig dekodieren. createImageBitmap decodiert das Foto
+   fertig, bevor gezeichnet wird - genau das fehlte auf dem iPhone, wo die
+   Leinwand sonst schwarz blieb - und versteht auch das iPhone-Format HEIC
+   und die Aufnahme-Drehung (EXIF). Aeltere Browser bekommen den <img>-Weg,
+   diesmal aber mit decode(), damit auch dort nichts Schwarzes entsteht. */
+async function ladeBild(datei) {
+  if (window.createImageBitmap) {
+    try {
+      const bmp = await createImageBitmap(datei, { imageOrientation: "from-image" });
+      return { bild: bmp, w: bmp.width, h: bmp.height, weg: () => bmp.close && bmp.close() };
+    } catch { /* faellt auf den <img>-Weg zurueck */ }
+  }
+  const url = URL.createObjectURL(datei);
+  const img = new Image();
+  try {
     img.src = url;
-  });
+    if (img.decode) await img.decode();
+    else await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+    return { bild: img, w: img.naturalWidth, h: img.naturalHeight, weg: () => URL.revokeObjectURL(url) };
+  } catch { URL.revokeObjectURL(url); return null; }
+}
+
+async function verkleinereBild(datei) {
+  const q0 = await ladeBild(datei);
+  if (!q0 || !q0.w || !q0.h) { if (q0) q0.weg(); return null; }
+  try {
+    const max = 1600;
+    let w = q0.w, h = q0.h;
+    if (w > max || h > max) {
+      const f = Math.min(max / w, max / h);
+      w = Math.round(w * f); h = Math.round(h * f);
+    }
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    c.getContext("2d").drawImage(q0.bild, 0, 0, w, h);
+    q0.weg();
+    let q = 0.82, dataUrl = c.toDataURL("image/jpeg", q);
+    /* Notfalls die Qualitaet senken, bis es unter die Grenze passt. */
+    while (dataUrl.length * 0.75 > BILD_MAX && q > 0.4) {
+      q -= 0.12; dataUrl = c.toDataURL("image/jpeg", q);
+    }
+    if (!dataUrl || dataUrl.length < 200) return null;
+    return { dataUrl, base64: dataUrl.split(",")[1] };
+  } catch { q0.weg(); return null; }
 }
 
 function zeigeBildVorschau({ dataUrl, base64 }) {
