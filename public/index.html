@@ -318,6 +318,15 @@
     cursor:pointer; background:rgba(0,0,0,.04);
   }
   .foto + span:not(:empty) { display:block; margin-top:6px; }
+  /* Aus dem Bild gelesener, uebersetzter Text */
+  .bildtext { margin-top:7px; font-size:14px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
+  .bildtext.leer { font-size:12.5px; opacity:.7; }
+  .mine .bildtext { color:#fff; }
+  .bildtext-btn {
+    margin-top:7px; background:rgba(0,0,0,.06); border:none; border-radius:9px;
+    padding:7px 11px; font-size:12.5px; color:var(--mine); cursor:pointer;
+  }
+  .mine .bildtext-btn { background:rgba(255,255,255,.22); color:#fff; }
   /* Bild gross - im eigenen Overlay, nicht in einem neuen Tab. Sonst
      kaeme man in der installierten App nicht mehr zurueck. */
   .lightbox {
@@ -621,7 +630,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v61";
+const BUILD = "v62";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -847,6 +856,19 @@ function start() {
     showErr(T("errTranslate"));
     const m = msgs.get(id); if (m) { m.failed = true; render(m); }
   });
+  /* Text im Bild: fertige Uebersetzung (leerer Text = kein Text gefunden). */
+  socket.on("bildTextFertig", ({ id, lang, text }) => {
+    const m = msgs.get(id); if (!m) return;
+    m.bildTr = m.bildTr || {};
+    m.bildTr[lang] = String(text || "");
+    m.bildLaeuft = false;
+    if (lang === me.lang) render(m);
+  });
+  socket.on("bildTextFehler", ({ id, lang }) => {
+    const m = msgs.get(id); if (!m) return;
+    m.bildLaeuft = false;
+    if (lang === me.lang) { showErr(T("errTranslate")); render(m); }
+  });
   socket.on("tooFast", () => {
     showErr(T("errTooFast"));
     /* Die Nachricht wurde nicht angenommen - den Text zurueck ins Feld,
@@ -866,7 +888,7 @@ function start() {
        jemand entscheidet, ob er bezahlt. */
     if (grund === "monat") zeigeQuotaLeiste();
     else showErr(T("errQuota"));
-    const m = msgs.get(id); if (m) { m.failed = true; render(m); }
+    const m = msgs.get(id); if (m) { m.failed = true; m.bildLaeuft = false; render(m); }
   });
 }
 
@@ -945,6 +967,36 @@ function bildEinsetzen(m, bubble) {
   img.src = "/medien/" + encodeURIComponent(m.id);
   img.onclick = (e) => { e.stopPropagation(); zeigeBildGross(m); };
   bubble.appendChild(img);
+
+  /* Text IM Bild uebersetzen (Schild, Screenshot, Brief ...). Auf Anfrage,
+     weil das Sehen mehr kostet. Ergebnis haengt an der Nachricht, ein
+     leerer Text heisst "kein Text gefunden". */
+  const fertig = m.bildTr && Object.prototype.hasOwnProperty.call(m.bildTr, me.lang);
+  if (fertig) {
+    const t = m.bildTr[me.lang];
+    const box = document.createElement("div");
+    box.className = "bildtext" + (t.trim() ? "" : " leer");
+    box.dir = t.trim() && RTL.has(me.lang) ? "rtl" : "auto";
+    box.textContent = t.trim() ? t : T("bildTextLeer");
+    bubble.appendChild(box);
+  } else if (m.bildLaeuft) {
+    const w = document.createElement("div");
+    w.className = "bildtext waiting";
+    w.textContent = T("translating");
+    bubble.appendChild(w);
+  } else {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "bildtext-btn";
+    btn.textContent = T("bildTextBtn");
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      m.bildLaeuft = true;
+      render(m);
+      socket.emit("bildText", { id: m.id, lang: me.lang });
+    };
+    bubble.appendChild(btn);
+  }
 }
 
 /* Vollbild-Ansicht eines Bildes. Schliesst per Tippen und - wichtig auf

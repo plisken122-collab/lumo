@@ -93,6 +93,16 @@ export async function init() {
       bytes      BYTEA NOT NULL
     );
 
+    /* Der aus einem Bild gelesene und uebersetzte Text - je Bild und
+       Zielsprache einmal. So kostet das Sehen des Bildes nur beim ersten
+       Mal. Verschwindet mit der Nachricht (CASCADE). */
+    CREATE TABLE IF NOT EXISTS bild_text (
+      message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      lang       TEXT NOT NULL,
+      body       TEXT NOT NULL,
+      PRIMARY KEY (message_id, lang)
+    );
+
     CREATE TABLE IF NOT EXISTS subscriptions (
       endpoint TEXT PRIMARY KEY,
       room     TEXT NOT NULL,
@@ -288,6 +298,24 @@ export async function getMedia(messageId) {
     `SELECT mime, bytes FROM media WHERE message_id = $1`, [messageId]
   );
   return rows.length ? { mime: rows[0].mime, bytes: rows[0].bytes } : null;
+}
+
+/* Aus einem Bild gelesener, uebersetzter Text - je Bild und Sprache. */
+const memBildText = new Map();
+export async function getBildText(messageId, lang) {
+  if (!usingDatabase) return memBildText.get(messageId + "|" + lang) ?? null;
+  const { rows } = await pool.query(
+    `SELECT body FROM bild_text WHERE message_id = $1 AND lang = $2`, [messageId, lang]
+  );
+  return rows.length ? rows[0].body : null;
+}
+export async function saveBildText(messageId, lang, body) {
+  if (!usingDatabase) { memBildText.set(messageId + "|" + lang, body); return; }
+  await pool.query(
+    `INSERT INTO bild_text (message_id, lang, body) VALUES ($1,$2,$3)
+     ON CONFLICT (message_id, lang) DO UPDATE SET body = EXCLUDED.body`,
+    [messageId, lang, body]
+  );
 }
 
 export async function getMessage(id) {

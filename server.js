@@ -823,6 +823,38 @@ async function claude(prompt) {
   };
 }
 
+/* Wie claude(), aber mit einem Bild davor: dasselbe Modell kann sehen,
+   liest also Text aus einem Foto und uebersetzt ihn in einem Zug. */
+async function claudeBild(daten, mime, prompt) {
+  if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1500,
+      messages: [{ role: "user", content: [
+        { type: "image", source: { type: "base64", media_type: mime, data: daten } },
+        { type: "text", text: prompt },
+      ] }],
+    }),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const text = (data.content || []).map((c) => (c.type === "text" ? c.text : "")).join("");
+  return {
+    result: JSON.parse(text.replace(/```json|```/g, "").trim()),
+    usage: {
+      inTokens: data.usage?.input_tokens || 0,
+      outTokens: data.usage?.output_tokens || 0,
+    },
+  };
+}
+
 async function translate(text, target) {
   const name = LANG_NAMES[target] || target;
   const hint = HINTS[target] ? `\nZielvariante beachten: ${HINTS[target]}` : "";
@@ -955,6 +987,61 @@ async function ensure(room, msgId, target) {
   })();
 
   inFlight.set(key, job);
+  return job;
+}
+
+/* Text aus einem Bild lesen und uebersetzen - auf Anfrage, nicht von
+   selbst (Sehen kostet mehr als Textuebersetzen). Ergebnis je Bild und
+   Sprache zwischengespeichert, damit das Ansehen nur einmal kostet. */
+const bildTextInFlight = new Map();
+async function uebersetzeBildText(room, msgId, target) {
+  const zwischen = await store.getBildText(msgId, target);
+  if (zwischen != null) {
+    io.to(room).emit("bildTextFertig", { id: msgId, lang: target, text: zwischen });
+    return zwischen;
+  }
+  const msg = await store.getMessage(msgId);
+  if (!msg || !msg.bild) return null;
+  const medien = await store.getMedia(msgId);
+  if (!medien) return null;
+
+  const key = `bt:${msgId}:${target}`;
+  if (bildTextInFlight.has(key)) return bildTextInFlight.get(key);
+
+  if (!(await imKontingent(room))) {
+    io.to(room).emit("quotaReached", { id: msgId, grund: "monat" });
+    return null;
+  }
+  if (!take("tr:day", TRANSLATIONS_PER_DAY, 24 * 60 * 60 * 1000)) {
+    io.to(room).emit("quotaReached", { id: msgId });
+    return null;
+  }
+
+  const name = LANG_NAMES[target] || target;
+  const prompt = `In diesem Bild steht moeglicherweise Text (Schild, Screenshot, Brief o. ae.). Lies allen gut lesbaren Text und uebersetze ihn natuerlich nach ${name} (${target}). Behalte Zeilenumbrueche grob bei. Ist gar kein lesbarer Text im Bild, gib einen leeren String zurueck. Erklaere und kommentiere nichts. Antworte NUR mit JSON, ohne Markdown: {"text":"<Uebersetzung oder leer>"}`;
+
+  const job = (async () => {
+    try {
+      const b64 = Buffer.from(medien.bytes).toString("base64");
+      const { result: out, usage } = await claudeBild(b64, medien.mime, prompt);
+      const text = String(out.text || "").slice(0, 4000);
+      store.logUsage({
+        room, target, chars: Math.max(1, text.length),
+        inTokens: usage.inTokens, outTokens: usage.outTokens,
+      }).catch((e) => console.error("Verbrauch nicht speicherbar:", e.message));
+      await store.saveBildText(msgId, target, text);
+      io.to(room).emit("bildTextFertig", { id: msgId, lang: target, text });
+      return text;
+    } catch (err) {
+      console.error("Bildtext-Uebersetzung fehlgeschlagen:", err.message);
+      io.to(room).emit("bildTextFehler", { id: msgId, lang: target });
+      return null;
+    } finally {
+      bildTextInFlight.delete(key);
+    }
+  })();
+
+  bildTextInFlight.set(key, job);
   return job;
 }
 
@@ -1415,6 +1502,14 @@ io.on("connection", (socket) => {
        ab, dass jemand das Ereignis von Hand in Schleife schickt. */
     if (!take(`need:${me.device}`, NEED_PER_MIN, 60 * 1000)) return;
     ensure(room, id, clean(lang)).catch(() => {});
+  });
+
+  /* Text im Bild uebersetzen - auf Anfrage. Strenger begrenzt als need,
+     weil ein Bildaufruf das Modell mehr kostet. */
+  socket.on("bildText", ({ id, lang }) => {
+    if (!room || !id) return;
+    if (!take(`bildtext:${me.device}`, 12, 60 * 1000)) return;
+    uebersetzeBildText(room, String(id), clean(lang)).catch(() => {});
   });
 
   socket.on("disconnect", () => {
