@@ -630,7 +630,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v62";
+const BUILD = "v63";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1485,6 +1485,13 @@ composerButtons();
 ------------------------------------------------------------------- */
 const BILD_MAX = 2_500_000;   /* muss zur Grenze im Server passen */
 const bildBtn = $("bildBtn"), bildInput = $("bildInput"), bildKamera = $("bildKamera");
+
+/* iPhone-Sonderweg: In der installierten App (Startbildschirm) bleibt die
+   Kamera beim *direkten* Aufruf ueber capture oft schwarz - eine
+   Apple-Einschraenkung. Nimmt man capture weg, oeffnet iOS stattdessen die
+   Auswahl mit "Foto aufnehmen", und ueber diesen Weg wird die Kamera
+   normal freigeschaltet. Android bleibt beim direkten capture. */
+if (istIos()) bildKamera.removeAttribute("capture");
 
 /* Auf Geraeten mit Kamera zuerst fragen: aufnehmen oder aus der Galerie?
    Manche Handys bieten von sich aus nur die Galerie an - mit dem eigenen
