@@ -630,7 +630,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v63";
+const BUILD = "v64";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -2209,7 +2209,25 @@ applyLanguage($("lang").value);
 /* Auf der Startseite gleich zeigen, wo etwas Neues liegt. */
 neuesHolen().then(() => { if (!$("setup").classList.contains("hide")) zeigeStartListe(); });
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+if ("serviceWorker" in navigator) {
+  /* Beim Erstbesuch gibt es noch keinen Controller - dessen erste
+     Uebernahme ist keine "neue Version" und darf nicht neu laden. */
+  const hatteController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+
+  /* Kommt eine neue Fassung, uebernimmt ihr Service Worker (skipWaiting +
+     claim) und loest controllerchange aus. Dann laedt die App sich einmal
+     neu, damit nie eine alte Version weiterlaeuft - aber nicht mitten im
+     Tippen, sonst ginge der Text im Feld verloren. */
+  let neuGeladen = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (neuGeladen || !hatteController) return;
+    const imChat = !$("chat").classList.contains("hide");
+    if (imChat && draft && draft.value.trim()) return;
+    neuGeladen = true;
+    location.reload();
+  });
+}
 </script>
 </body>
 </html>
