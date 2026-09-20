@@ -11,6 +11,9 @@
 window.LUMO_T = (function () {
   const S = {
     de: {
+      demoBtn: "Erst mal ausprobieren", demoName: "Demo-Partner",
+      demoIntro: "Demo-Partner – schreib irgendwas und sieh die Übersetzung. Du kannst jederzeit eine echte Person einladen.",
+      demoNudge: "👆 Bereit für echt? Tippe oben auf Einladen und schreib mit einer echten Person.",
       tagline: "Jeder schreibt in seiner Sprache. Jeder liest in seiner eigenen.",
       freeStart: "Kostenlos starten", back: "Zurück",
       nameLabel: "Dein Name", namePlaceholder: "Name",
@@ -79,6 +82,9 @@ window.LUMO_T = (function () {
       gateWrong: "Das Wort stimmt nicht.", gateOffline: "Keine Verbindung. Nochmal versuchen.",
     },
     en: {
+      demoBtn: "Try it first", demoName: "Demo partner",
+      demoIntro: "Demo partner – write anything and watch it translate. You can invite a real person anytime.",
+      demoNudge: "👆 Ready for the real thing? Tap invite above to chat with a real person.",
       tagline: "Everyone writes in their own language. Everyone reads in theirs.",
       freeStart: "Free to start", back: "Back",
       nameLabel: "Your name", namePlaceholder: "Name",
@@ -147,6 +153,9 @@ window.LUMO_T = (function () {
       gateWrong: "That word isn't right.", gateOffline: "No connection. Try again.",
     },
     "pt-PT": {
+      demoBtn: "Experimentar primeiro", demoName: "Parceiro demo",
+      demoIntro: "Parceiro demo – escreve algo e vê a tradução. Podes convidar uma pessoa real quando quiseres.",
+      demoNudge: "👆 Pronto para o verdadeiro? Toca em convidar acima para falar com uma pessoa real.",
       tagline: "Cada um escreve na sua língua. Cada um lê na sua.",
       freeStart: "Começa grátis", back: "Voltar",
       nameLabel: "O teu nome", namePlaceholder: "Nome",
@@ -215,6 +224,9 @@ window.LUMO_T = (function () {
       gateWrong: "A palavra não está certa.", gateOffline: "Sem ligação. Tenta outra vez.",
     },
     "pt-BR": {
+      demoBtn: "Testar primeiro", demoName: "Parceiro demo",
+      demoIntro: "Parceiro demo – escreva algo e veja a tradução. Você pode convidar uma pessoa real quando quiser.",
+      demoNudge: "👆 Pronto pra valer? Toque em convidar acima para falar com uma pessoa real.",
       tagline: "Cada um escreve no seu idioma. Cada um lê no seu.",
       freeStart: "Comece grátis", back: "Voltar",
       nameLabel: "Seu nome", namePlaceholder: "Nome",

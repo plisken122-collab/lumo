@@ -481,6 +481,7 @@
           <p class="leer-titel" id="t-leerTitel"></p>
           <p class="leer-text" id="t-leerText"></p>
           <button id="leerEinladen" class="primary"></button>
+          <button id="leerDemo" class="secondary" type="button"></button>
         </div>
       </div>
     </div>
@@ -657,7 +658,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v66";
+const BUILD = "v67";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -693,6 +694,7 @@ function applyLanguage(code) {
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
+  $("leerDemo").textContent = L.t("demoBtn");
   $("invitedNote").textContent = L.t("invitedTo");
   /* Die Fusszeilen-Links: Beschriftung folgt der App-Sprache. Der Link
      selbst bleibt, die Zielseite waehlt ihre Fassung dann selbst. */
@@ -804,6 +806,7 @@ $("installGo").onclick = async () => {
 function start() {
   $("setup").classList.add("hide");
   $("chat").classList.remove("hide");
+  demoAus();
   aktualisiereLeer();
   /* Der Installationshinweis kommt nicht mehr nach einem Timer, sondern
      erst nach der ersten gesendeten Nachricht (siehe installNachBeitrag):
@@ -917,6 +920,19 @@ function start() {
     else showErr(T("errQuota"));
     const m = msgs.get(id); if (m) { m.failed = true; m.bildLaeuft = false; render(m); }
   });
+  /* Antwort des Probe-Partners: kommt fertig mit Uebersetzung, damit sie
+     ohne "need"-Runde sofort in der Sprache des Besuchers erscheint. */
+  socket.on("demoAntwort", ({ text, tr, lang }) => {
+    if (!demoAktiv) return;
+    demoTippt(false);
+    const t = String(text || "");
+    const uebersetzt = (tr && tr[me.lang]) ? tr[me.lang] : t;
+    add({ id: "demo-p-" + Date.now(), device: "demo", name: T("demoName"),
+          lang: lang || demoPartnerLang, text: t, tr: { [me.lang]: uebersetzt } }, false);
+    /* Nach ein paar Runden sanft zum echten Chat schubsen. */
+    if (demoRunden === 2) demoSystemzeile(T("demoNudge"));
+  });
+  socket.on("demoFehler", () => { demoTippt(false); showErr(T("errTranslate")); });
 }
 
 $("langSwitch").onchange = (e) => {
@@ -1202,6 +1218,14 @@ function sendMsg() {
   const text = draft.value.trim();
   if (!text) return;
   lastSent = text;
+  /* Im Probe-Chat geht die Nachricht an den KI-Partner, nicht in einen
+     echten Raum. */
+  if (demoAktiv) {
+    demoSenden(text);
+    draft.value = ""; draft.style.height = "auto"; $("send").disabled = true;
+    composerButtons();
+    return;
+  }
   socket.emit("send", { text });
   draft.value = ""; draft.style.height = "auto"; $("send").disabled = true;
   /* Das Feld ist wieder leer - also gehoeren Sprechen und Mikrofon
@@ -1209,6 +1233,71 @@ function sendMsg() {
   composerButtons();
   installNachBeitrag();
 }
+
+/* ------------------------------------------------------------------
+   Probe-Chat mit KI-Partner. Loest das Grundproblem, dass ein Besucher
+   allein die Uebersetzung nicht erleben kann: ein Demo-Partner in einer
+   anderen Sprache, klar als Probe gekennzeichnet. Echte Chats laufen
+   unveraendert ueber sendMsg/"send".
+------------------------------------------------------------------- */
+let demoAktiv = false;
+let demoPartnerLang = "pt-PT";
+let demoRunden = 0;
+
+function demoAus() {
+  demoAktiv = false;
+  demoRunden = 0;
+  demoTippt(false);
+}
+
+/* "... tippt" - eine Zeile, die auftaucht, waehrend die Antwort laeuft. */
+function demoTippt(an) {
+  let el = $("demoTippt");
+  if (an) {
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "demoTippt";
+      el.className = "system";
+      el.textContent = T("demoName") + " …";
+      $("log").appendChild(el);
+      scrollDown();
+    }
+  } else if (el) {
+    el.remove();
+  }
+}
+
+function demoSystemzeile(text) {
+  const d = document.createElement("div");
+  d.className = "system";
+  d.textContent = text;
+  $("log").appendChild(d);
+  scrollDown();
+}
+
+function starteDemo() {
+  demoAktiv = true;
+  demoRunden = 0;
+  /* Der Partner spricht bewusst eine andere Sprache, damit die
+     Uebersetzung sichtbar wird. Portugiesisch passt zur Geschichte;
+     wer selbst Portugiesisch schreibt, bekommt Englisch. */
+  demoPartnerLang = me.lang.slice(0, 2) === "pt" ? "en" : "pt-PT";
+  $("leer").classList.add("hide");
+  demoSystemzeile(T("demoIntro"));
+  demoTippt(true);
+  socket.emit("demo", { text: "", meLang: me.lang, partnerLang: demoPartnerLang, first: true });
+}
+
+function demoSenden(text) {
+  /* Die eigene Nachricht sofort lokal zeigen - im Probe-Chat geht nichts
+     ueber den Server-Verlauf, es soll ja nur ausprobiert werden. */
+  add({ id: "demo-me-" + Date.now(), device: deviceId, name: me.name || "", lang: me.lang, text, tr: {} }, false);
+  demoRunden++;
+  demoTippt(true);
+  socket.emit("demo", { text, meLang: me.lang, partnerLang: demoPartnerLang, first: false });
+}
+
+$("leerDemo").onclick = starteDemo;
 
 /* ------------------------------------------------------------------
    Smileys

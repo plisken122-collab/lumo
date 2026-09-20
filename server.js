@@ -697,6 +697,9 @@ const GATE_TRIES = Number(process.env.GATE_TRIES_PER_15MIN || 10);
 const MSG_PER_MIN = Number(process.env.MSG_PER_MIN || 20);
 const NEED_PER_MIN = Number(process.env.NEED_PER_MIN || 120);
 const TRANSLATIONS_PER_DAY = Number(process.env.TRANSLATIONS_PER_DAY || 2000);
+/* Der Probe-Chat kostet je Runde eine KI-Antwort. Grosszuegig genug fuer
+   echtes Ausprobieren, gedeckelt gegen Missbrauch. */
+const DEMO_PER_DAY = Number(process.env.DEMO_PER_DAY || 800);
 
 const counters = new Map(); // Schluessel -> { n, until }
 
@@ -1510,6 +1513,42 @@ io.on("connection", (socket) => {
     if (!room || !id) return;
     if (!take(`bildtext:${me.device}`, 12, 60 * 1000)) return;
     uebersetzeBildText(room, String(id), clean(lang)).catch(() => {});
+  });
+
+  /* Probe-Chat: ein KI-Partner, damit ein Besucher die Uebersetzung allein
+     erleben kann, ohne dass schon jemand da ist. Bewusst schlank - eine
+     Antwort in der Partnersprache samt ihrer Uebersetzung in die Sprache
+     des Besuchers, in einem Zug. Nur zum Ausprobieren; echte Chats laufen
+     ueber "send". */
+  socket.on("demo", async ({ text, meLang, partnerLang, first }) => {
+    const my = clean(meLang);
+    const partner = clean(partnerLang);
+    /* Strenger als normale Nachrichten - jede Runde kostet eine KI-Antwort. */
+    if (!take(`demo:${me.device || ip}`, 12, 60 * 1000)) { socket.emit("demoFehler"); return; }
+    if (!take("demo:day", DEMO_PER_DAY, 24 * 60 * 60 * 1000)) { socket.emit("demoFehler"); return; }
+    const partnerName = LANG_NAMES[partner] || partner;
+    const myName = LANG_NAMES[my] || my;
+    const nutzer = first
+      ? "(Der Besucher hat den Probe-Chat gerade geoeffnet und noch nichts geschrieben. Begruesse ihn kurz und warm.)"
+      : String(text || "").slice(0, 800);
+    const prompt = `Du spielst einen warmherzigen, neugierigen Chat-Partner in einer Uebersetzungs-App - fuer einen Probe-Chat, damit ein neuer Nutzer die App ausprobieren kann. Antworte natuerlich und locker, wie eine echte Person in einem Chat, in EINEM kurzen Satz (hoechstens ~15 Woerter). Sei freundlich und stelle gern eine leichte Rueckfrage. Erwaehne nie, dass du eine KI bist. Schreibe deine Antwort auf ${partnerName} (${partner}).
+Der Nutzer schreibt auf ${myName} (${my}). Seine Nachricht: """${nutzer}"""
+Antworte NUR mit JSON, ohne Markdown: {"reply":"<deine Antwort auf ${partner}>","translation":"<dieselbe Antwort auf ${my}>"}`;
+    try {
+      const { result: out, usage } = await claude(prompt);
+      store.logUsage({
+        room: room || "demo", target: my, chars: String(out.reply || "").length,
+        inTokens: usage.inTokens, outTokens: usage.outTokens,
+      }).catch((e) => console.error("Verbrauch (Demo) nicht speicherbar:", e.message));
+      socket.emit("demoAntwort", {
+        text: String(out.reply || "").slice(0, 500),
+        tr: { [my]: String(out.translation || out.reply || "").slice(0, 500) },
+        lang: partner,
+      });
+    } catch (err) {
+      console.error("Demo fehlgeschlagen:", err.message);
+      socket.emit("demoFehler");
+    }
   });
 
   socket.on("disconnect", () => {
