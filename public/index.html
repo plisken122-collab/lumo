@@ -82,6 +82,18 @@
   }
   html[dir="rtl"] .howto li { flex-direction:row; }
 
+  /* Kleines Live-Beispiel unter der Tagline: zeigt die Uebersetzung in
+     Aktion, damit auch ein Besucher allein sofort sieht, was Diralo macht -
+     ohne dass schon jemand zum Schreiben da sein muss. */
+  .demo { margin:16px 0 0; display:flex; flex-direction:column; gap:7px; }
+  .demo-row { display:flex; align-items:flex-end; gap:7px; }
+  .demo-row.them { flex-direction:row-reverse; }
+  .demo-bubble { max-width:78%; padding:9px 13px; border-radius:15px; font-size:14.5px; line-height:1.3; }
+  .demo-row.you .demo-bubble { background:var(--surface); border:1px solid var(--line); color:var(--ink); border-bottom-left-radius:5px; }
+  .demo-row.them .demo-bubble { background:var(--mine); color:#fff; border-bottom-right-radius:5px; }
+  .demo-flag { font-size:18px; line-height:1; padding-bottom:4px; }
+  .demo-cap { margin:3px 0 0; text-align:center; font-size:11.5px; color:var(--muted); }
+
   .bar { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
   /* Der Chat-Code muss schrumpfen duerfen, sonst schiebt er die Knoepfe
      auf einem schmalen Handy aus der Zeile. */
@@ -376,6 +388,21 @@
          das Kontingent erreicht ist. -->
     <p class="freebadge" id="t-freeStart"></p>
 
+    <!-- Kleines Beispiel, das die Uebersetzung sofort zeigt - bewusst auf
+         Englisch, weil der meiste Zulauf ueber englische Videos kommt. So
+         versteht auch ein Besucher allein in einer Sekunde, was Diralo tut. -->
+    <div class="demo" aria-hidden="true">
+      <div class="demo-row you">
+        <span class="demo-flag">🇬🇧</span>
+        <span class="demo-bubble">I miss you ❤️</span>
+      </div>
+      <div class="demo-row them">
+        <span class="demo-flag">🇵🇹</span>
+        <span class="demo-bubble">Sinto a tua falta ❤️</span>
+      </div>
+      <p class="demo-cap">One writes — the other reads in their own language</p>
+    </div>
+
     <!-- Kurz erklaert, dass man zu zweit ist: ein kalter Besucher allein
          sieht sonst einen leeren Raum und geht wieder. -->
     <div class="howto" id="howto">
@@ -630,7 +657,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v65";
+const BUILD = "v66";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
