@@ -174,13 +174,16 @@ async function laden() {
     if (a.status === 401) { location.reload(); return; }
     const d = await a.json();
 
+    const demo = d.demo || { monat: 0, kostenUsd: 0 };
+    const demoStarts = (d.trichter.summe && d.trichter.summe.demo) || 0;
     $("kacheln").innerHTML =
       kachel(nf.format(d.chats.aktiv7), "Aktive Chats", "7 Tage · " + nf.format(d.chats.aktiv30) + " in 30") +
       kachel(nf.format(d.abos.plus + d.abos.familie), "Zahlende Abos",
              d.abos.plus + "× Plus · " + d.abos.familie + "× Familie") +
       kachel(d.umsatzMonatEur.toFixed(2) + " €", "Umsatz / Monat", "wiederkehrend", true) +
       kachel(nf.format(d.uebersetzungen.monat), "Übersetzungen", "diesen Monat") +
-      kachel("$" + d.kostenMonatUsd.toFixed(2), "Kosten / Monat", "Übersetzung", true) +
+      kachel("$" + d.kostenMonatUsd.toFixed(2), "Kosten / Monat", "davon Demo $" + demo.kostenUsd.toFixed(2), true) +
+      kachel(nf.format(demoStarts), "Demo gestartet", "letzte 14 Tage") +
       kachel(nf.format(d.push), "Benachrichtigungen", "Geräte");
 
     zeichneTrichter(d.trichter.summe);

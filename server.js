@@ -641,7 +641,7 @@ app.get("/api/trichter", async (req, res) => {
 app.get("/api/admin/daten", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   try {
-    const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt] = await Promise.all([
+    const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt, demo] = await Promise.all([
       store.trichter(14),
       store.aktiveChats(7),
       store.aktiveChats(30),
@@ -649,8 +649,10 @@ app.get("/api/admin/daten", async (req, res) => {
       store.pushZaehlung(),
       store.getUsage(30),
       store.getUsage(365),
+      store.getDemoUsage(30),
     ]);
     const kostenMonat = costOf(monat.total);
+    const kostenDemo = costOf(demo);
     res.json({
       trichter,
       chats: { aktiv7, aktiv30 },
@@ -658,6 +660,7 @@ app.get("/api/admin/daten", async (req, res) => {
       push,
       uebersetzungen: { monat: monat.total.count, jahr: gesamt.total.count },
       kostenMonatUsd: Number(kostenMonat.toFixed(2)),
+      demo: { monat: demo.count, kostenUsd: Number(kostenDemo.toFixed(2)) },
       umsatzMonatEur: abos.plus * 4.99 + abos.familie * 9.99,
     });
   } catch (err) {
@@ -1526,6 +1529,10 @@ io.on("connection", (socket) => {
     /* Strenger als normale Nachrichten - jede Runde kostet eine KI-Antwort. */
     if (!take(`demo:${me.device || ip}`, 12, 60 * 1000)) { socket.emit("demoFehler"); return; }
     if (!take("demo:day", DEMO_PER_DAY, 24 * 60 * 60 * 1000)) { socket.emit("demoFehler"); return; }
+    /* Nur der Start zaehlt (die Begruessung), nicht jede einzelne Runde -
+       so steht im Admin "wie viele haben die Demo ausprobiert". Eigene
+       Tests bleiben wie ueberall draussen. */
+    if (first && !internSock) await store.zaehle("demo").catch(() => {});
     const partnerName = LANG_NAMES[partner] || partner;
     const myName = LANG_NAMES[my] || my;
     const nutzer = first
@@ -1536,8 +1543,10 @@ Der Nutzer schreibt auf ${myName} (${my}). Seine Nachricht: """${nutzer}"""
 Antworte NUR mit JSON, ohne Markdown: {"reply":"<deine Antwort auf ${partner}>","translation":"<dieselbe Antwort auf ${my}>"}`;
     try {
       const { result: out, usage } = await claude(prompt);
+      /* Unter eigenem Kuerzel, damit sich die Demo-Kosten im Admin von den
+         echten Uebersetzungen trennen lassen. */
       store.logUsage({
-        room: room || "demo", target: my, chars: String(out.reply || "").length,
+        room: "__demo__", target: my, chars: String(out.reply || "").length,
         inTokens: usage.inTokens, outTokens: usage.outTokens,
       }).catch((e) => console.error("Verbrauch (Demo) nicht speicherbar:", e.message));
       socket.emit("demoAntwort", {

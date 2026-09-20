@@ -458,6 +458,26 @@ export async function getUsage(days = 30) {
   };
 }
 
+/* Nur der Verbrauch des Probe-Chats (Raum-Kuerzel "__demo__") - damit der
+   Admin die Demo-Kosten von den echten Uebersetzungen trennen kann. */
+export async function getDemoUsage(days = 30) {
+  const since = Date.now() - days * 24 * 60 * 60 * 1000;
+  if (!usingDatabase) {
+    const rows = mem.usage.filter((r) => r.at >= since && r.room === "__demo__");
+    return rows.reduce(
+      (a, r) => ({ count: a.count + 1, inTokens: a.inTokens + r.in_tokens, outTokens: a.outTokens + r.out_tokens }),
+      { count: 0, inTokens: 0, outTokens: 0 }
+    );
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS count,
+            COALESCE(SUM(in_tokens),0)::bigint AS in_tokens,
+            COALESCE(SUM(out_tokens),0)::bigint AS out_tokens
+       FROM usage_log WHERE room = '__demo__' AND at >= $1`, [since]);
+  const r = rows[0];
+  return { count: r.count, inTokens: Number(r.in_tokens), outTokens: Number(r.out_tokens) };
+}
+
 /* --------------------------- Aufraeumen ---------------------------
    Nachrichten aelter als die Aufbewahrungsfrist verschwinden. Was
    geloescht ist, kann niemand mehr lesen und niemand herausverlangen.
