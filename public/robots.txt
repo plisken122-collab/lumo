@@ -1,2 +1,11 @@
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /stats.html
+Disallow: /gate.html
+Disallow: /api/
+Disallow: /medien/
+Disallow: /health
+
+Sitemap: https://diralo.app/sitemap.xml
