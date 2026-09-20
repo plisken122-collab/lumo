@@ -15,11 +15,14 @@
 <meta property="og:url" content="https://diralo.app/">
 <meta property="og:title" content="Diralo — Chat in your language, they read in theirs">
 <meta property="og:description" content="Free translation chat: everyone writes in their own language and reads in theirs. No account, nothing to install.">
-<meta property="og:image" content="https://diralo.app/icons/icon-512-v2.png">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://diralo.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Diralo — chat in your language, they read in theirs">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Diralo — Chat in your language, they read in theirs">
 <meta name="twitter:description" content="Free translation chat: everyone writes in their own language and reads in theirs. No account, nothing to install.">
-<meta name="twitter:image" content="https://diralo.app/icons/icon-512-v2.png">
+<meta name="twitter:image" content="https://diralo.app/og-image.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-192-v2.png">
@@ -672,7 +675,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v68";
+const BUILD = "v69";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
