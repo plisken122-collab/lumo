@@ -347,6 +347,11 @@
     cursor:pointer; background:rgba(0,0,0,.04);
   }
   .foto + span:not(:empty) { display:block; margin-top:6px; }
+  /* Geteilter Standort - eine antippbare Karte, die die Karten-App oeffnet. */
+  .ortkarte { display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; padding:2px 0; }
+  .ortpin { font-size:32px; line-height:1; flex-shrink:0; }
+  .ortkarte b { display:block; font-size:15px; margin-bottom:2px; }
+  .ortlink { font-size:13px; text-decoration:underline; opacity:.85; }
   /* Aus dem Bild gelesener, uebersetzter Text */
   .bildtext { margin-top:7px; font-size:14px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
   .bildtext.leer { font-size:12.5px; opacity:.7; }
@@ -510,6 +515,7 @@
     <div class="composer" id="composer">
       <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
       <button id="bildBtn" class="mic-btn" type="button">📷</button>
+      <button id="ortBtn" class="mic-btn" type="button">📍</button>
       <input id="bildInput" type="file" accept="image/*" class="datei-versteckt">
       <input id="bildKamera" type="file" accept="image/*" capture="environment" class="datei-versteckt">
       <textarea id="draft" rows="1"></textarea>
@@ -675,7 +681,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v69";
+const BUILD = "v70";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -707,6 +713,7 @@ function applyLanguage(code) {
   $("send").textContent = L.t("send");
   $("dictBtn").title = L.t("dictateTitle");
   $("bildBtn").title = L.t("bildTitle");
+  $("ortBtn").title = L.t("ortBtn");
   $("zurueckBtn").setAttribute("aria-label", L.t("back"));
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
@@ -1016,6 +1023,32 @@ function aktualisiereLeer() {
   $("inviteBtn").classList.toggle("hide", istLeer);
 }
 
+/* Standort in eine Blase setzen: eine antippbare Karte. Tippen oeffnet
+   die Koordinaten in der Karten-App (Google Maps) - bewusst in einem
+   neuen Tab, denn eine Karte gehoert nicht in unser Overlay, und der
+   Empfaenger will sie ja wirklich oeffnen. */
+function ortEinsetzen(m, bubble) {
+  const karte = document.createElement("a");
+  karte.className = "ortkarte";
+  karte.href = "https://www.google.com/maps?q=" + m.ort.lat + "," + m.ort.lng;
+  karte.target = "_blank";
+  karte.rel = "noopener";
+  const pin = document.createElement("span");
+  pin.className = "ortpin";
+  pin.textContent = "📍";
+  const txt = document.createElement("span");
+  const titel = document.createElement("b");
+  titel.textContent = T("ortShared");
+  const link = document.createElement("span");
+  link.className = "ortlink";
+  link.textContent = T("ortOpen");
+  txt.appendChild(titel);
+  txt.appendChild(link);
+  karte.appendChild(pin);
+  karte.appendChild(txt);
+  bubble.appendChild(karte);
+}
+
 /* Das Bild in eine Blase setzen. Tippen zeigt es gross im eigenen
    Overlay - nicht in einem neuen Tab, sonst kaeme man in der
    installierten App nicht mehr zurueck. */
@@ -1142,6 +1175,7 @@ function render(m) {
     const text = shown || m.text;
     bubble.textContent = "";
     if (m.bild) bildEinsetzen(m, bubble);
+    if (m.ort) ortEinsetzen(m, bubble);
     /* Sprachnachricht: Abspieler zuerst, die Mitschrift darunter. Ohne
        Mitschrift bleibt es beim Abspieler mit einem Hinweis. */
     if (m.audioSeconds != null) {
@@ -1169,7 +1203,8 @@ function render(m) {
     span.dir = RTL.has(me.lang) ? "rtl" : "auto";
     span.textContent = text;
     if (m.audioSeconds != null) span.className = "no-text";
-    bubble.appendChild(span);
+    /* Beim reinen Standort gibt es keinen Text - dann keine leere Zeile. */
+    if (text || !m.ort) bubble.appendChild(span);
     if (m.open) {
       const o = document.createElement("div");
       o.className = "orig";
@@ -1177,7 +1212,7 @@ function render(m) {
       o.textContent = m.text;
       bubble.appendChild(o);
     }
-    if (m.live) notify(m, text || (m.bild ? "📷" : text));
+    if (m.live) notify(m, text || (m.bild ? "📷" : (m.ort ? "📍" : text)));
   }
 
   meta.textContent = "";
@@ -1634,6 +1669,23 @@ const hatKamera = (navigator.maxTouchPoints || 0) > 0 ||
                   (window.matchMedia && matchMedia("(pointer: coarse)").matches);
 
 bildBtn.onclick = () => { if (hatKamera) zeigeBildQuelle(); else bildInput.click(); };
+
+/* Standort teilen: den aktuellen Standort holen (der Browser fragt selbst
+   um Erlaubnis) und als antippbare Karte verschicken. */
+$("ortBtn").onclick = () => {
+  if (!navigator.geolocation) { showErr(T("ortError")); return; }
+  const btn = $("ortBtn");
+  btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      btn.disabled = false;
+      socket.emit("sendOrt", { lat: pos.coords.latitude, lng: pos.coords.longitude });
+      installNachBeitrag();
+    },
+    () => { btn.disabled = false; showErr(T("ortError")); },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+};
 
 function zeigeBildQuelle() {
   schliesseSheet();

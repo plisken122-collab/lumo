@@ -1069,7 +1069,7 @@ async function pushToRoom(room, msg) {
       const body = await ensure(room, msg.id, clean(sub.lang));
       const payload = JSON.stringify({
         title: msg.name,
-        body: body || msg.text,
+        body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : "")),
         room,
         id: msg.id,
       });
@@ -1469,6 +1469,35 @@ io.on("connection", (socket) => {
       await store.addMessage(msg);
     } catch (err) {
       console.error("Nachricht nicht speicherbar:", err.message);
+      socket.emit("translationError", { id: msg.id, lang: me.lang });
+      return;
+    }
+    io.to(room).emit("message", msg);
+    pushToRoom(room, msg).catch((e) => console.error("Push-Lauf:", e.message));
+  });
+
+  /* Standort teilen: kein Text, nur Koordinaten. Wird als antippbare
+     Karte gezeigt und in der Karten-App des Empfaengers geoeffnet. Auf
+     sechs Nachkommastellen gerundet - das reicht metergenau und speichert
+     nicht mehr als noetig. */
+  socket.on("sendOrt", async ({ lat, lng }) => {
+    if (!room) return;
+    const la = Number(lat), lo = Number(lng);
+    if (!Number.isFinite(la) || !Number.isFinite(lo) ||
+        la < -90 || la > 90 || lo < -180 || lo > 180) return;
+    if (!take(`msg:${me.device}`, MSG_PER_MIN, 60 * 1000)) { socket.emit("tooFast"); return; }
+    if (!internSock) zaehle("nachricht");
+    const msg = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      room, device: me.device, name: me.name,
+      text: "", lang: me.lang, detected: false, tr: {},
+      ort: { lat: Math.round(la * 1e6) / 1e6, lng: Math.round(lo * 1e6) / 1e6 },
+      at: Date.now(),
+    };
+    try {
+      await store.addMessage(msg);
+    } catch (err) {
+      console.error("Standort nicht speicherbar:", err.message);
       socket.emit("translationError", { id: msg.id, lang: me.lang });
       return;
     }

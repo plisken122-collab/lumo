@@ -81,6 +81,13 @@ export async function init() {
        Bildunterschrift. */
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS has_image BOOLEAN NOT NULL DEFAULT FALSE;
 
+    /* Geteilter Standort: Breiten- und Laengengrad. NULL heisst, es ist
+       kein Standort, sondern eine gewoehnliche Nachricht. Kein Kartenbild
+       wird gespeichert - der Empfaenger oeffnet die Koordinaten in seiner
+       Karten-App. */
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS ort_lat DOUBLE PRECISION;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS ort_lng DOUBLE PRECISION;
+
     /* Die Aufnahme selbst. Opus ist klein - eine halbe Minute sind rund
        40 KB, das traegt die Datenbank ohne Muehe. Bilder gehoeren spaeter
        nicht hierher, die sind hundertmal groesser.
@@ -201,7 +208,9 @@ export async function init() {
      sonst erst auf, wenn jemand etwas loeschen will. */
   for (const [spalte, art] of [["audio_seconds", "INTEGER"],
                                ["deleted", "BOOLEAN NOT NULL DEFAULT FALSE"],
-                               ["has_image", "BOOLEAN NOT NULL DEFAULT FALSE"]]) {
+                               ["has_image", "BOOLEAN NOT NULL DEFAULT FALSE"],
+                               ["ort_lat", "DOUBLE PRECISION"],
+                               ["ort_lng", "DOUBLE PRECISION"]]) {
     try {
       await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS ${spalte} ${art}`);
     } catch (err) {
@@ -243,10 +252,11 @@ export async function addMessage(msg) {
     return msg;
   }
   await pool.query(
-    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image, ort_lat, ort_lng)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (id) DO NOTHING`,
     [msg.id, msg.room, msg.device, msg.name, msg.text, msg.lang, msg.detected, msg.at,
-     msg.audioSeconds ?? null, Boolean(msg.bild)]
+     msg.audioSeconds ?? null, Boolean(msg.bild),
+     msg.ort ? msg.ort.lat : null, msg.ort ? msg.ort.lng : null]
   );
   return msg;
 }
@@ -277,12 +287,12 @@ export async function deleteForAll(id, device) {
   if (!usingDatabase) {
     const m = mem.messages.get(id);
     if (!m || m.device !== device) return false;
-    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false;
+    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false; m.ort = null;
     mem.media.delete(id);
     return true;
   }
   const { rowCount } = await pool.query(
-    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL, has_image = FALSE
+    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL, has_image = FALSE, ort_lat = NULL, ort_lng = NULL
      WHERE id = $1 AND device = $2 AND deleted = FALSE`,
     [id, device]
   );
@@ -382,6 +392,8 @@ function rowToMsg(r, translations) {
     text: r.body, lang: r.lang, detected: r.detected, at: Number(r.at), tr,
     audioSeconds: r.audio_seconds ?? null,
     bild: Boolean(r.has_image),
+    ort: (r.ort_lat != null && r.ort_lng != null)
+      ? { lat: Number(r.ort_lat), lng: Number(r.ort_lng) } : null,
     deleted: Boolean(r.deleted),
   };
 }
