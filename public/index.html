@@ -352,6 +352,8 @@
   .ortpin { font-size:32px; line-height:1; flex-shrink:0; }
   .ortkarte b { display:block; font-size:15px; margin-bottom:2px; }
   .ortlink { font-size:13px; text-decoration:underline; opacity:.85; }
+  /* Uhrzeit in der Namenszeile - etwas leiser als der Name. */
+  .meta .zeit { opacity:.7; }
   /* Aus dem Bild gelesener, uebersetzter Text */
   .bildtext { margin-top:7px; font-size:14px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
   .bildtext.leer { font-size:12.5px; opacity:.7; }
@@ -681,7 +683,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v70";
+const BUILD = "v71";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1137,6 +1139,17 @@ function zeigeBildGross(m) {
   document.body.appendChild(overlay);
 }
 
+/* Uhrzeit einer Nachricht in der Locale des Lesers (24h/12h folgt der
+   Sprache automatisch). Eine ungueltige Locale faellt still auf die
+   Browser-Voreinstellung zurueck. */
+function uhrzeit(at) {
+  try {
+    return new Date(at).toLocaleTimeString(me.lang || undefined, { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+}
+
 function render(m) {
   const row = $("m" + m.id); if (!row) return;
   const bubble = row.querySelector(".bubble");
@@ -1153,6 +1166,10 @@ function render(m) {
     const wer = document.createElement("span");
     wer.textContent = m.name;
     meta.appendChild(wer);
+    const zt = document.createElement("span");
+    zt.className = "zeit";
+    zt.textContent = uhrzeit(m.at);
+    meta.appendChild(zt);
     return;
   }
 
@@ -1219,6 +1236,12 @@ function render(m) {
   const who = document.createElement("span");
   who.textContent = m.name;
   meta.appendChild(who);
+  /* Uhrzeit, wann die Nachricht geschrieben wurde - in der Sprache des
+     Lesers (Format 24h/12h folgt der Locale). */
+  const zeit = document.createElement("span");
+  zeit.className = "zeit";
+  zeit.textContent = uhrzeit(m.at);
+  meta.appendChild(zeit);
   /* Nur anbieten, wenn das Original ueberhaupt anders aussieht. Bei
      reinen Smiley-Nachrichten gibt der Server den Text unveraendert
      zurueck - da waere "Original: ..." ein Verweis auf dasselbe. */
