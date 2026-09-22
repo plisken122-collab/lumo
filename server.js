@@ -1505,6 +1505,17 @@ io.on("connection", (socket) => {
     pushToRoom(room, msg).catch((e) => console.error("Push-Lauf:", e.message));
   });
 
+  /* Lesebestaetigung: jemand hat den Chat offen und alles bis "bis"
+     gesehen. Nur an die anderen im Raum weiterreichen (nicht zurueck an
+     den Melder), damit deren eigene Nachrichten die Lese-Haken bekommen.
+     Bewusst fluechtig - nichts wird gespeichert. */
+  socket.on("gelesen", ({ bis }) => {
+    if (!room) return;
+    const t = Number(bis);
+    if (!Number.isFinite(t)) return;
+    socket.to(room).emit("gelesen", { device: me.device, bis: t });
+  });
+
   /* Loeschen fuer alle. Nur die eigene Nachricht - geprueft wird am
      Geraet, das sie geschrieben hat, nicht an dem, was der Browser
      behauptet zu duerfen. */

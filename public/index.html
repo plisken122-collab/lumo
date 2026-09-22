@@ -355,6 +355,8 @@
   .ortlink { font-size:13px; text-decoration:underline; opacity:.85; }
   /* Uhrzeit in der Namenszeile - etwas leiser als der Name. */
   .meta .zeit { opacity:.7; }
+  /* Lese-Haken (gelesen) - in der Akzentfarbe, wie das Blau bei WhatsApp. */
+  .gelesen-haken { color:var(--mine); font-weight:600; letter-spacing:-2px; }
   /* Aus dem Bild gelesener, uebersetzter Text */
   .bildtext { margin-top:7px; font-size:14px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
   .bildtext.leer { font-size:12.5px; opacity:.7; }
@@ -703,7 +705,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v72";
+const BUILD = "v73";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -897,10 +899,18 @@ function start() {
     }
   });
 
-  socket.on("history", (list) => { list.forEach((m) => add(m, false)); aktualisiereLeer(); });
+  socket.on("history", (list) => { list.forEach((m) => add(m, false)); aktualisiereLeer(); gelesenMelden(); });
   socket.on("message", (m) => {
     add(m, true);
-    if (document.visibilityState === "visible") gelesenSetzen(me.room);
+    if (document.visibilityState === "visible") { gelesenSetzen(me.room); gelesenMelden(); }
+  });
+  /* Das Gegenueber hat den Chat offen und alles bis "bis" gesehen - meine
+     eigenen Nachrichten bis dahin bekommen die Lese-Haken. */
+  socket.on("gelesen", ({ bis }) => {
+    const t = Number(bis); if (!t) return;
+    msgs.forEach((m) => {
+      if (m.device === deviceId && !m.gelesen && m.at <= t) { m.gelesen = true; render(m); }
+    });
   });
   socket.on("deleteFailed", () => { showErr(T("delFailed")); });
   socket.on("deleted", ({ id }) => {
@@ -1262,6 +1272,15 @@ function render(m) {
   zeit.className = "zeit";
   zeit.textContent = uhrzeit(m.at);
   meta.appendChild(zeit);
+  /* Lesebestaetigung: zwei Haken auf den EIGENEN Nachrichten, sobald das
+     Gegenueber sie gesehen hat (wie bei WhatsApp). */
+  if (m.device === deviceId && m.gelesen) {
+    const haken = document.createElement("span");
+    haken.className = "gelesen-haken";
+    haken.textContent = "✓✓";
+    haken.title = T("gelesen");
+    meta.appendChild(haken);
+  }
   /* Nur anbieten, wenn das Original ueberhaupt anders aussieht. Bei
      reinen Smiley-Nachrichten gibt der Server den Text unveraendert
      zurueck - da waere "Original: ..." ein Verweis auf dasselbe. */
@@ -1928,6 +1947,16 @@ function gelesenSetzen(code, wann) {
   try { localStorage.setItem(GELESEN, JSON.stringify(g)); } catch {}
 }
 
+/* Dem Gegenueber melden, dass ich den Chat gerade offen habe und alles
+   bis jetzt gesehen habe - daraus werden auf seiner Seite die Lese-Haken.
+   Nur wenn der Chat wirklich sichtbar und offen ist. */
+function gelesenMelden() {
+  if (socket && me.room && document.visibilityState === "visible"
+      && !$("chat").classList.contains("hide")) {
+    socket.emit("gelesen", { bis: Date.now() });
+  }
+}
+
 /* Zahlen je Chat vom Server holen. Nur Zahlen - der Server schickt nie
    Inhalte, damit die Abfrage nichts ueber fremde Chats verraet. */
 let neuesStand = {};
@@ -2435,6 +2464,7 @@ async function unregisterPush() {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && me.room && !$("chat").classList.contains("hide")) {
     gelesenSetzen(me.room);
+    gelesenMelden();
   }
 });
 
