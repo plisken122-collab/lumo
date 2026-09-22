@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#E4E5E9">
+<meta name="theme-color" content="#E4E5E9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161B" media="(prefers-color-scheme: dark)">
 <meta name="robots" content="index, follow">
 <title>Diralo — Chat in your language, they read in theirs</title>
 <meta name="description" content="Free translation chat: everyone writes in their own language and reads in theirs. No account, nothing to install. Made for international couples, families and friends across a language barrier.">
@@ -397,6 +398,25 @@
     background:#F1F2F5; border-left:3px solid var(--mine);
     font-size:12.5px; line-height:1.55; color:var(--muted);
   }
+
+  /* Dunkelmodus: folgt der Einstellung des Geraets. Handys schalten
+     abends von selbst auf dunkel - dann wird auch Diralo dunkel, ohne
+     dass man etwas einstellen muss. Die meisten Farben kommen aus den
+     Variablen und passen sich hier von selbst an; die wenigen fest
+     verdrahteten (helle Blasen, Kaesten) werden gezielt ueberschrieben. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas:#14161B; --surface:#1E212A; --ink:#EAEBEF; --muted:#9A9EAC;
+      --line:#2E323D; --mine:#5A67CE; --danger:#E06A62;
+    }
+    .theirs .bubble { background:#262A34; }
+    .note { background:#22252E; }
+    .invited { background:#232838; }
+    .quotabar { background:#2B2620; border-color:#4A4433; }
+    .freebadge { background:#1E3320; color:#93D389; }
+    .bildtext-btn { background:rgba(255,255,255,.08); }
+    .foto { background:rgba(255,255,255,.05); }
+  }
 </style>
 </head>
 <body>
@@ -683,7 +703,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v71";
+const BUILD = "v72";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
