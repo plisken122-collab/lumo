@@ -34,6 +34,7 @@ const mem = {
   funnel: new Map(),   // "tag|ereignis" -> Anzahl
   abos: new Map(),     // id -> Abo
   aboRaeume: new Map(), // room -> abo_id
+  reactions: new Map(), // message_id -> { device: emoji }
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -112,6 +113,15 @@ export async function init() {
       lang       TEXT NOT NULL,
       body       TEXT NOT NULL,
       PRIMARY KEY (message_id, lang)
+    );
+
+    /* Reaktionen (Herz, Daumen ...): eine je Geraet und Nachricht.
+       Verschwindet mit der Nachricht (CASCADE). */
+    CREATE TABLE IF NOT EXISTS reactions (
+      message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      device     TEXT NOT NULL,
+      emoji      TEXT NOT NULL,
+      PRIMARY KEY (message_id, device)
     );
 
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -294,6 +304,7 @@ export async function deleteForAll(id, device) {
     if (!m || m.device !== device) return false;
     m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false; m.ort = null;
     mem.media.delete(id);
+    mem.reactions.delete(id);
     return true;
   }
   const { rowCount } = await pool.query(
@@ -304,6 +315,7 @@ export async function deleteForAll(id, device) {
   if (!rowCount) return false;
   await pool.query(`DELETE FROM translations WHERE message_id = $1`, [id]);
   await pool.query(`DELETE FROM media WHERE message_id = $1`, [id]);
+  await pool.query(`DELETE FROM reactions WHERE message_id = $1`, [id]);
   return true;
 }
 
@@ -345,7 +357,9 @@ export async function getMessage(id) {
 export async function getHistory(room, limit = 200) {
   if (!usingDatabase) {
     const ids = mem.rooms.get(room) || [];
-    return ids.slice(-limit).map((id) => mem.messages.get(id)).filter(Boolean);
+    const list = ids.slice(-limit).map((id) => mem.messages.get(id)).filter(Boolean);
+    for (const m of list) m.reaktionen = { ...(mem.reactions.get(m.id) || {}) };
+    return list;
   }
   const { rows } = await pool.query(
     `SELECT * FROM (
@@ -364,7 +378,52 @@ export async function getHistory(room, limit = 200) {
     if (!byId.has(t.message_id)) byId.set(t.message_id, []);
     byId.get(t.message_id).push(t);
   }
-  return rows.map((r) => rowToMsg(r, byId.get(r.id) || []));
+  const reakt = await reaktionenLaden(ids);
+  return rows.map((r) => {
+    const m = rowToMsg(r, byId.get(r.id) || []);
+    m.reaktionen = reakt.get(r.id) || {};
+    return m;
+  });
+}
+
+/* Eine Reaktion setzen, aendern oder (leeres Emoji) entfernen. Eine je
+   Geraet und Nachricht. */
+export async function setReaction(messageId, device, emoji) {
+  if (!usingDatabase) {
+    let r = mem.reactions.get(messageId);
+    if (!r) { r = {}; mem.reactions.set(messageId, r); }
+    if (emoji) r[device] = emoji; else delete r[device];
+    return;
+  }
+  if (emoji) {
+    await pool.query(
+      `INSERT INTO reactions (message_id, device, emoji) VALUES ($1,$2,$3)
+       ON CONFLICT (message_id, device) DO UPDATE SET emoji = EXCLUDED.emoji`,
+      [messageId, device, emoji]
+    );
+  } else {
+    await pool.query(`DELETE FROM reactions WHERE message_id = $1 AND device = $2`, [messageId, device]);
+  }
+}
+
+/* Reaktionen zu mehreren Nachrichten auf einmal: id -> { device: emoji }. */
+async function reaktionenLaden(ids) {
+  const map = new Map();
+  if (!usingDatabase) {
+    for (const id of ids) {
+      const r = mem.reactions.get(id);
+      if (r && Object.keys(r).length) map.set(id, { ...r });
+    }
+    return map;
+  }
+  const { rows } = await pool.query(
+    `SELECT message_id, device, emoji FROM reactions WHERE message_id = ANY($1)`, [ids]
+  );
+  for (const r of rows) {
+    if (!map.has(r.message_id)) map.set(r.message_id, {});
+    map.get(r.message_id)[r.device] = r.emoji;
+  }
+  return map;
 }
 
 export async function setTranslation(id, lang, body) {

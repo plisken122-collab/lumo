@@ -704,6 +704,10 @@ const TRANSLATIONS_PER_DAY = Number(process.env.TRANSLATIONS_PER_DAY || 2000);
    echtes Ausprobieren, gedeckelt gegen Missbrauch. */
 const DEMO_PER_DAY = Number(process.env.DEMO_PER_DAY || 800);
 
+/* Erlaubte Reaktionen. Nur diese werden angenommen - so kann niemand
+   beliebige Zeichen ueber die Reaktion einschleusen. */
+const REAKTIONEN = ["❤️", "👍", "😂", "😮", "😢", "🙏"];
+
 const counters = new Map(); // Schluessel -> { n, until }
 
 /* Zaehlt einen Versuch. Gibt false zurueck, wenn die Grenze erreicht
@@ -1576,6 +1580,21 @@ io.on("connection", (socket) => {
     if (!room) return;
     if (!take(`tippt:${me.device}`, 40, 60 * 1000)) return;
     socket.to(room).emit("tippt", { name: me.name });
+  });
+
+  /* Reaktion setzen/entfernen (Herz, Daumen ...). Leeres Emoji hebt die
+     eigene Reaktion auf. Wird gespeichert und an alle im Raum verteilt. */
+  socket.on("reagieren", async ({ id, emoji }) => {
+    if (!room || !id) return;
+    if (!take(`reagieren:${me.device}`, 30, 60 * 1000)) return;
+    const e = REAKTIONEN.includes(emoji) ? emoji : "";
+    try {
+      await store.setReaction(String(id), me.device, e);
+    } catch (err) {
+      console.error("Reaktion nicht speicherbar:", err.message);
+      return;
+    }
+    io.to(room).emit("reaktion", { id: String(id), device: me.device, emoji: e });
   });
 
   /* Loeschen fuer alle. Nur die eigene Nachricht - geprueft wird am

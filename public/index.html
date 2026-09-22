@@ -366,6 +366,22 @@
   .tippt-dots i:nth-child(3) { animation-delay:.4s; }
   @keyframes tipptblink { 0%,60%,100% { opacity:.25; } 30% { opacity:1; } }
 
+  /* Emoji-Reihe oben im Nachrichten-Menue. */
+  .reaktion-reihe {
+    display:flex; justify-content:space-around; gap:2px;
+    padding:2px 0 10px; margin-bottom:6px; border-bottom:1px solid var(--line);
+  }
+  .reaktion-reihe button { font-size:26px; background:none; border:none; padding:6px; border-radius:10px; cursor:pointer; line-height:1; }
+  .reaktion-reihe button.gewaehlt { background:var(--line); }
+
+  /* Reaktions-Abzeichen unter der Blase. */
+  .reaktionen { display:flex; gap:4px; margin-top:3px; flex-wrap:wrap; }
+  .reaktion {
+    font-size:13px; background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; padding:1px 7px; cursor:pointer; line-height:1.6;
+  }
+  .reaktion.meine { border-color:var(--mine); }
+
   /* Antworten-/Zitat-Leiste ueber dem Eingabefeld. */
   .antwortbar {
     display:flex; align-items:center; gap:10px;
@@ -770,7 +786,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v78";
+const BUILD = "v79";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -974,6 +990,13 @@ function start() {
   });
   /* Das Gegenueber tippt gerade - kurz "... schreibt" zeigen. */
   socket.on("tippt", ({ name }) => { zeigeTippt(name); });
+  /* Reaktion von jemandem (auch von mir zurueck als Bestaetigung). */
+  socket.on("reaktion", ({ id, device, emoji }) => {
+    const m = msgs.get(id); if (!m) return;
+    m.reaktionen = m.reaktionen || {};
+    if (emoji) m.reaktionen[device] = emoji; else delete m.reaktionen[device];
+    reaktionenRendern(m);
+  });
   /* Das Gegenueber hat den Chat offen und alles bis "bis" gesehen - meine
      eigenen Nachrichten bis dahin bekommen die Lese-Haken. */
   socket.on("gelesen", ({ bis }) => {
@@ -986,7 +1009,7 @@ function start() {
   socket.on("deleted", ({ id }) => {
     const m = msgs.get(id);
     if (!m) return;
-    m.deleted = true; m.text = ""; m.tr = {}; m.audioSeconds = null; m.open = false;
+    m.deleted = true; m.text = ""; m.tr = {}; m.audioSeconds = null; m.open = false; m.reaktionen = {};
     render(m);
   });
   socket.on("system", (ev) => {
@@ -1264,10 +1287,45 @@ function uhrzeit(at) {
   }
 }
 
+const REAKTIONEN = ["❤️", "👍", "😂", "😮", "😢", "🙏"];
+
+/* Reaktion setzen/umschalten: dasselbe Emoji noch einmal = entfernen.
+   Optimistisch anzeigen und ans Gegenueber melden. */
+function reagieren(m, emoji) {
+  if (!socket || !me.room || m.deleted) return;
+  m.reaktionen = m.reaktionen || {};
+  const neu = (m.reaktionen[deviceId] === emoji) ? "" : emoji;
+  if (neu) m.reaktionen[deviceId] = neu; else delete m.reaktionen[deviceId];
+  reaktionenRendern(m);
+  socket.emit("reagieren", { id: m.id, emoji: neu });
+}
+
+/* Die Reaktions-Abzeichen unter einer Nachricht neu zeichnen. Gleiche
+   Emojis werden zusammengezaehlt; meine eigene ist hervorgehoben. */
+function reaktionenRendern(m) {
+  const row = $("m" + m.id); if (!row) return;
+  let el = row.querySelector(".reaktionen");
+  const r = m.reaktionen || {};
+  const emojis = Object.values(r);
+  if (!emojis.length) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement("div"); el.className = "reaktionen"; row.appendChild(el); }
+  const zaehl = {};
+  for (const e of emojis) zaehl[e] = (zaehl[e] || 0) + 1;
+  el.textContent = "";
+  for (const [e, n] of Object.entries(zaehl)) {
+    const b = document.createElement("span");
+    b.className = "reaktion" + (r[deviceId] === e ? " meine" : "");
+    b.textContent = n > 1 ? (e + " " + n) : e;
+    b.onclick = () => reagieren(m, e);
+    el.appendChild(b);
+  }
+}
+
 function render(m) {
   const row = $("m" + m.id); if (!row) return;
   const bubble = row.querySelector(".bubble");
   const meta = row.querySelector(".meta");
+  reaktionenRendern(m);
   /* Geloeschtes hat keinen Inhalt mehr - weder uebersetzen noch
      abspielen, nur der Hinweis bleibt. */
   if (m.deleted) {
@@ -2390,6 +2448,21 @@ function zeigeMenue(m) {
   sheet.className = "sheet";
   const box = document.createElement("div");
   box.className = "sheet-inner";
+
+  /* Emoji-Reihe zum Reagieren - ganz oben, wie bei WhatsApp/iMessage. */
+  if (!m.deleted) {
+    const reihe = document.createElement("div");
+    reihe.className = "reaktion-reihe";
+    for (const e of REAKTIONEN) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = e;
+      if ((m.reaktionen || {})[deviceId] === e) b.classList.add("gewaehlt");
+      b.onclick = () => { reagieren(m, e); schliesseSheet(); };
+      reihe.appendChild(b);
+    }
+    box.appendChild(reihe);
+  }
 
   /* Antworten - auf jede noch vorhandene Nachricht. */
   if (!m.deleted) {
