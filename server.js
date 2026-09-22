@@ -1051,6 +1051,58 @@ async function uebersetzeBildText(room, msgId, target) {
   return job;
 }
 
+/* Aussprache-Hilfe: Lautschrift, wie man den Originaltext einer Nachricht
+   in seiner Sprache ausspricht - fuer Paare, die die Sprache des anderen
+   lernen. Auf Anfrage (kostet das Modell); das Ergebnis merkt sich der
+   Browser fuer die Sitzung, deshalb keine eigene Zwischenspeicher-Tabelle. */
+const ausspracheInFlight = new Map();
+async function ausspracheHelfen(room, msgId, target) {
+  const msg = await store.getMessage(msgId);
+  if (!msg || !msg.text.trim()) { io.to(room).emit("ausspracheFehler", { id: msgId, lang: target }); return null; }
+
+  const key = `au:${msgId}:${target}`;
+  if (ausspracheInFlight.has(key)) return ausspracheInFlight.get(key);
+
+  if (!(await imKontingent(room))) {
+    io.to(room).emit("quotaReached", { id: msgId, grund: "monat" });
+    io.to(room).emit("ausspracheFehler", { id: msgId, lang: target });
+    return null;
+  }
+  if (!take("tr:day", TRANSLATIONS_PER_DAY, 24 * 60 * 60 * 1000)) {
+    io.to(room).emit("quotaReached", { id: msgId });
+    io.to(room).emit("ausspracheFehler", { id: msgId, lang: target });
+    return null;
+  }
+
+  const quelle = LANG_NAMES[msg.lang] || msg.lang;
+  const ziel = LANG_NAMES[target] || target;
+  const prompt = `Der folgende Text ist auf ${quelle}. Schreibe eine einfache, praktische Aussprache-Hilfe fuer jemanden, der ${ziel} spricht, damit er den Text laut vorlesen kann - mit der gewohnten Schreibweise und den Lautregeln von ${ziel}, KEINE IPA-Zeichen, keine Erklaerung. Kurz halten.
+Text: """${msg.text.slice(0, 1000)}"""
+Antworte NUR mit JSON, ohne Markdown: {"lautschrift":"<Aussprache in ${ziel}-Schreibweise>"}`;
+
+  const job = (async () => {
+    try {
+      const { result: out, usage } = await claude(prompt);
+      const text = String(out.lautschrift || "").slice(0, 600);
+      store.logUsage({
+        room, target, chars: Math.max(1, msg.text.length),
+        inTokens: usage.inTokens, outTokens: usage.outTokens,
+      }).catch((e) => console.error("Verbrauch nicht speicherbar:", e.message));
+      io.to(room).emit("ausspracheFertig", { id: msgId, lang: target, text });
+      return text;
+    } catch (err) {
+      console.error("Aussprache fehlgeschlagen:", err.message);
+      io.to(room).emit("ausspracheFehler", { id: msgId, lang: target });
+      return null;
+    } finally {
+      ausspracheInFlight.delete(key);
+    }
+  })();
+
+  ausspracheInFlight.set(key, job);
+  return job;
+}
+
 /* ------------------------------- Push ------------------------------- */
 /* Schickt jedem angemeldeten Geraet im Raum die Nachricht in seiner Sprache. */
 async function pushToRoom(room, msg) {
@@ -1557,6 +1609,14 @@ io.on("connection", (socket) => {
     if (!room || !id) return;
     if (!take(`bildtext:${me.device}`, 12, 60 * 1000)) return;
     uebersetzeBildText(room, String(id), clean(lang)).catch(() => {});
+  });
+
+  /* Aussprache-Hilfe anfordern - auf Anfrage, aehnlich begrenzt wie
+     Bildtext, weil jeder Aufruf das Modell kostet. */
+  socket.on("aussprache", ({ id, lang }) => {
+    if (!room || !id) return;
+    if (!take(`aussprache:${me.device}`, 12, 60 * 1000)) return;
+    ausspracheHelfen(room, String(id), clean(lang)).catch(() => {});
   });
 
   /* Probe-Chat: ein KI-Partner, damit ein Besucher die Uebersetzung allein

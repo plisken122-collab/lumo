@@ -381,6 +381,19 @@
   /* Kurzes Hervorheben, wenn man ueber ein Zitat zur Originalnachricht springt. */
   .row .bubble { transition:box-shadow .25s; }
   .row.blink .bubble { box-shadow:0 0 0 2px var(--mine); }
+
+  /* Aussprache-Fenster. */
+  .aussprache { text-align:left; }
+  .au-titel { font-size:13px; color:var(--muted); margin:0 0 5px; }
+  .au-orig { font-size:18px; font-weight:500; margin:0 0 14px; line-height:1.35; }
+  .au-hoeren {
+    width:100%; margin:0 0 14px; background:var(--surface); color:var(--mine);
+    border:1px solid var(--mine); border-radius:12px; padding:12px; font-size:15px; font-weight:500;
+  }
+  .au-laut { min-height:26px; margin-bottom:8px; }
+  .au-lbl { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .au-text { margin:0; font-size:18px; line-height:1.5; }
+  .au-warten { margin:0; font-size:14px; color:var(--muted); }
   /* Aus dem Bild gelesener, uebersetzter Text */
   .bildtext { margin-top:7px; font-size:14px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
   .bildtext.leer { font-size:12.5px; opacity:.7; }
@@ -739,7 +752,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v75";
+const BUILD = "v76";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -989,6 +1002,20 @@ function start() {
     const m = msgs.get(id); if (!m) return;
     m.bildLaeuft = false;
     if (lang === me.lang) { showErr(T("errTranslate")); render(m); }
+  });
+  /* Aussprache-Hilfe fertig/fehlgeschlagen - nur die Lautschrift in der
+     eigenen Sprache uebernehmen und ein offenes Aussprache-Fenster fuellen. */
+  socket.on("ausspracheFertig", ({ id, lang, text }) => {
+    if (lang !== me.lang) return;
+    const m = msgs.get(id); if (!m) return;
+    m.lautschrift = String(text || "");
+    ausspracheAktualisieren(m);
+  });
+  socket.on("ausspracheFehler", ({ id, lang }) => {
+    if (lang !== me.lang) return;
+    const m = msgs.get(id); if (!m) return;
+    m.lautschriftFehler = true;
+    ausspracheAktualisieren(m);
   });
   socket.on("tooFast", () => {
     showErr(T("errTooFast"));
@@ -2018,6 +2045,103 @@ function versteckeLokal(id) {
 let sheet = null;
 function schliesseSheet() {
   if (sheet) { sheet.remove(); sheet = null; }
+  ausspracheOffen = null;
+}
+
+/* ------------------------------------------------------------------
+   Aussprache-Hilfe: zeigt, wie man den Originaltext einer Nachricht in
+   der Sprache des Gegenuebers ausspricht - Lautschrift (per KI) und
+   Vorlesen (Sprachausgabe des Browsers). Fuer Paare, die die Sprache des
+   anderen lernen wollen.
+------------------------------------------------------------------- */
+let ausspracheOffen = null;
+
+function vorlesen(text, lang) {
+  if (!("speechSynthesis" in window)) { showErr(T("errVorlesen")); return; }
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = 0.9;
+    speechSynthesis.speak(u);
+  } catch { showErr(T("errVorlesen")); }
+}
+
+function zeigeAussprache(m) {
+  schliesseSheet();
+  ausspracheOffen = m.id;
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  const box = document.createElement("div");
+  box.className = "sheet-inner aussprache";
+
+  const titel = document.createElement("p");
+  titel.className = "au-titel";
+  titel.textContent = T("ausspracheTitel");
+  box.appendChild(titel);
+
+  const orig = document.createElement("p");
+  orig.className = "au-orig";
+  orig.dir = RTL.has(m.lang) ? "rtl" : "auto";
+  orig.textContent = m.text;
+  box.appendChild(orig);
+
+  const hoeren = document.createElement("button");
+  hoeren.type = "button";
+  hoeren.className = "au-hoeren";
+  hoeren.textContent = "🔊 " + T("vorlesen");
+  hoeren.onclick = () => vorlesen(m.text, m.lang);
+  box.appendChild(hoeren);
+
+  const laut = document.createElement("div");
+  laut.className = "au-laut";
+  laut.id = "au-laut";
+  box.appendChild(laut);
+
+  const zu = document.createElement("button");
+  zu.type = "button";
+  zu.textContent = T("cancel");
+  zu.onclick = schliesseSheet;
+  box.appendChild(zu);
+
+  sheet.appendChild(box);
+  sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
+  document.body.appendChild(sheet);
+
+  ausspracheAktualisieren(m);
+  if (m.lautschrift == null) {
+    m.lautschriftFehler = false;
+    socket.emit("aussprache", { id: m.id, lang: me.lang });
+  }
+}
+
+/* Den Lautschrift-Bereich im offenen Fenster auf den neuesten Stand
+   bringen (waehrend des Ladens, bei Ergebnis oder Fehler). */
+function ausspracheAktualisieren(m) {
+  if (ausspracheOffen !== m.id) return;
+  const laut = $("au-laut");
+  if (!laut) return;
+  laut.textContent = "";
+  if (m.lautschrift) {
+    const lbl = document.createElement("span");
+    lbl.className = "au-lbl";
+    lbl.textContent = T("ausspracheLabel");
+    const t = document.createElement("p");
+    t.className = "au-text";
+    t.textContent = m.lautschrift;
+    laut.appendChild(lbl);
+    laut.appendChild(t);
+  } else if (m.lautschriftFehler) {
+    const e = document.createElement("p");
+    e.className = "au-warten";
+    e.textContent = T("errTranslate");
+    laut.appendChild(e);
+  } else {
+    const w = document.createElement("p");
+    w.className = "au-warten";
+    w.textContent = T("ausspracheLaeuft");
+    laut.appendChild(w);
+  }
 }
 
 /* --------------------------------------------------------------------
@@ -2231,6 +2355,16 @@ function zeigeMenue(m) {
     r.textContent = T("reply");
     r.onclick = () => { antwortSetzen(m); schliesseSheet(); };
     box.appendChild(r);
+  }
+
+  /* Aussprache-Hilfe - nur sinnvoll, wenn der Text in einer anderen
+     Sprache steht (die des Gegenuebers), die man aussprechen lernen will. */
+  if (!m.deleted && !m.ort && (m.text || "").trim() && m.lang !== me.lang) {
+    const au = document.createElement("button");
+    au.type = "button";
+    au.textContent = "🔊 " + T("aussprache");
+    au.onclick = () => zeigeAussprache(m);
+    box.appendChild(au);
   }
 
   /* Fuer alle nur, wenn sie von diesem Geraet kam und noch da ist. */

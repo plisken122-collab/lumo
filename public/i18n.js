@@ -13,6 +13,9 @@ window.LUMO_T = (function () {
     de: {
       demoCap: "Einer schreibt — der andere liest in seiner eigenen Sprache",
       reply: "Antworten", replyGone: "Nachricht nicht mehr da",
+      aussprache: "Aussprache", ausspracheTitel: "So sprichst du das aus",
+      vorlesen: "Vorlesen", ausspracheLabel: "So klingt's:",
+      ausspracheLaeuft: "wird erstellt …", errVorlesen: "Vorlesen geht auf diesem Gerät nicht.",
       demoBtn: "Erst mal ausprobieren", demoName: "Demo-Partner",
       demoIntro: "Demo-Partner – schreib irgendwas und sieh die Übersetzung. Du kannst jederzeit eine echte Person einladen.",
       demoNudge: "👆 Bereit für echt? Tippe oben auf Einladen und schreib mit einer echten Person.",
@@ -89,6 +92,9 @@ window.LUMO_T = (function () {
     en: {
       demoCap: "One writes — the other reads in their own language",
       reply: "Reply", replyGone: "Message no longer available",
+      aussprache: "Pronunciation", ausspracheTitel: "How to say it",
+      vorlesen: "Play", ausspracheLabel: "Sounds like:",
+      ausspracheLaeuft: "loading …", errVorlesen: "Read-aloud isn't available on this device.",
       demoBtn: "Try it first", demoName: "Demo partner",
       demoIntro: "Demo partner – write anything and watch it translate. You can invite a real person anytime.",
       demoNudge: "👆 Ready for the real thing? Tap invite above to chat with a real person.",
@@ -165,6 +171,9 @@ window.LUMO_T = (function () {
     "pt-PT": {
       demoCap: "Um escreve — o outro lê na sua própria língua",
       reply: "Responder", replyGone: "Mensagem já não existe",
+      aussprache: "Pronúncia", ausspracheTitel: "Como se diz isto",
+      vorlesen: "Ouvir", ausspracheLabel: "Soa assim:",
+      ausspracheLaeuft: "a carregar …", errVorlesen: "A leitura em voz alta não está disponível neste dispositivo.",
       demoBtn: "Experimentar primeiro", demoName: "Parceiro demo",
       demoIntro: "Parceiro demo – escreve algo e vê a tradução. Podes convidar uma pessoa real quando quiseres.",
       demoNudge: "👆 Pronto para o verdadeiro? Toca em convidar acima para falar com uma pessoa real.",
@@ -241,6 +250,9 @@ window.LUMO_T = (function () {
     "pt-BR": {
       demoCap: "Um escreve — o outro lê no seu próprio idioma",
       reply: "Responder", replyGone: "Mensagem não disponível",
+      aussprache: "Pronúncia", ausspracheTitel: "Como falar isso",
+      vorlesen: "Ouvir", ausspracheLabel: "Soa assim:",
+      ausspracheLaeuft: "carregando …", errVorlesen: "A leitura em voz alta não está disponível neste aparelho.",
       demoBtn: "Testar primeiro", demoName: "Parceiro demo",
       demoIntro: "Parceiro demo – escreva algo e veja a tradução. Você pode convidar uma pessoa real quando quiser.",
       demoNudge: "👆 Pronto pra valer? Toque em convidar acima para falar com uma pessoa real.",
