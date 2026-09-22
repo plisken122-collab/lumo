@@ -446,7 +446,7 @@
         <span class="demo-flag">🇵🇹</span>
         <span class="demo-bubble">Sinto a tua falta ❤️</span>
       </div>
-      <p class="demo-cap">One writes — the other reads in their own language</p>
+      <p class="demo-cap" id="t-demoCap">One writes — the other reads in their own language</p>
     </div>
 
     <!-- Kurz erklaert, dass man zu zweit ist: ein kalter Besucher allein
@@ -705,7 +705,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v73";
+const BUILD = "v74";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -725,7 +725,7 @@ function applyLanguage(code) {
   document.documentElement.lang = code;
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
-  for (const key of ["tagline", "freeStart", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
+  for (const key of ["tagline", "freeStart", "demoCap", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
