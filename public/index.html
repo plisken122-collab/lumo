@@ -358,6 +358,14 @@
   /* Lese-Haken (gelesen) - in der Akzentfarbe, wie das Blau bei WhatsApp. */
   .gelesen-haken { color:var(--mine); font-weight:600; letter-spacing:-2px; }
 
+  /* "... schreibt gerade"-Anzeige mit drei blinkenden Puenktchen. */
+  .tippt { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); padding:2px 8px 6px; }
+  .tippt-dots { display:inline-flex; gap:3px; }
+  .tippt-dots i { width:5px; height:5px; border-radius:50%; background:var(--muted); animation:tipptblink 1.2s infinite; }
+  .tippt-dots i:nth-child(2) { animation-delay:.2s; }
+  .tippt-dots i:nth-child(3) { animation-delay:.4s; }
+  @keyframes tipptblink { 0%,60%,100% { opacity:.25; } 30% { opacity:1; } }
+
   /* Antworten-/Zitat-Leiste ueber dem Eingabefeld. */
   .antwortbar {
     display:flex; align-items:center; gap:10px;
@@ -583,6 +591,11 @@
       </div>
       <button id="antwortWeg" class="antwort-weg" type="button" aria-label="">✕</button>
     </div>
+    <!-- "... schreibt gerade" - erscheint live, waehrend das Gegenueber tippt. -->
+    <div id="tippt" class="tippt hide">
+      <span id="tipptName"></span>
+      <span class="tippt-dots"><i></i><i></i><i></i></span>
+    </div>
     <div class="composer" id="composer">
       <button id="emojiBtn" class="emoji-btn" type="button" aria-expanded="false">🙂</button>
       <button id="bildBtn" class="mic-btn" type="button">📷</button>
@@ -752,7 +765,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v76";
+const BUILD = "v77";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -903,6 +916,7 @@ function start() {
   $("chat").classList.remove("hide");
   demoAus();
   antwortLoeschen();
+  versteckeTippt();
   aktualisiereLeer();
   /* Der Installationshinweis kommt nicht mehr nach einem Timer, sondern
      erst nach der ersten gesendeten Nachricht (siehe installNachBeitrag):
@@ -949,9 +963,12 @@ function start() {
 
   socket.on("history", (list) => { list.forEach((m) => add(m, false)); aktualisiereLeer(); gelesenMelden(); });
   socket.on("message", (m) => {
+    versteckeTippt();
     add(m, true);
     if (document.visibilityState === "visible") { gelesenSetzen(me.room); gelesenMelden(); }
   });
+  /* Das Gegenueber tippt gerade - kurz "... schreibt" zeigen. */
+  socket.on("tippt", ({ name }) => { zeigeTippt(name); });
   /* Das Gegenueber hat den Chat offen und alles bis "bis" gesehen - meine
      eigenen Nachrichten bis dahin bekommen die Lese-Haken. */
   socket.on("gelesen", ({ bis }) => {
@@ -1380,7 +1397,28 @@ draft.addEventListener("input", () => {
   composerButtons();
   draft.style.height = "auto";
   draft.style.height = Math.min(draft.scrollHeight, 120) + "px";
+  if (draft.value.trim()) tipptSenden();
 });
+
+/* "... schreibt gerade": ein winziges Live-Signal, gedrosselt auf
+   hoechstens alle zwei Sekunden. Nichts wird gespeichert. */
+let letztesTippen = 0;
+function tipptSenden() {
+  if (!socket || !me.room || demoAktiv) return;
+  const now = Date.now();
+  if (now - letztesTippen > 2000) { letztesTippen = now; socket.emit("tippt"); }
+}
+let tipptTimer = null;
+function zeigeTippt(name) {
+  $("tipptName").textContent = (name || "") + " " + T("tippt");
+  $("tippt").classList.remove("hide");
+  clearTimeout(tipptTimer);
+  tipptTimer = setTimeout(versteckeTippt, 3500);
+}
+function versteckeTippt() {
+  clearTimeout(tipptTimer);
+  $("tippt").classList.add("hide");
+}
 draft.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });

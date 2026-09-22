@@ -1569,6 +1569,15 @@ io.on("connection", (socket) => {
     socket.to(room).emit("gelesen", { device: me.device, bis: t });
   });
 
+  /* "... schreibt gerade": winziges Live-Signal an die anderen im Raum.
+     Der Client drosselt schon auf alle zwei Sekunden; die Bremse hier
+     faengt nur einen Missbrauch ab. Nichts wird gespeichert. */
+  socket.on("tippt", () => {
+    if (!room) return;
+    if (!take(`tippt:${me.device}`, 40, 60 * 1000)) return;
+    socket.to(room).emit("tippt", { name: me.name });
+  });
+
   /* Loeschen fuer alle. Nur die eigene Nachricht - geprueft wird am
      Geraet, das sie geschrieben hat, nicht an dem, was der Browser
      behauptet zu duerfen. */
