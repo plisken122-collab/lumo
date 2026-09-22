@@ -1469,6 +1469,11 @@ io.on("connection", (socket) => {
     socket.join(room);
     try {
       socket.emit("history", await store.getHistory(room));
+      /* Dauerhafte Lese-Haken: dem Beitretenden sagen, wie weit die anderen
+         schon gelesen haben - dann sieht er das ✓✓ auch nach einem Neustart
+         und wenn der andere gerade offline ist. */
+      const gelesenBis = await store.getReadBisExcept(room, me.device);
+      if (gelesenBis) socket.emit("gelesen", { device: null, bis: gelesenBis });
     } catch (err) {
       console.error("Verlauf nicht ladbar:", err.message);
       socket.emit("history", []);
@@ -1570,6 +1575,9 @@ io.on("connection", (socket) => {
     if (!room) return;
     const t = Number(bis);
     if (!Number.isFinite(t)) return;
+    /* Dauerhaft merken, damit der Absender die Haken auch spaeter/nach
+       Neustart sieht - nicht nur waehrend beide gerade online sind. */
+    store.setRead(room, me.device, t).catch(() => {});
     socket.to(room).emit("gelesen", { device: me.device, bis: t });
   });
 

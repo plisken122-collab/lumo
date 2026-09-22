@@ -35,6 +35,7 @@ const mem = {
   abos: new Map(),     // id -> Abo
   aboRaeume: new Map(), // room -> abo_id
   reactions: new Map(), // message_id -> { device: emoji }
+  readState: new Map(), // "room|device" -> bis (bis wann gelesen)
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -122,6 +123,16 @@ export async function init() {
       device     TEXT NOT NULL,
       emoji      TEXT NOT NULL,
       PRIMARY KEY (message_id, device)
+    );
+
+    /* Lesestand je Chat und Geraet: bis zu welchem Zeitpunkt jemand alles
+       gesehen hat. Daraus werden die dauerhaften Lese-Haken - auch nach
+       einem Neustart und wenn der andere gerade offline ist. */
+    CREATE TABLE IF NOT EXISTS read_state (
+      room   TEXT NOT NULL,
+      device TEXT NOT NULL,
+      bis    BIGINT NOT NULL,
+      PRIMARY KEY (room, device)
     );
 
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -424,6 +435,41 @@ async function reaktionenLaden(ids) {
     map.get(r.message_id)[r.device] = r.emoji;
   }
   return map;
+}
+
+/* Lesestand merken: bis zu welchem Zeitpunkt dieses Geraet den Chat gesehen
+   hat. Nur nach oben - ein spaeteres Lesen senkt den Stand nie. */
+export async function setRead(room, device, bis) {
+  const t = Number(bis) || 0;
+  if (!room || !device || !t) return;
+  if (!usingDatabase) {
+    const k = `${room}|${device}`;
+    mem.readState.set(k, Math.max(t, mem.readState.get(k) || 0));
+    return;
+  }
+  await pool.query(
+    `INSERT INTO read_state (room, device, bis) VALUES ($1,$2,$3)
+     ON CONFLICT (room, device) DO UPDATE SET bis = GREATEST(read_state.bis, EXCLUDED.bis)`,
+    [room, device, t]
+  );
+}
+
+/* Wie weit haben die ANDEREN im Chat gelesen? Daraus ergeben sich die
+   Lese-Haken der eigenen Nachrichten. */
+export async function getReadBisExcept(room, device) {
+  if (!usingDatabase) {
+    let max = 0;
+    for (const [k, bis] of mem.readState) {
+      const [r, d] = k.split("|");
+      if (r === room && d !== device) max = Math.max(max, bis);
+    }
+    return max;
+  }
+  const { rows } = await pool.query(
+    `SELECT COALESCE(MAX(bis),0)::bigint AS bis FROM read_state WHERE room = $1 AND device <> $2`,
+    [room, device]
+  );
+  return Number(rows[0].bis) || 0;
 }
 
 export async function setTranslation(id, lang, body) {
