@@ -88,6 +88,10 @@ export async function init() {
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS ort_lat DOUBLE PRECISION;
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS ort_lng DOUBLE PRECISION;
 
+    /* Antwort auf eine andere Nachricht: die id der zitierten Nachricht.
+       NULL heisst, es ist eine gewoehnliche Nachricht ohne Bezug. */
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to TEXT;
+
     /* Die Aufnahme selbst. Opus ist klein - eine halbe Minute sind rund
        40 KB, das traegt die Datenbank ohne Muehe. Bilder gehoeren spaeter
        nicht hierher, die sind hundertmal groesser.
@@ -210,7 +214,8 @@ export async function init() {
                                ["deleted", "BOOLEAN NOT NULL DEFAULT FALSE"],
                                ["has_image", "BOOLEAN NOT NULL DEFAULT FALSE"],
                                ["ort_lat", "DOUBLE PRECISION"],
-                               ["ort_lng", "DOUBLE PRECISION"]]) {
+                               ["ort_lng", "DOUBLE PRECISION"],
+                               ["reply_to", "TEXT"]]) {
     try {
       await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS ${spalte} ${art}`);
     } catch (err) {
@@ -252,11 +257,11 @@ export async function addMessage(msg) {
     return msg;
   }
   await pool.query(
-    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image, ort_lat, ort_lng)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image, ort_lat, ort_lng, reply_to)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (id) DO NOTHING`,
     [msg.id, msg.room, msg.device, msg.name, msg.text, msg.lang, msg.detected, msg.at,
      msg.audioSeconds ?? null, Boolean(msg.bild),
-     msg.ort ? msg.ort.lat : null, msg.ort ? msg.ort.lng : null]
+     msg.ort ? msg.ort.lat : null, msg.ort ? msg.ort.lng : null, msg.replyTo || null]
   );
   return msg;
 }
@@ -394,6 +399,7 @@ function rowToMsg(r, translations) {
     bild: Boolean(r.has_image),
     ort: (r.ort_lat != null && r.ort_lng != null)
       ? { lat: Number(r.ort_lat), lng: Number(r.ort_lng) } : null,
+    replyTo: r.reply_to || null,
     deleted: Boolean(r.deleted),
   };
 }

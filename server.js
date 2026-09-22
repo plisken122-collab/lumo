@@ -1447,7 +1447,7 @@ io.on("connection", (socket) => {
     me.lang = clean(lang);
   });
 
-  socket.on("send", async ({ text }) => {
+  socket.on("send", async ({ text, replyTo }) => {
     if (!room || !text?.trim()) return;
     if (!take(`msg:${me.device}`, MSG_PER_MIN, 60 * 1000)) {
       socket.emit("tooFast");
@@ -1463,6 +1463,7 @@ io.on("connection", (socket) => {
       lang: me.lang,
       detected: false,
       tr: {},
+      replyTo: replyTo ? String(replyTo).slice(0, 60) : null,
       at: Date.now(),
     };
     try {

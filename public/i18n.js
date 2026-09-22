@@ -12,6 +12,7 @@ window.LUMO_T = (function () {
   const S = {
     de: {
       demoCap: "Einer schreibt — der andere liest in seiner eigenen Sprache",
+      reply: "Antworten", replyGone: "Nachricht nicht mehr da",
       demoBtn: "Erst mal ausprobieren", demoName: "Demo-Partner",
       demoIntro: "Demo-Partner – schreib irgendwas und sieh die Übersetzung. Du kannst jederzeit eine echte Person einladen.",
       demoNudge: "👆 Bereit für echt? Tippe oben auf Einladen und schreib mit einer echten Person.",
@@ -87,6 +88,7 @@ window.LUMO_T = (function () {
     },
     en: {
       demoCap: "One writes — the other reads in their own language",
+      reply: "Reply", replyGone: "Message no longer available",
       demoBtn: "Try it first", demoName: "Demo partner",
       demoIntro: "Demo partner – write anything and watch it translate. You can invite a real person anytime.",
       demoNudge: "👆 Ready for the real thing? Tap invite above to chat with a real person.",
@@ -162,6 +164,7 @@ window.LUMO_T = (function () {
     },
     "pt-PT": {
       demoCap: "Um escreve — o outro lê na sua própria língua",
+      reply: "Responder", replyGone: "Mensagem já não existe",
       demoBtn: "Experimentar primeiro", demoName: "Parceiro demo",
       demoIntro: "Parceiro demo – escreve algo e vê a tradução. Podes convidar uma pessoa real quando quiseres.",
       demoNudge: "👆 Pronto para o verdadeiro? Toca em convidar acima para falar com uma pessoa real.",
@@ -237,6 +240,7 @@ window.LUMO_T = (function () {
     },
     "pt-BR": {
       demoCap: "Um escreve — o outro lê no seu próprio idioma",
+      reply: "Responder", replyGone: "Mensagem não disponível",
       demoBtn: "Testar primeiro", demoName: "Parceiro demo",
       demoIntro: "Parceiro demo – escreva algo e veja a tradução. Você pode convidar uma pessoa real quando quiser.",
       demoNudge: "👆 Pronto pra valer? Toque em convidar acima para falar com uma pessoa real.",
