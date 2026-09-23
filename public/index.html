@@ -115,6 +115,13 @@
      erleben laesst - ohne Formular, direkt auf der Startseite. */
   .demo-try { margin:14px auto 0; display:block; padding:12px 22px; font-size:15px; }
   .demo-try-sub { margin:6px 0 0; text-align:center; font-size:12px; color:var(--muted); }
+  /* Einladen-Aufforderung mitten im Probe-Chat, sobald der Nutzer die
+     Uebersetzung erlebt hat - der wichtigste Moment, um den Partner zu holen. */
+  .demo-cta { display:block; max-width:320px; margin:12px auto 6px; background:var(--surface);
+    border:1px solid var(--line); border-radius:16px; padding:15px 16px; text-align:center;
+    box-shadow:0 4px 14px rgba(40,50,90,.08); }
+  .demo-cta p { margin:0 0 11px; font-size:14px; line-height:1.4; color:var(--ink); }
+  .demo-cta button.primary { width:100%; }
 
   .bar { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
   /* Der Chat-Code muss schrumpfen duerfen, sonst schiebt er die Knoepfe
@@ -797,7 +804,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v81";
+const BUILD = "v82";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1106,9 +1113,9 @@ function start() {
     const t = String(text || "");
     const uebersetzt = (tr && tr[me.lang]) ? tr[me.lang] : t;
     add({ id: "demo-p-" + Date.now(), device: "demo", name: T("demoName"),
-          lang: lang || demoPartnerLang, text: t, tr: { [me.lang]: uebersetzt } }, false);
+          lang: lang || demoPartnerLang, text: t, tr: { [me.lang]: uebersetzt }, at: Date.now() }, false);
     /* Nach ein paar Runden sanft zum echten Chat schubsen. */
-    if (demoRunden === 2) demoSystemzeile(T("demoNudge"));
+    if (demoRunden === 2) demoEinladenCta();
   });
   socket.on("demoFehler", () => { demoTippt(false); showErr(T("errTranslate")); });
 
@@ -1639,9 +1646,30 @@ function demoSystemzeile(text) {
   scrollDown();
 }
 
+/* Der Schub zum echten Chat: eine Karte mit klarem Knopf, statt nur der
+   Bitte "tippe oben aufs Symbol". Kommt, sobald der Nutzer die Uebersetzung
+   ein paar Runden erlebt hat - hier ist die Bereitschaft am groessten. */
+let demoCtaGezeigt = false;
+function demoEinladenCta() {
+  if (demoCtaGezeigt) return;
+  demoCtaGezeigt = true;
+  const c = document.createElement("div");
+  c.className = "demo-cta";
+  const p = document.createElement("p");
+  p.textContent = T("demoNudge");
+  const b = document.createElement("button");
+  b.className = "primary";
+  b.textContent = "❤️ " + T("demoInviteBtn");
+  b.onclick = einladen;
+  c.appendChild(p); c.appendChild(b);
+  $("log").appendChild(c);
+  scrollDown();
+}
+
 function starteDemo() {
   demoAktiv = true;
   demoRunden = 0;
+  demoCtaGezeigt = false;
   /* Der Partner spricht bewusst eine andere Sprache, damit die
      Uebersetzung sichtbar wird. Portugiesisch passt zur Geschichte;
      wer selbst Portugiesisch schreibt, bekommt Englisch. */
@@ -1655,7 +1683,7 @@ function starteDemo() {
 function demoSenden(text) {
   /* Die eigene Nachricht sofort lokal zeigen - im Probe-Chat geht nichts
      ueber den Server-Verlauf, es soll ja nur ausprobiert werden. */
-  add({ id: "demo-me-" + Date.now(), device: deviceId, name: me.name || "", lang: me.lang, text, tr: {} }, false);
+  add({ id: "demo-me-" + Date.now(), device: deviceId, name: me.name || "", lang: me.lang, text, tr: {}, at: Date.now() }, false);
   demoRunden++;
   demoTippt(true);
   socket.emit("demo", { text, meLang: me.lang, partnerLang: demoPartnerLang, first: false });
@@ -2573,6 +2601,12 @@ function einladungsLink(code) {
 }
 
 async function einladen() {
+  /* Aus dem Probe-Chat heraus eingeladen? Dann die Demo beenden, damit die
+     naechsten Nachrichten in den echten Raum gehen und nicht mehr an die KI -
+     sonst schriebe der Einladende weiter mit dem Demo-Partner, waehrend die
+     echte Person schon beigetreten ist. Der Raum ("demo-...") ist ohnehin
+     ein echter, teilbarer Chat. */
+  if (demoAktiv) { demoAus(); aktualisiereLeer(); }
   const link = einladungsLink(me.room);
   /* Zweisprachig und bewusst fest: Die Einladung geht an jemanden, der
      eine andere Sprache spricht - sonst braeuchte er Diralo nicht. Der
@@ -2589,7 +2623,9 @@ async function einladen() {
     try { await navigator.share({ text: text + " " + link }); return; } catch { /* abgebrochen */ }
   }
   try {
-    await navigator.clipboard.writeText(link);
+    /* Text UND Link kopieren, nicht nur den nackten Link - der Empfaenger
+       bekommt so gleich den Kontext dazu, in beiden Sprachen. */
+    await navigator.clipboard.writeText(text + "\n" + link);
     showErr(T("inviteCopied"));   /* dieselbe Leiste, nur als Bestaetigung */
   } catch {
     /* Letzte Rettung: zum Abschreiben anzeigen. */
