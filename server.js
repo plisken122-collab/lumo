@@ -1456,7 +1456,10 @@ io.on("connection", (socket) => {
     }
 
     room = gewuenscht;
-    if (vorher !== room && !internSock) zaehle("eingetreten");
+    /* Der Probe-Chat von der Startseite (Raum "demo-...") ist kein echter
+       Eintritt - sonst blaeht er die Trichterzahl "Chat betreten" auf.
+       Die Demo selbst wird ueber "first" im demo-Ereignis eigens gezaehlt. */
+    if (vorher !== room && !internSock && !room.startsWith("demo-")) zaehle("eingetreten");
     if (vorher && vorher !== room) {
       socket.leave(vorher);
       socket.to(vorher).emit("system", { type: "left", name: me.name });

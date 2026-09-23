@@ -111,6 +111,10 @@
   .demo-row.them .demo-bubble { background:var(--mine); color:#fff; border-bottom-right-radius:5px; }
   .demo-flag { font-size:18px; line-height:1; padding-bottom:4px; }
   .demo-cap { margin:3px 0 0; text-align:center; font-size:11.5px; color:var(--muted); }
+  /* Der eine Knopf, der einen kalten Besucher die Uebersetzung sofort
+     erleben laesst - ohne Formular, direkt auf der Startseite. */
+  .demo-try { margin:14px auto 0; display:block; padding:12px 22px; font-size:15px; }
+  .demo-try-sub { margin:6px 0 0; text-align:center; font-size:12px; color:var(--muted); }
 
   .bar { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
   /* Der Chat-Code muss schrumpfen duerfen, sonst schiebt er die Knoepfe
@@ -516,6 +520,13 @@
       <p class="demo-cap" id="t-demoCap">One writes — the other reads in their own language</p>
     </div>
 
+    <!-- Der wichtigste Knopf der Startseite: ein kalter Besucher tippt hier
+         einmal und sieht die Uebersetzung sofort - ohne Namen, ohne Code,
+         ohne Formular. Erst danach kommt der Schritt "echte Person einladen".
+         Steht bewusst ausserhalb des aria-hidden Demo-Bildes. -->
+    <button id="demoLanding" class="primary demo-try" type="button"></button>
+    <p class="demo-try-sub" id="t-demoLandingSub"></p>
+
     <!-- Kurz erklaert, dass man zu zweit ist: ein kalter Besucher allein
          sieht sonst einen leeren Raum und geht wieder. -->
     <div class="howto" id="howto">
@@ -786,7 +797,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v79";
+const BUILD = "v80";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -806,7 +817,7 @@ function applyLanguage(code) {
   document.documentElement.lang = code;
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
-  for (const key of ["tagline", "freeStart", "demoCap", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
+  for (const key of ["tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
@@ -824,6 +835,7 @@ function applyLanguage(code) {
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
   $("leerDemo").textContent = L.t("demoBtn");
+  $("demoLanding").textContent = L.t("demoLanding");
   $("invitedNote").textContent = L.t("invitedTo");
   /* Die Fusszeilen-Links: Beschriftung folgt der App-Sprache. Der Link
      selbst bleibt, die Zielseite waehlt ihre Fassung dann selbst. */
@@ -942,7 +954,9 @@ function start() {
   /* Der Installationshinweis kommt nicht mehr nach einem Timer, sondern
      erst nach der ersten gesendeten Nachricht (siehe installNachBeitrag):
      dann hat die Person den Wert erlebt und installiert eher. */
-  chatMerken(me.room);
+  /* Den Probe-Raum der Startseite nicht in die eigene Chat-Liste schreiben -
+     er soll nach dem Ausprobieren nicht als "meine Chats" herumliegen. */
+  if (!me.room.startsWith("demo-")) chatMerken(me.room);
   gelesenSetzen(me.room);
   zeigeRaumLabel();
   $("langSwitch").value = me.lang;
@@ -963,6 +977,7 @@ function start() {
       build: BUILD,
       speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
     });
+    if (demoBeimBetreten) { demoBeimBetreten = false; starteDemo(); }
     return;
   }
 
@@ -1096,6 +1111,11 @@ function start() {
     if (demoRunden === 2) demoSystemzeile(T("demoNudge"));
   });
   socket.on("demoFehler", () => { demoTippt(false); showErr(T("errTranslate")); });
+
+  /* Kam der Beitritt nur von der Startseiten-Demo, jetzt loslegen. Der
+     "demo"- und "join"-Emit werden bis zum Verbindungsaufbau gepuffert -
+     die Reihenfolge stimmt also auch beim allerersten Socket. */
+  if (demoBeimBetreten) { demoBeimBetreten = false; starteDemo(); }
 }
 
 $("langSwitch").onchange = (e) => {
@@ -1584,6 +1604,9 @@ function zitatEinsetzen(m, bubble) {
 let demoAktiv = false;
 let demoPartnerLang = "pt-PT";
 let demoRunden = 0;
+/* Merkt, dass der Chat gerade nur fuer die Startseiten-Demo betreten wird,
+   damit start() nach dem Beitritt sofort die Demo anwirft. */
+let demoBeimBetreten = false;
 
 function demoAus() {
   demoAktiv = false;
@@ -1639,6 +1662,19 @@ function demoSenden(text) {
 }
 
 $("leerDemo").onclick = starteDemo;
+
+/* Startseiten-Demo: ohne Formular direkt ausprobieren. Betritt einen
+   eigenen Probe-Raum ("demo-..."), den der Server bewusst NICHT als
+   "Chat betreten" zaehlt, und wirft nach dem Beitritt sofort die Demo an.
+   Der Raum ist trotzdem ein echter, teilbarer Code - wer ueberzeugt ist,
+   kann per "Einladen" sofort eine echte Person dazuholen. */
+$("demoLanding").onclick = () => {
+  const name = $("name").value.trim() || "Gast";
+  const lang = $("lang").value;
+  me = { name, lang, room: "demo-" + neuerCode() };
+  demoBeimBetreten = true;
+  start();
+};
 
 /* ------------------------------------------------------------------
    Smileys
