@@ -29,7 +29,7 @@ const app = express();
    Hosentraeger.
 -------------------------------------------------------------------- */
 app.disable("x-powered-by");   // verraet sonst "Express"
-app.use((_req, res, next) => {
+app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy", [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline'",
@@ -45,6 +45,14 @@ app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Referrer-Policy", "no-referrer");
+  /* HTTPS erzwingen: Hat der Browser die Seite einmal ueber HTTPS gesehen,
+     geht er ein Jahr lang nie wieder ueber HTTP hin - das verhindert ein
+     Herunterstufen der Verbindung. Nur ueber HTTPS senden (hinter dem
+     Render-Proxy steht das in x-forwarded-proto); ueber HTTP ignorieren
+     Browser den Header ohnehin, aber so bleibt lokales http sauber. */
+  if (req.secure || req.headers["x-forwarded-proto"] === "https") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
   next();
 });
 const http = createServer(app);
@@ -698,6 +706,14 @@ const RETENTION_DAYS = Number(process.env.RETENTION_DAYS || 30);
 -------------------------------------------------------------------- */
 const GATE_TRIES = Number(process.env.GATE_TRIES_PER_15MIN || 10);
 const MSG_PER_MIN = Number(process.env.MSG_PER_MIN || 20);
+/* Zusaetzliche Schranke je IP und Tag. Die Minutengrenze oben haengt am
+   Geraetenamen, den der Browser selbst schickt - wer ihn rotiert, umgeht
+   sie. Diese Grenze haengt an der Adresse und sorgt dafuer, dass ein
+   einzelner Absender nicht den gemeinsamen Tagesvorrat an Uebersetzungen
+   (TRANSLATIONS_PER_DAY) leerlaufen lassen kann. Bewusst grosszuegig, damit
+   echte Vielschreiber - auch mehrere hinter demselben Mobilfunk-Zugang -
+   nicht anstossen; zum Feintunen per Umgebungsvariable. 0 heisst: keine. */
+const MSG_PER_DAY_IP = Number(process.env.MSG_PER_DAY_IP || 600);
 const NEED_PER_MIN = Number(process.env.NEED_PER_MIN || 120);
 const TRANSLATIONS_PER_DAY = Number(process.env.TRANSLATIONS_PER_DAY || 2000);
 /* Der Probe-Chat kostet je Runde eine KI-Antwort. Grosszuegig genug fuer
@@ -1240,6 +1256,9 @@ app.post("/api/voice", express.json({ limit: "3mb" }), async (req, res) => {
   if (!take(`msg:${geraet}`, MSG_PER_MIN, 60 * 1000)) {
     return res.status(429).json({ error: "Zu schnell" });
   }
+  if (!take(`msgtag:${req.ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu schnell" });
+  }
 
   const msg = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -1307,6 +1326,9 @@ app.post("/api/bild", express.json({ limit: "5mb" }), async (req, res) => {
   if (!take(`msg:${geraet}`, MSG_PER_MIN, 60 * 1000)) {
     return res.status(429).json({ error: "Zu schnell" });
   }
+  if (!take(`msgtag:${req.ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu schnell" });
+  }
 
   const msg = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -1353,6 +1375,9 @@ app.get("/medien/:id", async (req, res) => {
 });
 
 app.get("/api/stats", async (req, res) => {
+  /* Betriebszahlen (Token, Kosten, Uebersetzungen je Tag) gehen niemanden
+     ausser den Betreiber etwas an - dieselbe Sperre wie /api/admin/daten. */
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   const days = Math.min(365, Math.max(1, Number(req.query.days) || 30));
   try {
     const u = await store.getUsage(days);
@@ -1377,7 +1402,13 @@ app.get("/api/stats", async (req, res) => {
   }
 });
 
-app.get("/health", (_req, res) =>
+/* Nach aussen nur "ich lebe" - genau das, was der Render-Healthcheck
+   braucht. Alle Betriebsdetails (Restbudget, Kontingente, App-Fassung,
+   Fehlertexte, Geraete-/Nachrichten-Fragmente) verrieten sonst jedem
+   Besucher zu viel und gaeben einem Angreifer eine Landkarte. Die vollen
+   Angaben gibt es nur mit Admin-Cookie. */
+app.get("/health", (req, res) => {
+  if (!adminOk(req)) return res.json({ ok: true });
   res.json({
     ok: true,
     key: Boolean(API_KEY),
@@ -1393,6 +1424,7 @@ app.get("/health", (_req, res) =>
     loeschVersuch: letzterLoeschVersuch,
     limits: {
       msgPerMin: MSG_PER_MIN,
+      msgPerDayIp: MSG_PER_DAY_IP > 0 ? MSG_PER_DAY_IP : null,
       translationsPerDay: TRANSLATIONS_PER_DAY > 0 ? TRANSLATIONS_PER_DAY : null,
       translationsLeftToday: leftToday(),
     },
@@ -1403,8 +1435,8 @@ app.get("/health", (_req, res) =>
       kontingente: geld.KONTINGENT,
       letzterFehler: letzterGeldFehler,
     },
-  })
-);
+  });
+});
 
 /* ------------------------------ Sockets ------------------------------ */
 io.use((socket, next) => {
@@ -1517,6 +1549,12 @@ io.on("connection", (socket) => {
       socket.emit("tooFast");
       return;
     }
+    /* Zusaetzliche Tagesgrenze je Adresse - faengt den ab, der den
+       Geraetenamen rotiert, um die Minutengrenze zu umgehen. */
+    if (!take(`msgtag:${ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) {
+      socket.emit("tooFast");
+      return;
+    }
     if (!internSock) zaehle("nachricht");
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -1551,6 +1589,7 @@ io.on("connection", (socket) => {
     if (!Number.isFinite(la) || !Number.isFinite(lo) ||
         la < -90 || la > 90 || lo < -180 || lo > 180) return;
     if (!take(`msg:${me.device}`, MSG_PER_MIN, 60 * 1000)) { socket.emit("tooFast"); return; }
+    if (!take(`msgtag:${ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) { socket.emit("tooFast"); return; }
     if (!internSock) zaehle("nachricht");
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
