@@ -82,6 +82,14 @@
       <div class="tage" id="tage"></div>
     </div>
 
+    <div class="card hide" id="quellenCard">
+      <h2>Quellen (getaggte Links)</h2>
+      <div id="quellen"></div>
+      <p class="small" style="margin-top:10px">Häng <b>?von=name</b> an einen Link,
+      z.&nbsp;B. <b>diralo.app/?von=reddit</b> — dann steht diese Quelle hier getrennt
+      von der Werbung. So siehst du, welcher Kanal wirklich Nutzer bringt.</p>
+    </div>
+
     <p class="aktualisiert" id="stand"></p>
     <p class="small">Es werden nur Summen gezeigt — keine Chat-Codes, keine Nachrichten.</p>
 
@@ -168,6 +176,30 @@ function zeichneTage(proTag) {
   }).join("");
 }
 
+/* Quellen aus den "q:<name>:<stufe>"-Ereignissen im Trichter-Summe. */
+function zeichneQuellen(summe) {
+  const q = {};
+  for (const [k, n] of Object.entries(summe || {})) {
+    if (k.slice(0, 2) !== "q:") continue;
+    const teile = k.split(":");
+    const tag = teile[1], stufe = teile[2];
+    if (!tag || !stufe) continue;
+    (q[tag] ||= {})[stufe] = n;
+  }
+  const tags = Object.keys(q).sort((a, b) => (q[b].besuch || 0) - (q[a].besuch || 0));
+  if (!tags.length) { $("quellenCard").classList.add("hide"); return; }
+  $("quellenCard").classList.remove("hide");
+  $("quellen").innerHTML = tags.map((tag) => {
+    const s = q[tag];
+    const stufen = [["Besuche", s.besuch], ["Demo", s.demo], ["Eingetreten", s.eingetreten], ["Geschrieben", s.nachricht]];
+    return `<div class="reihe" style="align-items:baseline">` +
+      `<div class="name" style="font-weight:500">${tag}</div>` +
+      `<div style="flex:1">` +
+      stufen.map(([n, v]) => `<span class="small" style="margin-right:16px">${n}: <b style="color:var(--ink)">${nf.format(v || 0)}</b></span>`).join("") +
+      `</div></div>`;
+  }).join("");
+}
+
 async function laden() {
   try {
     const a = await fetch("/api/admin/daten");
@@ -187,6 +219,7 @@ async function laden() {
       kachel(nf.format(d.push), "Benachrichtigungen", "Geräte");
 
     zeichneTrichter(d.trichter.summe);
+    zeichneQuellen(d.trichter.summe);
     zeichneTage(d.trichter.proTag);
     $("stand").textContent = "Stand: " + new Date().toLocaleString("de-DE");
   } catch {

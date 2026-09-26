@@ -572,6 +572,31 @@ function internSetzen(res, an, secure) {
   );
 }
 
+/* --------------------------------------------------------------------
+   Herkunft (getaggte Links)
+
+   Kommt jemand ueber diralo.app/?von=reddit, merken wir uns "reddit" in
+   einem Cookie und zaehlen die Stufen dieser Quelle getrennt (Besuch,
+   Demo, Eintritt, Nachricht). So laesst sich sehen, welcher Kanal wirklich
+   Nutzer bringt - nicht bloss Besuche, die man von Werbung nicht trennen
+   kann. Der Name wird auf harmlose Zeichen begrenzt; nichts Persoenliches.
+-------------------------------------------------------------------- */
+const VON_COOKIE = "diralo_von";
+const quelleTag = (v) => String(v || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 20);
+const istQuelle = (req) => quelleTag(cookieValue(req, VON_COOKIE));
+function vonSetzen(res, tag, secure) {
+  res.setHeader(
+    "Set-Cookie",
+    `${VON_COOKIE}=${tag}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`
+  );
+}
+/* Zaehlt eine Quellen-Stufe als Ereignis "q:<quelle>:<stufe>". Faellt die
+   Datenbank aus, ist es gleichgueltig - darf nie den Betrieb stoeren. */
+function zaehleQuelle(tag, stufe) {
+  if (!tag) return;
+  store.zaehle(`q:${tag}:${stufe}`).catch(() => {});
+}
+
 /* Die Startseite selbst zaehlen. Muss vor express.static stehen, sonst
    liefert der die Datei aus, bevor wir sie bemerken. */
 app.get("/", (req, res) => {
@@ -580,6 +605,16 @@ app.get("/", (req, res) => {
     const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
     internSetzen(res, an, secure);
     return res.redirect("/");
+  }
+  /* Ueber einen getaggten Link gekommen (?von=reddit)? Quelle merken und
+     ihren Besuch getrennt zaehlen. */
+  if (req.query.von !== undefined && !istIntern(req)) {
+    const tag = quelleTag(req.query.von);
+    if (tag) {
+      const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
+      vonSetzen(res, tag, secure);
+      zaehleQuelle(tag, "besuch");
+    }
   }
   if (!istIntern(req)) zaehle("besuch");
   res.sendFile(join(__dirname, "public", "index.html"));
@@ -1461,6 +1496,9 @@ io.on("connection", (socket) => {
   /* Dasselbe "nicht zaehlen"-Cookie wie oben - der Handschlag traegt es
      mit, also bleiben auch Eintritt und Nachricht dieses Geraets draussen. */
   const internSock = istIntern({ headers: { cookie: socket.handshake.headers.cookie || "" } });
+  /* Herkunft dieses Geraets (aus dem ?von-Cookie), um Eintritt/Demo/Nachricht
+     der Quelle zuzuordnen. */
+  const vonSock = istQuelle({ headers: { cookie: socket.handshake.headers.cookie || "" } });
 
   socket.on("join", async ({ roomCode, name, lang, device, build, speech }) => {
     /* Zur Fehlersuche: Welche Fassung hat das Geraet geladen, und kann
@@ -1491,7 +1529,10 @@ io.on("connection", (socket) => {
     /* Der Probe-Chat von der Startseite (Raum "demo-...") ist kein echter
        Eintritt - sonst blaeht er die Trichterzahl "Chat betreten" auf.
        Die Demo selbst wird ueber "first" im demo-Ereignis eigens gezaehlt. */
-    if (vorher !== room && !internSock && !room.startsWith("demo-")) zaehle("eingetreten");
+    if (vorher !== room && !internSock && !room.startsWith("demo-")) {
+      zaehle("eingetreten");
+      zaehleQuelle(vonSock, "eingetreten");
+    }
     if (vorher && vorher !== room) {
       socket.leave(vorher);
       socket.to(vorher).emit("system", { type: "left", name: me.name });
@@ -1555,7 +1596,7 @@ io.on("connection", (socket) => {
       socket.emit("tooFast");
       return;
     }
-    if (!internSock) zaehle("nachricht");
+    if (!internSock) { zaehle("nachricht"); zaehleQuelle(vonSock, "nachricht"); }
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       room,
@@ -1590,7 +1631,7 @@ io.on("connection", (socket) => {
         la < -90 || la > 90 || lo < -180 || lo > 180) return;
     if (!take(`msg:${me.device}`, MSG_PER_MIN, 60 * 1000)) { socket.emit("tooFast"); return; }
     if (!take(`msgtag:${ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) { socket.emit("tooFast"); return; }
-    if (!internSock) zaehle("nachricht");
+    if (!internSock) { zaehle("nachricht"); zaehleQuelle(vonSock, "nachricht"); }
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       room, device: me.device, name: me.name,
@@ -1711,7 +1752,7 @@ io.on("connection", (socket) => {
     /* Nur der Start zaehlt (die Begruessung), nicht jede einzelne Runde -
        so steht im Admin "wie viele haben die Demo ausprobiert". Eigene
        Tests bleiben wie ueberall draussen. */
-    if (first && !internSock) await store.zaehle("demo").catch(() => {});
+    if (first && !internSock) { await store.zaehle("demo").catch(() => {}); zaehleQuelle(vonSock, "demo"); }
     const partnerName = LANG_NAMES[partner] || partner;
     const myName = LANG_NAMES[my] || my;
     const nutzer = first
