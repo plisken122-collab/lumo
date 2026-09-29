@@ -9,6 +9,7 @@ import crypto from "crypto";
 import webpush from "web-push";
 import * as store from "./store.js";
 import * as geld from "./bezahlung.js";
+import * as play from "./playkasse.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -143,7 +144,11 @@ const OPEN_PATHS = new Set(["/gate.html", "/api/gate", "/health", "/favicon.svg"
      kauft niemand die Katze im Sack. Der Webhook von Stripe bringt kein
      Cookie mit und muss ebenfalls vorbei. */
   "/preise.html", "/preise", "/api/stripe", "/api/plan", "/api/kasse", "/api/kasse-zurueck", "/api/verwalten",
-  "/api/raeume", "/api/raum-dazu", "/api/raum-weg"]);
+  "/api/raeume", "/api/raum-dazu", "/api/raum-weg",
+  /* Kaeufe aus der Android-App, und die Datei, an der Android erkennt,
+     dass App und Seite zusammengehoeren. Beide fragt kein Browser mit
+     Cookie ab. */
+  "/api/play-kauf", "/.well-known/assetlinks.json"]);
 const isOpen = (p) => OPEN_PATHS.has(p) || p.startsWith("/brand/") || p.startsWith("/icons/");
 
 app.post("/api/gate", (req, res) => {
@@ -220,16 +225,21 @@ function eigeneHerkunft(req) {
    Das Kontingent gehoert dem Abo, nicht dem einzelnen Chat: Ein Abo
    schaltet mehrere Chats frei, und die teilen sich die Uebersetzungen.
    Ein Chat ohne Abo steht fuer sich und bekommt das freie Kontingent. */
+/* "gekuendigt" gehoert dazu: bezahlt ist bezahlt, der Tarif gilt bis
+   zum Ende des Zeitraums. Erst "canceled" nimmt ihn weg. */
+const LAEUFT = ["active", "trialing", "past_due", "gekuendigt"];
+const laeuftNoch = (abo) => Boolean(abo && LAEUFT.includes(abo.status));
+
 async function kontingent(room) {
-  const abo = await store.getAboByRoom(room);
-  /* "gekuendigt" gehoert dazu: bezahlt ist bezahlt, der Tarif gilt bis
-     zum Ende des Zeitraums. Erst "canceled" nimmt ihn weg. */
-  const laeuft = abo && ["active", "trialing", "past_due", "gekuendigt"].includes(abo.status);
+  let abo = await store.getAboByRoom(room);
+  if (play.istPlay(abo)) abo = await playAuffrischen(abo);
+  const laeuft = laeuftNoch(abo);
   const plan = laeuft ? abo.plan : "frei";
   const raeume = laeuft ? await store.raeumeVonAbo(abo.id) : [room];
   return {
     plan,
     bezahlt: Boolean(laeuft),
+    ausPlay: play.istPlay(abo),
     status: abo?.status || null,
     grenze: geld.KONTINGENT[plan] ?? geld.KONTINGENT.frei,
     plaetze: geld.PLAETZE[plan] ?? geld.PLAETZE.frei,
@@ -253,6 +263,10 @@ app.get("/api/plan", async (req, res) => {
          die Preisseite einen Knopf, der beim Druecken absagt. */
       tarife: geld.verfuegbar(),
       kontingente: geld.KONTINGENT,
+      /* In der Android-App wird ueber Google Play gekauft. Die Seite
+         braucht die Produktnamen, um Preise und Kauf bei Google anzufragen. */
+      play: { an: play.playAn, produkte: play.PRODUKTE },
+      herkunft: k.bezahlt ? (k.ausPlay ? "play" : "stripe") : null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message.slice(0, 200) });
@@ -412,9 +426,11 @@ async function aboMitSchluessel(req, res) {
 }
 
 app.post("/api/verwalten", async (req, res) => {
-  if (!geld.bezahlungAn) return res.status(503).json({ error: "Bezahlung ist aus." });
   const abo = await aboMitSchluessel(req, res);
   if (!abo) return;
+  /* Ein Abo aus Google Play kuendigt man nur bei Google. */
+  if (play.istPlay(abo)) return res.json({ url: play.verwaltungsAdresse() });
+  if (!geld.bezahlungAn) return res.status(503).json({ error: "Bezahlung ist aus." });
   if (!abo.customer) return res.status(404).json({ error: "Zu dieser Mitgliedschaft fehlt der Kunde bei Stripe." });
   try {
     const seite = await geld.verwaltungsSeite({ kunde: abo.customer, herkunft: eigeneHerkunft(req) });
@@ -474,6 +490,117 @@ app.post("/api/raum-weg", async (req, res) => {
   const plaetze = geld.PLAETZE[abo.plan] ?? geld.PLAETZE.frei;
   res.json({ raeume: jetzt, frei: Math.max(0, plaetze - jetzt.length) });
 });
+
+/* ------------------------- Kaeufe aus Google Play -------------------------
+   Die Android-App kauft ueber Google und schickt uns danach den Beleg
+   (purchaseToken). Freigeschaltet wird erst, wenn Google ihn bestaetigt.
+
+   Kennt nur, wer gekauft hat: Der Beleg ist fuer Play, was die Kennung
+   des Kassengangs fuer Stripe ist. Deshalb gibt es hier - und nur hier -
+   einen frischen Verwaltungsschluessel.
+
+   still: Die Preisseite gleicht beim Oeffnen die Kaeufe des Geraets ab,
+   falls nach einem Kauf die Verbindung abriss. Dabei soll ein bekanntes
+   Abo nicht bei jedem Oeffnen einen neuen Schluessel bekommen.
+------------------------------------------------------------------------- */
+app.post("/api/play-kauf", async (req, res) => {
+  if (!play.playAn) return res.status(503).json({ error: "Google Play ist noch nicht eingerichtet." });
+  if (!take(`play:${req.ip}`, 20, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu viele Versuche. Spaeter nochmal." });
+  }
+
+  const room = raumCode(req.body?.room);
+  const token = String(req.body?.token || "").trim();
+  const still = req.body?.still === true;
+  if (!token || token.length > 1000 || !/^[A-Za-z0-9._-]+$/.test(token)) {
+    return res.status(400).json({ error: "Unbrauchbarer Beleg" });
+  }
+
+  let kauf;
+  try {
+    kauf = await play.kaufLesen(token);
+  } catch (err) {
+    letzterGeldFehler = "Play: " + err.message.slice(0, 150);
+    if (err.status >= 400 && err.status < 500 && err.status !== 401 && err.status !== 403) {
+      return res.status(400).json({ error: "Google kennt diesen Kauf nicht." });
+    }
+    return res.status(502).json({ error: "Google antwortet gerade nicht." });
+  }
+  if (kauf.wartet) return res.json({ fertig: false, wartet: true });
+  if (!kauf.plan) return res.status(400).json({ error: "Gehoert nicht zu Diralo" });
+
+  /* Quittieren, sonst erstattet Google nach drei Tagen. Klappt es jetzt
+     nicht, holt es der naechste Abgleich beim Oeffnen der Preisseite nach -
+     deshalb hier kein Abbruch. */
+  if (!kauf.quittiert) {
+    try { await play.quittieren(kauf.produkt, token); }
+    catch (err) { letzterGeldFehler = "Play quittieren: " + err.message.slice(0, 150); }
+  }
+
+  try {
+    const nr = play.VORSILBE + token;
+    const vorher = (await store.getAboBySubscription(nr))
+      || (kauf.vorgaenger ? await store.getAboBySubscription(play.VORSILBE + kauf.vorgaenger) : null);
+
+    let schluessel = null;
+    if (!vorher || !still) schluessel = geld.neuerVerwaltungsSchluessel();
+
+    const id = vorher?.id || store.neueAboId();
+    await store.saveAbo({
+      id, plan: kauf.plan, status: kauf.status,
+      subscription: nr,
+      manage_key: schluessel ? geld.schluesselAbdruck(schluessel) : null,
+      period_end: kauf.ende,
+    });
+
+    /* Den Chat dazunehmen, fuer den gekauft wurde - wenn noch Platz ist.
+       Haengt er an einem abgelaufenen Abo, darf er umziehen; an einem
+       laufenden bleibt er, dann ordnet der Kaeufer in der Verwaltung zu. */
+    let dazu = false;
+    if (room) {
+      const belegt = await store.getAboByRoom(room);
+      if (belegt && belegt.id !== id && !laeuftNoch(belegt)) await store.raumEntfernen(belegt.id, room);
+      const raeume = await store.raeumeVonAbo(id);
+      if (raeume.includes(room)) dazu = true;
+      else if (raeume.length < (geld.PLAETZE[kauf.plan] ?? 1)) dazu = await store.raumHinzufuegen(id, room);
+    }
+
+    frischeZahlen(await store.raeumeVonAbo(id));
+    res.json({ fertig: true, room: dazu ? room : null, plan: kauf.plan, schluessel });
+  } catch (err) {
+    console.error("  Play-Kauf nicht eingetragen:", err.message);
+    letzterGeldFehler = "Play eintragen: " + err.message.slice(0, 150);
+    res.status(500).json({ error: "Konnte den Kauf nicht eintragen." });
+  }
+});
+
+/* Laeuft ein Play-Abo noch? Google meldet Verlaengerungen und
+   Kuendigungen nicht von selbst (dafuer braeuchte es Pub/Sub). Stattdessen
+   wird nachgefragt, sobald der bezahlte Zeitraum vorbei ist - hoechstens
+   alle zehn Minuten je Abo, damit eine klemmende Google-Schnittstelle
+   nicht jede Uebersetzung ausbremst. */
+const playNachgefragt = new Map(); // abo_id -> Zeitpunkt
+
+async function playAuffrischen(abo) {
+  if (!play.playAn || abo.status === "canceled") return abo;
+  const ende = Number(abo.period_end) || 0;
+  if (ende && Date.now() < ende) return abo;
+  if (Date.now() - (playNachgefragt.get(abo.id) || 0) < 10 * 60 * 1000) return abo;
+  playNachgefragt.set(abo.id, Date.now());
+
+  try {
+    const kauf = await play.kaufLesen(abo.subscription.slice(play.VORSILBE.length));
+    const neu = await store.saveAbo({
+      id: abo.id, plan: kauf.plan || abo.plan, status: kauf.status,
+      subscription: abo.subscription, period_end: kauf.ende,
+    });
+    frischeZahlen(await store.raeumeVonAbo(abo.id));
+    return neu || abo;
+  } catch (err) {
+    letzterGeldFehler = "Play nachfragen: " + err.message.slice(0, 150);
+    return abo;
+  }
+}
 
 /* --------------------------- Meldungen von Stripe ---------------------
    Die einzige Stelle, an der eine Mitgliedschaft ablaufen oder wieder
@@ -710,6 +837,13 @@ app.get("/api/admin/daten", async (req, res) => {
     res.status(500).json({ error: err.message.slice(0, 200) });
   }
 });
+
+/* Die Bestaetigung, dass die Android-App zu dieser Seite gehoert. Ohne
+   sie zeigt die App oben eine Adressleiste wie ein Browser. express.static
+   liefert Punkt-Ordner wie .well-known nicht aus - daher von Hand. */
+app.get("/.well-known/assetlinks.json", (_req, res) =>
+  res.sendFile(join(__dirname, "public", ".well-known", "assetlinks.json"),
+    (err) => { if (err && !res.headersSent) res.status(404).end(); }));
 
 app.use(express.static(join(__dirname, "public")));
 
@@ -1466,6 +1600,7 @@ app.get("/health", (req, res) => {
     geld: {
       stripe: geld.bezahlungAn,
       webhook: geld.webhookAn,
+      play: play.playAn,
       preise: geld.verfuegbar(),
       kontingente: geld.KONTINGENT,
       letzterFehler: letzterGeldFehler,

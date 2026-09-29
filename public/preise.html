@@ -189,7 +189,10 @@
         </div>
       </div>
 
-      <p class="small">O pagamento é processado pela Stripe. Nunca vemos os dados do seu cartão. Aplicam-se as <a href="/agb">Condições de Utilização</a>; sobre o prazo de 14 dias, ver <a href="/widerruf">Direito de livre resolução</a>.</p>
+      <button class="kaufen leer hide" data-nur="play" data-wiederherstellen style="margin-top:8px">Restaurar compras do Google Play</button>
+
+      <p class="small" data-nur="web">O pagamento é processado pela Stripe. Nunca vemos os dados do seu cartão. Aplicam-se as <a href="/agb">Condições de Utilização</a>; sobre o prazo de 14 dias, ver <a href="/widerruf">Direito de livre resolução</a>.</p>
+      <p class="small hide" data-nur="play">O pagamento é processado pelo Google Play. Pode cancelar a qualquer momento na Play Store, em Pagamentos e subscrições. Aplicam-se as <a href="/agb">Condições de Utilização</a>.</p>
 
       <a class="back" href="/">← Voltar ao Diralo</a>
     </div>
@@ -266,7 +269,10 @@
         </div>
       </div>
 
-      <p class="small">Die Zahlung wickelt Stripe ab. Deine Kartendaten sehen wir nie. Es gelten die <a href="/agb">Nutzungsbedingungen</a>; zur Frist von 14 Tagen siehe <a href="/widerruf">Widerrufsbelehrung</a>.</p>
+      <button class="kaufen leer hide" data-nur="play" data-wiederherstellen style="margin-top:8px">Käufe aus Google Play wiederherstellen</button>
+
+      <p class="small" data-nur="web">Die Zahlung wickelt Stripe ab. Deine Kartendaten sehen wir nie. Es gelten die <a href="/agb">Nutzungsbedingungen</a>; zur Frist von 14 Tagen siehe <a href="/widerruf">Widerrufsbelehrung</a>.</p>
+      <p class="small hide" data-nur="play">Die Zahlung läuft über Google Play. Kündigen kannst du jederzeit im Play Store unter Zahlungen und Abos. Es gelten die <a href="/agb">Nutzungsbedingungen</a>.</p>
 
       <a class="back" href="/">← Zurück zu Diralo</a>
     </div>
@@ -343,7 +349,10 @@
         </div>
       </div>
 
-      <p class="small">Payment is handled by Stripe. We never see your card details. Our <a href="/agb">Terms of Use</a> apply; on the 14-day period see <a href="/widerruf">Right of withdrawal</a>.</p>
+      <button class="kaufen leer hide" data-nur="play" data-wiederherstellen style="margin-top:8px">Restore Google Play purchases</button>
+
+      <p class="small" data-nur="web">Payment is handled by Stripe. We never see your card details. Our <a href="/agb">Terms of Use</a> apply; on the 14-day period see <a href="/widerruf">Right of withdrawal</a>.</p>
+      <p class="small hide" data-nur="play">Payment is handled by Google Play. You can cancel any time in the Play Store under Payments &amp; subscriptions. Our <a href="/agb">Terms of Use</a> apply.</p>
 
       <a class="back" href="/">← Back to Diralo</a>
     </div>
@@ -377,19 +386,28 @@ const WORTE = {
         gekauft: "Obrigado! A conversa <strong>{room}</strong> está agora no plano {plan}.",
         bewahren: "Guarde esta chave de gestão. Só a mostramos uma vez:",
         ohneSchluessel: "Não foi possível gerar a chave de gestão. Contacte-nos em kontakt@diralo.app — a subscrição está activa.",
-        abgebrochen: "Pagamento cancelado. Não foi cobrado nada." },
+        abgebrochen: "Pagamento cancelado. Não foi cobrado nada.",
+        ohneRaum: "A subscrição está activa, mas esta conversa não pôde ser adicionada. Adicione-a abaixo com a chave de gestão.",
+        wartet: "O pagamento ainda está pendente no Google Play. Assim que for confirmado, a subscrição fica activa.",
+        keineKaeufe: "Não encontrámos compras do Google Play nesta conta." },
   de: { laeuft: "Einen Moment…", keineKasse: "Die Bezahlung ist noch nicht eingerichtet. Schau später noch einmal.",
         fehlt: "Trag zuerst den Chat-Code ein.", schiefe: "Hat nicht geklappt. Versuch es noch einmal.",
         gekauft: "Danke! Der Chat <strong>{room}</strong> läuft jetzt mit {plan}.",
         bewahren: "Heb diesen Verwaltungsschlüssel auf. Wir zeigen ihn nur dieses eine Mal:",
         ohneSchluessel: "Der Verwaltungsschlüssel konnte nicht erzeugt werden. Melde dich bei kontakt@diralo.app — die Mitgliedschaft läuft.",
-        abgebrochen: "Zahlung abgebrochen. Es wurde nichts berechnet." },
+        abgebrochen: "Zahlung abgebrochen. Es wurde nichts berechnet.",
+        ohneRaum: "Die Mitgliedschaft läuft, aber dieser Chat konnte nicht dazugenommen werden. Nimm ihn unten mit dem Verwaltungsschlüssel dazu.",
+        wartet: "Die Zahlung ist bei Google Play noch offen. Sobald sie bestätigt ist, läuft die Mitgliedschaft.",
+        keineKaeufe: "Mit diesem Konto wurden keine Käufe bei Google Play gefunden." },
   en: { laeuft: "One moment…", keineKasse: "Payment is not set up yet. Please check back soon.",
         fehlt: "Enter the chat code first.", schiefe: "That didn't work. Please try again.",
         gekauft: "Thank you! Chat <strong>{room}</strong> is now on {plan}.",
         bewahren: "Keep this management key. We show it only once:",
         ohneSchluessel: "The management key could not be created. Write to kontakt@diralo.app — the membership is active.",
-        abgebrochen: "Payment cancelled. Nothing was charged." },
+        abgebrochen: "Payment cancelled. Nothing was charged.",
+        ohneRaum: "The membership is active, but this chat could not be added. Add it below with the management key.",
+        wartet: "The payment is still pending with Google Play. The membership starts as soon as it is confirmed.",
+        keineKaeufe: "No Google Play purchases were found for this account." },
 };
 
 let sprache = "pt";
@@ -415,7 +433,10 @@ function preiseSchreiben() {
       b.setAttribute("aria-selected", b.dataset.zeit === zeitraum ? "true" : "false"));
     teil.querySelectorAll("[data-preis]").forEach((el) => {
       const t = TARIFE[el.dataset.preis];
-      const zahl = l === "en" ? t[zeitraum === "jahr" ? "jahrEn" : "monatEn"] : t[zeitraum];
+      /* In der App gilt der Preis, den Google Play nennt - der kann je
+         nach Land in anderer Waehrung oder Hoehe stehen. */
+      const vonPlay = playPreis(el.dataset.preis, l);
+      const zahl = vonPlay || (l === "en" ? t[zeitraum === "jahr" ? "jahrEn" : "monatEn"] : t[zeitraum]);
       el.innerHTML = zahl + ' <span class="je">' + JE[l][zeitraum] + "</span>";
     });
   });
@@ -467,12 +488,18 @@ async function angebotHolen() {
 
 function knoepfeAnpassen() {
   if (!angebot) return;
-  const aus = !angebot.bezahlungAn;
+  /* In der App zaehlt nur Google Play. Fehlt dort etwas, bleiben die
+     Knoepfe aus - auf Stripe auszuweichen, verbietet Google. */
+  const aus = inApp ? !(playDienst && angebot.play?.an) : !angebot.bezahlungAn;
 
   document.querySelectorAll("[data-plan]").forEach((b) => {
     const plan = b.dataset.plan;
-    const gibtEs = Boolean(angebot.tarife?.[plan]?.[zeitraum]);
-    const schonDrin = angebot.bezahlt && angebot.plan === plan;
+    const gibtEs = inApp
+      ? Boolean(playArtikel[angebot.play?.produkte?.[plan]?.[zeitraum]])
+      : Boolean(angebot.tarife?.[plan]?.[zeitraum]);
+    /* Ueber Play: Ein zweites Abo fuer denselben Chat haette keinen Platz
+       fuer ihn. Wer wechseln will, kuendigt erst im Play Store. */
+    const schonDrin = angebot.bezahlt && (inApp || angebot.plan === plan);
     b.disabled = aus || !gibtEs || schonDrin;
     b.dataset.grund = aus ? "aus" : (!gibtEs ? "fehlt" : (schonDrin ? "drin" : ""));
   });
@@ -480,7 +507,9 @@ function knoepfeAnpassen() {
   /* Den Zeitraum-Umschalter genauso: Gibt es keinen Jahrespreis, soll
      man nicht darauf umschalten koennen. */
   document.querySelectorAll("[data-zeit]").forEach((b) => {
-    const irgendwo = Object.values(angebot.tarife || {}).some((t) => t[b.dataset.zeit]);
+    const irgendwo = inApp
+      ? Object.values(angebot.play?.produkte || {}).some((t) => playArtikel[t[b.dataset.zeit]])
+      : Object.values(angebot.tarife || {}).some((t) => t[b.dataset.zeit]);
     b.disabled = aus || !irgendwo;
     b.style.opacity = b.disabled ? ".45" : "";
   });
@@ -495,8 +524,138 @@ const melden = (art, html) => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+/* ---------------------------- Google Play ----------------------------
+   In der Android-App aus dem Play Store laeuft der Kauf ueber Google:
+   Die Digital Goods API nennt Preise und bisherige Kaeufe, die Payment
+   Request API oeffnet das Kaufblatt von Google Play. Heraus kommt ein
+   Beleg (purchaseToken), den der Server bei Google nachprueft.
+
+   inApp haengt nicht davon ab, ob die API da ist: Fehlt sie in der App,
+   sollen die Knoepfe aus sein - nicht auf Stripe umspringen. Umgekehrt
+   macht die API allein noch keine App: Chrome kann sie auch im Browser
+   anbieten, und dort soll Stripe bleiben. Massgeblich ist die Marke, die
+   die Startseite beim Oeffnen aus der App setzt (?von=android). */
+const inApp = (() => {
+  try { return sessionStorage.getItem("diralo-app") === "android"; } catch { return false; }
+})();
+
+const PLAY = "https://play.google.com/billing";
+let playDienst = null;
+let playArtikel = {}; // Produkt -> { price: { currency, value } }
+
+async function playVorbereiten() {
+  if (!inApp || !("getDigitalGoodsService" in window)) return;
+  try { playDienst = await window.getDigitalGoodsService(PLAY); } catch { playDienst = null; }
+}
+
+async function playPreiseHolen() {
+  if (!playDienst || !angebot?.play?.an) return;
+  const produkte = Object.values(angebot.play.produkte).flatMap((z) => Object.values(z));
+  try {
+    for (const a of await playDienst.getDetails(produkte)) playArtikel[a.itemId] = a;
+  } catch { playArtikel = {}; }
+  preiseSchreiben();
+  knoepfeAnpassen();
+}
+
+function playPreis(plan, l) {
+  const a = playArtikel[angebot?.play?.produkte?.[plan]?.[zeitraum]];
+  if (!a?.price) return null;
+  try {
+    return new Intl.NumberFormat(l === "en" ? "en-IE" : l, { style: "currency", currency: a.price.currency })
+      .format(Number(a.price.value));
+  } catch { return null; }
+}
+
+/* Den Beleg beim Server abliefern. still: beim Abgleich im Hintergrund,
+   dann ohne Fehlermeldung und ohne neuen Schluessel fuer Bekanntes. */
+async function playMelden(room, token, still) {
+  try {
+    const a = await fetch("/api/play-kauf", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ room, token, still }),
+    });
+    const daten = await a.json().catch(() => ({}));
+    if (!a.ok) { if (!still) melden("schlecht", daten.error || WORTE[sprache].schiefe); return null; }
+    return daten;
+  } catch {
+    if (!still) melden("schlecht", WORTE[sprache].schiefe);
+    return null;
+  }
+}
+
+async function playKaufen(plan, knopf) {
+  const room = (raumFelder()[0]?.value || gemerkterRaum() || "").trim();
+  const w = WORTE[sprache];
+  if (!room) { melden("schlecht", w.fehlt); return; }
+  const produkt = angebot?.play?.produkte?.[plan]?.[zeitraum];
+  if (!playDienst || !produkt) { melden("schlecht", w.keineKasse); return; }
+
+  const alt = knopf.textContent;
+  knopf.disabled = true;
+  knopf.textContent = w.laeuft;
+  try {
+    /* Der Betrag hier ist Pflicht fuer die API, aber ohne Bedeutung -
+       was gilt, zeigt und bucht Google Play selbst. */
+    const anfrage = new PaymentRequest(
+      [{ supportedMethods: PLAY, data: { sku: produkt } }],
+      { total: { label: "Diralo", amount: { currency: "EUR", value: "0" } } }
+    );
+    const antwort = await anfrage.show();
+    const daten = await playMelden(room, antwort.details.purchaseToken, false);
+    await antwort.complete(daten ? "success" : "fail");
+    if (daten) gekauftZeigen(daten);
+  } catch (err) {
+    melden("schlecht", err?.name === "AbortError" ? w.abgebrochen : w.schiefe);
+  } finally {
+    knopf.disabled = false;
+    knopf.textContent = alt;
+    angebotHolen();
+  }
+}
+
+/* Kaeufe dieses Google-Kontos mit dem Server abgleichen. Faengt den Fall
+   auf, dass nach dem Kauf die Verbindung abriss - sonst wuerde der Kauf
+   nie quittiert, und Google erstattet ihn nach drei Tagen. */
+async function playAbgleichen(still) {
+  if (!playDienst || !angebot?.play?.an) return;
+  const room = (raumFelder()[0]?.value || gemerkterRaum() || "").trim();
+  let kaeufe = [];
+  try { kaeufe = await playDienst.listPurchases(); } catch { return; }
+  if (!kaeufe.length) { if (!still) melden("schlecht", WORTE[sprache].keineKaeufe); return; }
+  for (const k of kaeufe) {
+    const daten = await playMelden(room, k.purchaseToken, still);
+    if (daten?.schluessel) gekauftZeigen(daten);
+  }
+  angebotHolen();
+}
+
+document.querySelectorAll("[data-wiederherstellen]").forEach((b) => {
+  b.onclick = async () => { b.disabled = true; await playAbgleichen(false); b.disabled = false; };
+});
+
+/* Nach einem Kauf - ueber Stripe oder Play - Dank und Schluessel zeigen. */
+function gekauftZeigen(daten) {
+  const w = WORTE[sprache];
+  if (daten.wartet) { melden("gut", w.wartet); return; }
+  let html = daten.room
+    ? w.gekauft.replace("{room}", daten.room).replace("{plan}", daten.plan)
+    : w.ohneRaum;
+  if (daten.schluessel) {
+    html += "<p>" + w.bewahren + '</p><div class="schluessel">' + daten.schluessel + "</div>";
+  } else {
+    /* Darf nicht vorkommen - aber ohne Schluessel kann niemand
+       kuendigen, deshalb hier lieber ein deutlicher Hinweis als ein
+       stiller gruener Kasten. */
+    html += "<p>" + w.ohneSchluessel + "</p>";
+  }
+  melden("gut", html);
+  if (daten.room) raumFelder().forEach((f) => { f.value = daten.room; });
+}
+
 /* ------------------------------ Kaufen ------------------------------ */
 async function kaufen(plan, knopf) {
+  if (inApp) return playKaufen(plan, knopf);
   const room = (raumFelder()[0]?.value || gemerkterRaum() || "").trim();
   const w = WORTE[sprache];
   if (!room) { melden("schlecht", w.fehlt); return; }
@@ -645,18 +804,7 @@ document.querySelectorAll("[data-verwaltung]").forEach((b) => {
     const antwort = await fetch("/api/kasse-zurueck?id=" + encodeURIComponent(erfolg));
     const daten = await antwort.json().catch(() => ({}));
     if (!antwort.ok || !daten.fertig) { melden("schlecht", daten.error || w().schiefe); return; }
-
-    let html = w().gekauft.replace("{room}", daten.room).replace("{plan}", daten.plan);
-    if (daten.schluessel) {
-      html += "<p>" + w().bewahren + '</p><div class="schluessel">' + daten.schluessel + "</div>";
-    } else {
-      /* Darf nicht vorkommen - aber ohne Schluessel kann niemand
-         kuendigen, deshalb hier lieber ein deutlicher Hinweis als ein
-         stiller gruener Kasten. */
-      html += "<p>" + w().ohneSchluessel + "</p>";
-    }
-    melden("gut", html);
-    raumFelder().forEach((f) => { f.value = daten.room; });
+    gekauftZeigen(daten);
   } catch {
     melden("schlecht", w().schiefe);
   } finally {
@@ -682,9 +830,19 @@ function appSprache() {
   if (q.startsWith("pt")) return "pt";
   return "en";
 }
+/* Texte fuer Stripe oder Google Play - je nachdem, wo die Seite laeuft. */
+document.querySelectorAll("[data-nur]").forEach((el) => {
+  el.classList.toggle("hide", el.dataset.nur !== (inApp ? "play" : "web"));
+});
+
 zeige(appSprache());
 
-angebotHolen();
+(async () => {
+  await playVorbereiten();
+  await angebotHolen();
+  await playPreiseHolen();
+  playAbgleichen(true);
+})();
 </script>
 </body>
 </html>

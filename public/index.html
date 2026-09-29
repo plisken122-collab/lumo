@@ -653,6 +653,18 @@
 <script src="/i18n.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+/* Laeuft die Seite in der Android-App aus dem Play Store? Dann darf die
+   Preisseite nie den Weg ueber Stripe zeigen - Google verlangt dort den
+   Kauf ueber Play. Die App startet mit ?von=android, und Android traegt
+   sich als Herkunft ein. Gemerkt nur fuer diesen Tab: Dieselbe Seite im
+   Browser soll weiter Stripe anbieten. */
+try {
+  if (document.referrer.startsWith("android-app://")
+      || new URLSearchParams(location.search).get("von") === "android") {
+    sessionStorage.setItem("diralo-app", "android");
+  }
+} catch {}
+
 const LANGS = [
   ["de","Deutsch"],["de-CH","Deutsch (Schweiz)"],
   ["pt-PT","Português (Portugal)"],["pt-BR","Português (Brasil)"],
@@ -804,7 +816,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v82";
+const BUILD = "v83";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {

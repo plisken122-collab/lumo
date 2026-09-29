@@ -187,6 +187,36 @@ Der Webhook läuft am JSON-Leser vorbei (`express.raw`), weil seine Unterschrift
 
 ---
 
+## Bezahlung in der Android-App (Google Play)
+
+In der App aus dem Play Store verlangt Google, dass Abos über **Google Play Billing** laufen — Stripe ist dort verboten. Die Preisseite erkennt die App an der Marke, die die Startseite beim Öffnen mit `?von=android` (oder mit Android als Herkunft) für diesen Tab setzt. Dann zeigt sie nur den Play-Weg; fehlt dort etwas, bleiben die Knöpfe aus, statt auf Stripe auszuweichen. Im Browser bleibt alles bei Stripe.
+
+Ablauf: Die Seite fragt über die **Digital Goods API** Preise und Käufe bei Google Play ab und öffnet das Kaufblatt über die **Payment Request API**. Den Beleg (`purchaseToken`) schickt sie an `/api/play-kauf`; der Server prüft ihn bei Google (`playkasse.js`), **quittiert** ihn (sonst erstattet Google nach drei Tagen) und legt ein ganz normales Abo an — mit Verwaltungsschlüssel, Chats und Kontingent wie bei Stripe. In der Datenbank steht in `subscription` dann `gp:<token>`.
+
+Verlängerung und Ablauf: Kein Pub/Sub nötig. Ist der bezahlte Zeitraum vorbei, fragt der Server beim nächsten Blick auf den Chat bei Google nach (höchstens alle zehn Minuten je Abo). Beim Öffnen der Preisseite gleicht die App außerdem ihre Käufe mit dem Server ab — falls nach einem Kauf die Verbindung abriss.
+
+### Was in der Play Console eingerichtet werden muss
+
+1. **Vier Abo-Produkte**, jedes mit genau **einem** Basis-Abo (die Digital Goods API kann zwischen Basis-Abos nicht wählen):
+   `diralo_plus_monat`, `diralo_plus_jahr`, `diralo_familie_monat`, `diralo_familie_jahr`
+2. In der **Google Cloud Console**: die *Google Play Android Developer API* einschalten, ein **Dienstkonto** anlegen und einen JSON-Schlüssel dafür erzeugen.
+3. In der Play Console unter **Nutzer und Berechtigungen** die E-Mail des Dienstkontos einladen, mit *Finanzdaten ansehen* und *Bestellungen und Abos verwalten*.
+4. Beim Verpacken mit PWABuilder **Google Play Billing** einschalten und als Start-Adresse `/?von=android` nehmen.
+5. Die `assetlinks.json` aus PWABuilder nach `public/.well-known/assetlinks.json` legen — und zusätzlich den SHA-256-Fingerabdruck aus Play Console → *App-Integrität → App-Signatur* eintragen, sonst zeigt die installierte App eine Adressleiste.
+
+### Umgebungsvariablen
+
+| Variable | Wofür |
+|---|---|
+| `GOOGLE_PLAY_PAKET` | Paketname der App, z. B. `app.diralo.twa` |
+| `GOOGLE_PLAY_DIENSTKONTO` | Der JSON-Schlüssel des Dienstkontos — roh oder base64-verpackt |
+
+Fehlt eine davon, ist der Play-Weg aus. Was der Server sieht, steht unter `/health` in `geld.play`. Durchspielen ohne Google: `node play-test.mjs` (läuft immer ohne Datenbank).
+
+Wer im Play Store gekauft hat, kündigt auch dort — „Verwaltung öffnen“ führt bei einem Play-Abo in die Abo-Seite von Google Play.
+
+---
+
 ## Was noch fehlt für den Produktivbetrieb
 
 - **Login.** Aktuell reicht der Chat-Code. Wer ihn kennt, liest mit.
