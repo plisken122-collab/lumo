@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Diralo",
+    "slug": "diralo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.diralo.twa"
+    },
+    "android": {
+      "package": "app.diralo.twa",
+      "adaptiveIcon": {
+        "backgroundColor": "#122036",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
