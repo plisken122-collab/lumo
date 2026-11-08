@@ -1399,9 +1399,15 @@ const VOICE_MIME = {
   "audio/ogg": "audio/ogg",
   "audio/mp4": "audio/mp4",
   "audio/mpeg": "audio/mpeg",
+  /* Die native App: ihre Spracherkennung speichert die Aufnahme nur als
+     unkomprimiertes WAV (16 kHz, 16 Bit, mono = 32 KB je Sekunde). */
+  "audio/wav": "audio/wav",
 };
+/* WAV ist ungepackt - zwei Minuten sind rund 3,8 MB. Eigene Grenze, damit
+   die fuer gepackte Formate nicht mit aufgeweicht wird. */
+const VOICE_MAX_BYTES_WAV = Number(process.env.VOICE_MAX_BYTES_WAV || 4_000_000);
 
-app.post("/api/voice", express.json({ limit: "3mb" }), async (req, res) => {
+app.post("/api/voice", express.json({ limit: "6mb" }), async (req, res) => {
   const { room, device, name, lang, seconds, transcript, mime, audio } = req.body || {};
   if (!room || !device || !audio) {
     return res.status(400).json({ error: "Angaben unvollstaendig" });
@@ -1416,7 +1422,8 @@ app.post("/api/voice", express.json({ limit: "3mb" }), async (req, res) => {
   } catch {
     return res.status(400).json({ error: "Aufnahme unlesbar" });
   }
-  if (!bytes.length || bytes.length > VOICE_MAX_BYTES) {
+  const grenze = type === "audio/wav" ? VOICE_MAX_BYTES_WAV : VOICE_MAX_BYTES;
+  if (!bytes.length || bytes.length > grenze) {
     return res.status(413).json({ error: "Aufnahme zu gross" });
   }
 
