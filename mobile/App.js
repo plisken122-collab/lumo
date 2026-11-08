@@ -13,9 +13,20 @@
  */
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
-  SafeAreaView, View, Text, TextInput, FlatList, Pressable,
-  KeyboardAvoidingView, Platform, StyleSheet, StatusBar, ActivityIndicator,
+  View, Text, TextInput, FlatList, Pressable, Image, Alert, Linking,
+  ScrollView, Modal, Share, Platform,
+  KeyboardAvoidingView, Keyboard, StyleSheet, StatusBar, ActivityIndicator,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import * as Location from "expo-location";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition";
+import { File } from "expo-file-system";
+/* Android zeichnet die App bis unter Status- und Navigationsleiste
+   (edge-to-edge). Das SafeAreaView aus react-native hilft nur auf iOS -
+   die Abstaende kommen deshalb von hier, auf beiden Systemen. */
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { io } from "socket.io-client";
 
@@ -23,19 +34,92 @@ import { io } from "socket.io-client";
 const SERVER_URL = "https://lumo-3d74.onrender.com";
 const BUILD = "native-0.1";
 
-/* Sprachen wie in der Web-App (Auswahl). Code = was der Server erwartet. */
+/* Dieselbe Sprachliste wie die Web-App (LANGS in public/index.html).
+   Code = was der Server erwartet. */
 const SPRACHEN = [
-  { code: "de", label: "Deutsch" },
-  { code: "en", label: "English" },
-  { code: "pt", label: "Portugues" },
-  { code: "es", label: "Espanol" },
-  { code: "fr", label: "Francais" },
-  { code: "it", label: "Italiano" },
-  { code: "uk", label: "Ukrainisch" },
-  { code: "ru", label: "Russisch" },
-  { code: "ar", label: "Arabisch" },
-  { code: "tr", label: "Turkce" },
-];
+  ["de","Deutsch"],["de-CH","Deutsch (Schweiz)"],
+  ["pt-PT","Português (Portugal)"],["pt-BR","Português (Brasil)"],
+  ["en","English (UK)"],["en-US","English (US)"],
+  ["es","Español (España)"],["es-419","Español (Latinoamérica)"],
+  ["fr","Français"],["it","Italiano"],["nl","Nederlands"],["pl","Polski"],
+  ["ru","Русский"],["uk","Українська"],["tr","Türkçe"],["ar","العربية"],
+  ["zh","中文 (简体)"],["zh-TW","中文 (繁體)"],["ja","日本語"],["ko","한국어"],
+  ["hi","हिन्दी"],["sv","Svenska"],["ro","Română"],["da","Dansk"],["no","Norsk"],
+  ["fi","Suomi"],["cs","Čeština"],["hu","Magyar"],["el","Ελληνικά"],["he","עברית"],
+  ["th","ไทย"],["vi","Tiếng Việt"],["id","Bahasa Indonesia"],
+].map(([code, label]) => ({ code, label }));
+const sprachName = (code) => SPRACHEN.find((x) => x.code === code)?.label || code;
+
+/* Einladung wie in der Web-App: Link mit dem Code hinter #c=. */
+const WEB_URL = "https://diralo.app";
+const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
+
+/* ---------------------------- Meine Chats ---------------------------
+   Wie in der Web-App: die Liste liegt nur auf diesem Geraet. Dazu je
+   Chat, wann er zuletzt offen war - daraus fragt die Startseite beim
+   Server ab, wie viel Neues gekommen ist (/api/neues, nur Zahlen). */
+const CHATS_KEY = "diralo_chats";
+const GELESEN_KEY = "diralo_gelesen";
+
+async function jsonLaden(key, leer) {
+  try { return JSON.parse((await AsyncStorage.getItem(key)) || "null") ?? leer; } catch { return leer; }
+}
+async function chatsLaden() {
+  const roh = await jsonLaden(CHATS_KEY, []);
+  return Array.isArray(roh) ? roh.filter((c) => c && typeof c.code === "string") : [];
+}
+/* Zuletzt benutzter nach oben. */
+async function chatMerken(code) {
+  const liste = await chatsLaden();
+  const da = liste.find((c) => c.code === code);
+  if (da) da.zuletzt = Date.now(); else liste.push({ code, name: "", zuletzt: Date.now() });
+  liste.sort((a, b) => (b.zuletzt || 0) - (a.zuletzt || 0));
+  try { await AsyncStorage.setItem(CHATS_KEY, JSON.stringify(liste.slice(0, 50))); } catch {}
+}
+async function chatVergessen(code) {
+  const liste = (await chatsLaden()).filter((c) => c.code !== code);
+  try { await AsyncStorage.setItem(CHATS_KEY, JSON.stringify(liste)); } catch {}
+}
+async function gelesenSetzen(code) {
+  const g = await jsonLaden(GELESEN_KEY, {});
+  g[code] = Date.now();
+  try { await AsyncStorage.setItem(GELESEN_KEY, JSON.stringify(g)); } catch {}
+}
+async function neuesHolen(liste, device) {
+  if (!liste.length) return {};
+  const g = await jsonLaden(GELESEN_KEY, {});
+  try {
+    const a = await fetch(`${SERVER_URL}/api/neues`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chats: liste.map((c) => ({ room: c.code, seit: g[c.code] || 0 })), device }),
+    });
+    return a.ok ? await a.json() : {};
+  } catch { return {}; }
+}
+
+/* Dieselben Reaktionen, die der Server annimmt (REAKTIONEN in server.js). */
+const REAKTIONEN = ["❤️", "👍", "😂", "😮", "😢", "🙏"];
+
+/* Fotos werden vor dem Senden verkleinert - der Server nimmt hoechstens
+   2,5 MB, und ein Handyfoto in voller Groesse waere ohnehin Verschwendung. */
+const FOTO_MAX_BREITE = 1600;
+
+/* Sprachnachrichten: hoechstens so lang wie der Server annimmt. */
+const SPRACHE_MAX_SEK = 120;
+
+/* Die Spracherkennung will eine Region (de-DE), die App kennt oft nur
+   die Sprache (de). Fuer die haeufigen Faelle die uebliche Region. */
+const REGION = {
+  de: "de-DE", en: "en-GB", es: "es-ES", fr: "fr-FR", it: "it-IT", nl: "nl-NL",
+  pl: "pl-PL", ru: "ru-RU", uk: "uk-UA", tr: "tr-TR", ar: "ar-SA", zh: "zh-CN",
+  ja: "ja-JP", ko: "ko-KR", hi: "hi-IN", sv: "sv-SE", ro: "ro-RO", da: "da-DK",
+  no: "nb-NO", fi: "fi-FI", cs: "cs-CZ", hu: "hu-HU", el: "el-GR", he: "he-IL",
+  th: "th-TH", vi: "vi-VN", id: "id-ID", "es-419": "es-MX",
+};
+const erkennerSprache = (code) => REGION[code] || (code.includes("-") ? code : `${code}-${code.toUpperCase()}`);
+
+const medienUrl = (id) => `${SERVER_URL}/medien/${encodeURIComponent(id)}`;
 
 /* Chat-Code wie auf der Web-Startseite: 10 Zeichen ohne i l o 0 1
    (die verwechselt man beim Vorlesen). */
@@ -62,6 +146,15 @@ async function geraeteId() {
 
 /* ================================================================== */
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Haupt />
+    </SafeAreaProvider>
+  );
+}
+
+function Haupt() {
+  const insets = useSafeAreaInsets();
   const [bereit, setBereit] = useState(false);
   const [device, setDevice] = useState(null);
   const [name, setName] = useState("");
@@ -88,8 +181,16 @@ export default function App() {
       await AsyncStorage.setItem("diralo_name", name.trim());
       await AsyncStorage.setItem("diralo_lang", lang);
     } catch {}
+    await chatMerken(c);
     setRaum(c);
   }, [name, lang]);
+
+  /* Beim Verlassen gilt der Chat als gelesen - sonst zaehlte die
+     Startseite eigene, gerade gesehene Nachrichten als neu. */
+  const verlassen = useCallback(async () => {
+    if (raum) await gelesenSetzen(raum);
+    setRaum(null);
+  }, [raum]);
 
   if (!bereit) {
     return (
@@ -100,32 +201,60 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={s.full}>
+    /* Oben navy, damit die Statusleiste zur Chat-Kopfzeile passt. Den
+       Abstand unten setzen Startseite und Eingabezeile selbst - so bleibt
+       ihr Hintergrund bis an den Rand. */
+    <View style={[s.full, { paddingTop: insets.top, backgroundColor: FARBE.navy }]}>
       <StatusBar barStyle="light-content" backgroundColor={FARBE.navy} />
-      {raum ? (
-        <Chat
-          raum={raum} name={name.trim()} lang={lang} device={device}
-          onBack={() => setRaum(null)}
-        />
-      ) : (
-        <Home
-          name={name} setName={setName}
-          lang={lang} setLang={setLang}
-          onStart={() => betreten(neuerCode())}
-          onJoin={betreten}
-        />
-      )}
-    </SafeAreaView>
+      <View style={s.full}>
+        {raum ? (
+          <Chat
+            raum={raum} name={name.trim()} lang={lang} device={device}
+            unten={insets.bottom}
+            onBack={verlassen}
+          />
+        ) : (
+          <Home
+            name={name} setName={setName}
+            lang={lang} setLang={setLang}
+            device={device}
+            unten={insets.bottom}
+            onStart={() => betreten(neuerCode())}
+            onJoin={betreten}
+          />
+        )}
+      </View>
+    </View>
   );
 }
 
 /* ----------------------------- Startseite ------------------------- */
-function Home({ name, setName, lang, setLang, onStart, onJoin }) {
+function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) {
   const [code, setCode] = useState("");
+  const [chats, setChats] = useState([]);
+  const [neues, setNeues] = useState({});
+  const [sprachWahl, setSprachWahl] = useState(false);
   const kannLos = name.trim().length > 0;
 
+  const laden = useCallback(async () => {
+    const liste = await chatsLaden();
+    setChats(liste);
+    setNeues(await neuesHolen(liste.slice(0, 20), device));
+  }, [device]);
+  useEffect(() => { laden(); }, [laden]);
+
+  const vergessen = (c) => {
+    Alert.alert(`„#${c.code}“ aus der Liste nehmen?`, null, [
+      { text: "Abbrechen", style: "cancel" },
+      { text: "Entfernen", style: "destructive", onPress: async () => { await chatVergessen(c.code); laden(); } },
+    ]);
+  };
+
   return (
-    <View style={s.homeWrap}>
+    <ScrollView
+      style={s.full} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={[s.homeWrap, { paddingBottom: 22 + unten }]}
+    >
       <View style={s.brandRow}>
         <View style={s.logoDot}><Text style={s.logoDotTxt}>D</Text></View>
         <Text style={s.brand}>Diralo</Text>
@@ -140,17 +269,16 @@ function Home({ name, setName, lang, setLang, onStart, onJoin }) {
       />
 
       <Text style={s.label}>Deine Sprache</Text>
-      <View style={s.chips}>
-        {SPRACHEN.map((sp) => (
-          <Pressable
-            key={sp.code}
-            onPress={() => setLang(sp.code)}
-            style={[s.chip, lang === sp.code && s.chipAktiv]}
-          >
-            <Text style={[s.chipTxt, lang === sp.code && s.chipTxtAktiv]}>{sp.label}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <Pressable style={[s.input, s.sprachFeld]} onPress={() => setSprachWahl(true)}>
+        <Text style={s.sprachFeldTxt}>{sprachName(lang)}</Text>
+        <Text style={s.sprachPfeil}>▾</Text>
+      </Pressable>
+      <Sprachauswahl
+        offen={sprachWahl} aktuell={lang}
+        onWahl={(c) => { setLang(c); setSprachWahl(false); }}
+        onZu={() => setSprachWahl(false)}
+      />
+      <View style={{ height: 20 }} />
 
       <Pressable
         style={[s.btnPrimary, !kannLos && s.btnAus]}
@@ -174,16 +302,131 @@ function Home({ name, setName, lang, setLang, onStart, onJoin }) {
           <Text style={s.btnGoldTxt}>Beitreten</Text>
         </Pressable>
       </View>
+
+      {chats.length > 0 && (
+        <View style={s.meineChats}>
+          <Text style={s.label}>Meine Chats</Text>
+          {chats.slice(0, 8).map((c) => {
+            const n = neues[c.code] || 0;
+            return (
+              <View key={c.code} style={s.chatZeile}>
+                <Pressable
+                  style={[s.input, s.chatOffen, !kannLos && s.btnAus]}
+                  disabled={!kannLos} onPress={() => onJoin(c.code)}
+                >
+                  <Text style={s.chatOffenTxt} numberOfLines={1}>#{c.code}</Text>
+                  {n > 0 && <View style={s.neu}><Text style={s.neuTxt}>{n > 99 ? "99+" : n}</Text></View>}
+                </Pressable>
+                <Pressable style={[s.input, s.chatWeg]} onPress={() => vergessen(c)} hitSlop={4}>
+                  <Text style={s.chatWegTxt}>✕</Text>
+                </Pressable>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      <Text style={s.note}>
+        Zum Übersetzen wird jede Nachricht an einen Server geschickt und ist dort lesbar — anders als bei WhatsApp. Schreib nichts hinein, was niemand sonst sehen soll. Nach 30 Tagen wird alles gelöscht.
+      </Text>
+    </ScrollView>
+  );
+}
+
+/* Ganze Sprachliste als Auswahlfenster - 33 Sprachen passen nicht als Knoepfe. */
+function Sprachauswahl({ offen, aktuell, onWahl, onZu }) {
+  return (
+    <Modal visible={offen} transparent animationType="slide" onRequestClose={onZu}>
+      <Pressable style={s.modalHinten} onPress={onZu} />
+      <View style={s.modalBox}>
+        <Text style={s.modalTitel}>Deine Sprache</Text>
+        <FlatList
+          data={SPRACHEN}
+          keyExtractor={(x) => x.code}
+          initialNumToRender={40}
+          renderItem={({ item }) => (
+            <Pressable style={s.sprachZeile} onPress={() => onWahl(item.code)}>
+              <Text style={[s.sprachZeileTxt, item.code === aktuell && s.sprachAktiv]}>{item.label}</Text>
+              {item.code === aktuell && <Text style={s.sprachAktiv}>✓</Text>}
+            </Pressable>
+          )}
+        />
+      </View>
+    </Modal>
+  );
+}
+
+/* Emoji-Auswahl wie in der Web-App: erste Gruppe = zuletzt benutzte. */
+const EMOJI = [
+  ["🕘", ""],
+  ["🙂", "😀 😃 😄 😁 😆 😅 🤣 😂 🙂 🙃 😉 😊 😇 🥰 😍 🤩 😘 😗 😚 😙 🥲 😋 😛 😜 🤪 😝 🤗 🤭 🤔 🤨 😐 😑 😶 🙄 😏 😣 😥 😮 🤐 😯 😪 😫 🥱 😴 😌 😛 🤤 😒 😓 😔 😕 🙃 🤑 😲 🙁 😖 😞 😟 😤 😢 😭 😦 😧 😨 😩 🤯 😬 😰 😱 🥵 🥶 😳 🤪 😵 😡 😠 🤬 😷 🤒 🤕 🤢 🤮 🤧 😇 🥳 🥸 🤠 😎 🤓 🧐 😈 👿 💀 👻 👽 🤖 💩"],
+  ["👍", "👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤝 🙏 ✍️ 💪 🦾 🤳 👀 👁️ 👄 👅 🧠 🦷 👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 🙋 🙆 🙅 🤷 🤦 💁 🙇 🚶 🏃 💃 🕺 👫 👬 👭 👪 🫂"],
+  ["❤️", "❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 💋 👑 💎 🔥 ✨ 🌟 ⭐ 💫 ⚡ 💥 🎉 🎊 🎈 🎁 🎀 🥂 🍻 🎂 🧁 ☕ 🍵 🍺 🍷 🎵 🎶 🎤 🎧 🎸 🎹 🎬 📷 💡 🔔 📣 💬 💭"],
+  ["🍕", "🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🥦 🥬 🥒 🌶️ 🌽 🥕 🧄 🧅 🥔 🥐 🥖 🍞 🧀 🥚 🍳 🥞 🧇 🥓 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍿 🍝 🍜 🍲 🍣 🍱 🍤 🍚 🍦 🍰 🍫 🍬 🍭 🍩 🍪"],
+  ["⚽", "⚽ 🏀 🏈 ⚾ 🎾 🏐 🏉 🎱 🏓 🏸 🥊 ⛳ 🏹 🎣 🎿 🎯 🎮 🎲 ♟️ 🚗 🚕 🚙 🚌 🏎️ 🚓 🚑 🚒 🚲 🛵 🏍️ ✈️ 🚀 🚁 ⛵ 🚤 🚢 🏠 🏡 🏢 🏥 🏨 🏪 ⛪ 🗼 🗽 ⛲ ⛺ 🌍 🌎 🌏 🌙 ⛰️ 🏔️ 🌋 🏖️ 🏝️"],
+  ["🐶", "🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🙈 🙉 🙊 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🐺 🐗 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🕷️ 🐢 🐍 🐙 🦀 🐠 🐟 🐬 🐳 🦈 🐘 🐫 🦒 🐄 🐎 🐑 🐐 🦌 🐕 🐈 🌵 🌲 🌳 🌴 🌱 🍀 🍃 🍁 🌺 🌻 🌹 🌷 🌸 💐 🍄"],
+  ["✅", "✅ ❌ ❎ ➕ ➖ ✖️ ❓ ❔ ❕ ❗ ‼️ ⁉️ 💯 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🔺 🔻 🔶 🔷 ⚠️ 🚫 ⛔ 📛 ♻️ ✔️ ☑️ 📌 📍 🔒 🔓 ⏰ ⌛ ⏳ 🔋 📱 💻 ⌨️ 🖨️ 📁 📄 📅 📊 ✏️ 📝 💰 💶 🛒 🎓 ⚙️ 🔧 🔨"],
+];
+const EMOJI_KEY = "diralo_emoji";
+
+function EmojiAuswahl({ zuletzt, onWahl }) {
+  const [gruppe, setGruppe] = useState(zuletzt.length ? 0 : 1);
+  const zeichen = gruppe === 0 ? zuletzt : EMOJI[gruppe][1].split(" ");
+  return (
+    <View style={s.emojiPanel}>
+      <View style={s.emojiTabs}>
+        {EMOJI.map(([icon], i) => (
+          <Pressable key={i} onPress={() => setGruppe(i)} style={[s.emojiTab, gruppe === i && s.emojiTabAn]}>
+            <Text style={s.emojiTabTxt}>{icon}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <ScrollView contentContainerStyle={s.emojiGrid} keyboardShouldPersistTaps="always">
+        {zeichen.length === 0 && <Text style={s.leer}>Noch keine benutzt.</Text>}
+        {zeichen.map((ch, i) => (
+          <Pressable key={ch + i} onPress={() => onWahl(ch)} style={s.emojiZelle}>
+            <Text style={s.emojiZeichen}>{ch}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
 /* ------------------------------- Chat ----------------------------- */
-function Chat({ raum, name, lang, device, onBack }) {
+function Chat({ raum, name, lang, device, unten, onBack }) {
+  /* Offene Tastatur deckt die Navigationsleiste ab - dann braucht die
+     Eingabezeile unten keinen eigenen Abstand mehr. */
+  const tastatur = useTastaturOffen();
   const [nachrichten, setNachrichten] = useState([]);
   const [text, setText] = useState("");
   const [verbunden, setVerbunden] = useState(false);
   const [hinweis, setHinweis] = useState(null);
+  const [laedt, setLaedt] = useState(false);          // Foto wird hochgeladen
+  const [reagierenAuf, setReagierenAuf] = useState(null); // Nachricht fuer die Emoji-Leiste
+  const [antwortAuf, setAntwortAuf] = useState(null);     // Zitat ueber dem Eingabefeld
+  const [emojiAuf, setEmojiAuf] = useState(false);
+  const [zuletztEmoji, setZuletztEmoji] = useState([]);
+  const auswahlRef = useRef({ start: 0, end: 0 });
+  useEffect(() => { jsonLaden(EMOJI_KEY, []).then(setZuletztEmoji); }, []);
+  const emojiEinfuegen = (ch) => {
+    const { start, end } = auswahlRef.current;
+    setText((t) => {
+      const a = Math.min(start, t.length), b = Math.min(end, t.length);
+      auswahlRef.current = { start: a + ch.length, end: a + ch.length };
+      return t.slice(0, a) + ch + t.slice(b);
+    });
+    setZuletztEmoji((alt) => {
+      const neu = [ch, ...alt.filter((c) => c !== ch)].slice(0, 24);
+      AsyncStorage.setItem(EMOJI_KEY, JSON.stringify(neu)).catch(() => {});
+      return neu;
+    });
+  };
+  const aufnahme = useSprachaufnahme({
+    lang,
+    onFertig: (a) => spracheSenden(a),
+    onFehler: (t) => setHinweis(t),
+  });
   const sockRef = useRef(null);
   const listRef = useRef(null);
   const askedRef = useRef(new Set());
@@ -240,6 +483,25 @@ function Chat({ raum, name, lang, device, onBack }) {
       if (ev?.type === "tooManyJoins") setHinweis("Zu viele Beitritts-Versuche. Bitte kurz warten.");
     });
     socket.on("tooFast", () => setHinweis("Etwas langsamer - zu viele Nachrichten in kurzer Zeit."));
+    /* Reaktion von irgendwem im Raum (auch die eigene kommt so zurueck).
+       Leeres Emoji = aufgehoben. */
+    /* Der Server loescht nur, was dieses Geraet selbst geschrieben hat. */
+    socket.on("deleteFailed", ({ grund }) => {
+      setHinweis(grund === "nicht erlaubt"
+        ? "Diese Nachricht wurde von einem anderen Gerät geschrieben und lässt sich hier nicht löschen."
+        : "Löschen gerade nicht möglich. Bitte später nochmal.");
+    });
+    socket.on("deleted", ({ id }) => {
+      setNachrichten((alt) => alt.map((m) => (m.id === id ? { ...m, deleted: true, text: "" } : m)));
+    });
+    socket.on("reaktion", ({ id, device: von, emoji }) => {
+      setNachrichten((alt) => alt.map((m) => {
+        if (m.id !== id) return m;
+        const r = { ...m.reaktionen };
+        if (emoji) r[von] = emoji; else delete r[von];
+        return { ...m, reaktionen: r };
+      }));
+    });
 
     return () => { socket.removeAllListeners(); socket.close(); };
   }, [raum, name, lang, device]);
@@ -251,15 +513,126 @@ function Chat({ raum, name, lang, device, onBack }) {
   const senden = () => {
     const t = text.trim();
     if (!t || !sockRef.current) return;
-    sockRef.current.emit("send", { text: t });
+    sockRef.current.emit("send", { text: t, replyTo: antwortAuf?.id || null });
     setText("");
+    setAntwortAuf(null);
+  };
+
+  /* Aufnahme + Mitschrift an den Server. Die Mitschrift wird dort wie
+     jede Nachricht uebersetzt; die Aufnahme laesst sich abspielen. */
+  const spracheSenden = async ({ uri, sekunden, mitschrift }) => {
+    setLaedt(true);
+    try {
+      const audio = await new File(uri).base64();
+      const antwort = await fetch(`${SERVER_URL}/api/voice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room: raum, device, name, lang,
+          seconds: sekunden, transcript: mitschrift, mime: "audio/wav", audio,
+        }),
+      });
+      if (!antwort.ok) {
+        setHinweis(antwort.status === 413 ? "Die Sprachnachricht ist zu lang." : "Sprachnachricht konnte nicht gesendet werden.");
+      }
+    } catch {
+      setHinweis("Sprachnachricht konnte nicht gesendet werden.");
+    } finally {
+      setLaedt(false);
+      try { new File(uri).delete(); } catch {}
+    }
+  };
+
+  const einladen = () => {
+    Share.share({
+      message: `Schreib mit mir in Diralo — jeder in seiner Sprache: ${einladungsLink(raum)}`,
+    }).catch(() => {});
+  };
+
+  /* Nur die eigene Nachricht; der Server prueft das ohnehin am Geraet. */
+  const loeschen = (m) => {
+    Alert.alert("Für alle löschen?", "Die Nachricht verschwindet auch beim Gegenüber.", [
+      { text: "Abbrechen", style: "cancel" },
+      { text: "Löschen", style: "destructive", onPress: () => sockRef.current?.emit("deleteForAll", { id: m.id }) },
+    ]);
+  };
+
+  /* Foto aus Galerie oder Kamera. Ein bereits getippter Text geht als
+     Bildunterschrift mit und wird wie jede Nachricht uebersetzt. */
+  const fotoSenden = async (quelle) => {
+    try {
+      const recht = quelle === "kamera"
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!recht.granted) {
+        setHinweis(quelle === "kamera" ? "Ohne Kamera-Erlaubnis geht das nicht." : "Ohne Zugriff auf die Fotos geht das nicht.");
+        return;
+      }
+      const opt = { mediaTypes: ["images"], quality: 1 };
+      const wahl = quelle === "kamera"
+        ? await ImagePicker.launchCameraAsync(opt)
+        : await ImagePicker.launchImageLibraryAsync(opt);
+      if (wahl.canceled || !wahl.assets?.length) return;
+
+      setLaedt(true);
+      const a = wahl.assets[0];
+      const resize = a.width > FOTO_MAX_BREITE ? [{ resize: { width: FOTO_MAX_BREITE } }] : [];
+      const klein = await manipulateAsync(a.uri, resize, {
+        compress: 0.75, format: SaveFormat.JPEG, base64: true,
+      });
+      const antwort = await fetch(`${SERVER_URL}/api/bild`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room: raum, device, name, lang,
+          caption: text.trim(), mime: "image/jpeg", bild: klein.base64,
+        }),
+      });
+      if (!antwort.ok) {
+        setHinweis(antwort.status === 413 ? "Das Foto ist zu gross." : "Foto konnte nicht gesendet werden.");
+        return;
+      }
+      setText("");
+    } catch {
+      setHinweis("Foto konnte nicht gesendet werden.");
+    } finally {
+      setLaedt(false);
+    }
+  };
+
+  const standortSenden = async () => {
+    try {
+      const recht = await Location.requestForegroundPermissionsAsync();
+      if (!recht.granted) { setHinweis("Ohne Standort-Erlaubnis geht das nicht."); return; }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      sockRef.current?.emit("sendOrt", { lat: pos.coords.latitude, lng: pos.coords.longitude });
+    } catch {
+      setHinweis("Standort konnte nicht ermittelt werden.");
+    }
+  };
+
+  const anhangMenue = () => {
+    Keyboard.dismiss();
+    Alert.alert("Senden", null, [
+      { text: "Foto aus Galerie", onPress: () => fotoSenden("galerie") },
+      { text: "Kamera", onPress: () => fotoSenden("kamera") },
+      { text: "Standort", onPress: standortSenden },
+    ], { cancelable: true });
+  };
+
+  /* Gleiche Reaktion nochmal = zuruecknehmen (wie in der Web-App). */
+  const reagieren = (emoji) => {
+    const m = reagierenAuf;
+    setReagierenAuf(null);
+    if (!m || !sockRef.current) return;
+    const aktuell = m.reaktionen?.[device];
+    sockRef.current.emit("reagieren", { id: m.id, emoji: aktuell === emoji ? "" : emoji });
   };
 
   return (
-    <KeyboardAvoidingView
-      style={s.full}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    /* "padding" auch auf Android: edge-to-edge schaltet das automatische
+       Verkleinern des Fensters ab, sonst laege die Tastatur ueber dem Feld. */
+    <KeyboardAvoidingView style={s.full} behavior="padding">
       {/* Kopfzeile */}
       <View style={s.chatHead}>
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
@@ -267,6 +640,9 @@ function Chat({ raum, name, lang, device, onBack }) {
           <Text style={s.chatTitel}>Chat {raum}</Text>
           <Text style={s.chatSub}>{verbunden ? "verbunden" : "verbinde ..."} · du: {name} ({lang})</Text>
         </View>
+        <Pressable onPress={einladen} style={s.einladen} hitSlop={8}>
+          <Text style={s.einladenTxt}>Einladen</Text>
+        </Pressable>
       </View>
 
       {hinweis && (
@@ -280,49 +656,311 @@ function Chat({ raum, name, lang, device, onBack }) {
         data={nachrichten}
         keyExtractor={(m) => m.id}
         contentContainerStyle={s.liste}
-        renderItem={({ item }) => <Bubble msg={item} lang={lang} device={device} />}
+        renderItem={({ item }) => (
+          <Bubble
+            msg={item} lang={lang} device={device}
+            zitat={item.replyTo ? nachrichten.find((m) => m.id === item.replyTo) || { fehlt: true } : null}
+            onLangDruck={() => setReagierenAuf(item)}
+          />
+        )}
         onContentSizeChange={scrollUnten}
         ListEmptyComponent={
           <Text style={s.leer}>Noch keine Nachrichten. Schreib die erste - sie wird automatisch uebersetzt.</Text>
         }
       />
 
-      <View style={s.eingabe}>
+      {reagierenAuf && (
+        <View style={s.reaktLeiste}>
+          {REAKTIONEN.map((e) => (
+            <Pressable key={e} onPress={() => reagieren(e)} style={s.reaktKnopf} hitSlop={4}>
+              <Text style={s.reaktKnopfTxt}>{e}</Text>
+            </Pressable>
+          ))}
+          <Pressable onPress={() => setReagierenAuf(null)} hitSlop={8}>
+            <Text style={s.reaktZu}>✕</Text>
+          </Pressable>
+        </View>
+      )}
+      {reagierenAuf && (
+        <View style={s.aktionLeiste}>
+          <Pressable
+            style={s.aktion}
+            onPress={() => { setAntwortAuf(reagierenAuf); setReagierenAuf(null); }}
+          >
+            <Text style={s.aktionTxt}>↩ Antworten</Text>
+          </Pressable>
+          {reagierenAuf.device === device && !reagierenAuf.deleted && (
+            <Pressable
+              style={s.aktion}
+              onPress={() => { const m = reagierenAuf; setReagierenAuf(null); loeschen(m); }}
+            >
+              <Text style={[s.aktionTxt, s.aktionRot]}>🗑 Für alle löschen</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+      {antwortAuf && (
+        <View style={s.antwortBar}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.antwortName}>{antwortAuf.device === device ? "Du" : antwortAuf.name}</Text>
+            <Text style={s.antwortText} numberOfLines={1}>{kurzText(antwortAuf, lang, device)}</Text>
+          </View>
+          <Pressable onPress={() => setAntwortAuf(null)} hitSlop={8}>
+            <Text style={s.reaktZu}>✕</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {emojiAuf && <EmojiAuswahl zuletzt={zuletztEmoji} onWahl={emojiEinfuegen} />}
+
+      <View style={[s.eingabe, { paddingBottom: 10 + (tastatur ? 0 : unten) }]}>
+        <Pressable style={s.anhang} onPress={anhangMenue} disabled={laedt} hitSlop={6}>
+          {laedt
+            ? <ActivityIndicator color={FARBE.navy} />
+            : <Text style={s.anhangTxt}>+</Text>}
+        </Pressable>
+        <Pressable
+          style={[s.anhang, emojiAuf && s.emojiKnopfAn]} hitSlop={6}
+          onPress={() => { if (!emojiAuf) Keyboard.dismiss(); setEmojiAuf(!emojiAuf); }}
+        >
+          <Text style={s.emojiKnopfTxt}>{emojiAuf ? "⌨️" : "🙂"}</Text>
+        </Pressable>
         <TextInput
           style={s.eingabeInput} value={text} onChangeText={setText}
+          onSelectionChange={(e) => { auswahlRef.current = e.nativeEvent.selection; }}
+          onFocus={() => setEmojiAuf(false)}
           placeholder="Nachricht schreiben ..." placeholderTextColor={FARBE.grau}
           multiline
         />
-        <Pressable style={[s.senden, !text.trim() && s.btnAus]} disabled={!text.trim()} onPress={senden}>
-          <Text style={s.sendenTxt}>Senden</Text>
-        </Pressable>
+        {/* Leeres Feld: Mikrofon statt Senden - wie bei WhatsApp. Tippen
+            startet die Aufnahme, nochmal tippen schickt sie ab. */}
+        {text.trim() ? (
+          <Pressable style={s.senden} onPress={senden}>
+            <Text style={s.sendenTxt}>Senden</Text>
+          </Pressable>
+        ) : aufnahme.laeuft ? (
+          <View style={s.aufnahmeRow}>
+            <Pressable onPress={aufnahme.abbrechen} hitSlop={8}><Text style={s.reaktZu}>✕</Text></Pressable>
+            <Pressable style={[s.senden, s.aufnahmeAn]} onPress={aufnahme.stopp}>
+              <Text style={s.sendenTxt}>● {aufnahme.sekunden}s  Senden</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable style={[s.senden, laedt && s.btnAus]} disabled={laedt} onPress={aufnahme.start}>
+            <Text style={s.sendenTxt}>🎤</Text>
+          </Pressable>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-/* Eine Sprechblase. Zeigt die Nachricht in MEINER Sprache (sonst Original). */
-function Bubble({ msg, lang, device }) {
+/* Eine Sprechblase. Zeigt die Nachricht in MEINER Sprache (sonst Original).
+   Langes Druecken oeffnet die Emoji-Leiste. */
+function Bubble({ msg, lang, device, zitat, onLangDruck }) {
   const meins = msg.device === device;
   const uebersetzt = !meins && msg.tr && msg.tr[lang];
   const anzeige = meins ? msg.text : (uebersetzt || msg.text);
   const original = !meins && uebersetzt && msg.text && msg.text !== uebersetzt;
+  const txtStil = [s.bubbleTxt, meins && s.bubbleTxtMeins];
 
-  if (msg.ort) {
+  if (msg.deleted) {
     return (
       <View style={[s.bubble, meins ? s.bubbleMeins : s.bubbleFremd]}>
-        {!meins && <Text style={s.bubbleName}>{msg.name}</Text>}
-        <Text style={s.bubbleTxt}>Standort: {msg.ort.lat}, {msg.ort.lng}</Text>
+        <Text style={[txtStil, s.geloescht]}>Nachricht geloescht</Text>
       </View>
     );
   }
+
+  let inhalt;
+  if (msg.ort) {
+    const karte = `https://www.google.com/maps/search/?api=1&query=${msg.ort.lat},${msg.ort.lng}`;
+    inhalt = (
+      <Pressable onPress={() => Linking.openURL(karte)} onLongPress={onLangDruck}>
+        <Text style={txtStil}>📍 Standort</Text>
+        <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>Zum Oeffnen in der Karte tippen</Text>
+      </Pressable>
+    );
+  } else {
+    inhalt = (
+      <>
+        {msg.bild ? (
+          <Pressable onPress={() => Linking.openURL(medienUrl(msg.id))} onLongPress={onLangDruck}>
+            <Image source={{ uri: medienUrl(msg.id) }} style={s.foto} resizeMode="cover" />
+          </Pressable>
+        ) : null}
+        {msg.audioSeconds ? <Sprachnachricht id={msg.id} sekunden={msg.audioSeconds} meins={meins} /> : null}
+        {anzeige ? <Text style={txtStil}>{anzeige}</Text> : null}
+        {!anzeige && !msg.bild && !msg.audioSeconds ? <Text style={txtStil}>...</Text> : null}
+        {original ? <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>{msg.text}</Text> : null}
+      </>
+    );
+  }
+
+  /* Gleiche Emojis zusammenfassen: "❤️ 2". */
+  const zaehlung = {};
+  for (const e of Object.values(msg.reaktionen || {})) zaehlung[e] = (zaehlung[e] || 0) + 1;
+  const reakt = Object.entries(zaehlung);
+
   return (
-    <View style={[s.bubble, meins ? s.bubbleMeins : s.bubbleFremd]}>
-      {!meins && <Text style={s.bubbleName}>{msg.name}</Text>}
-      <Text style={[s.bubbleTxt, meins && s.bubbleTxtMeins]}>{anzeige || "..."}</Text>
-      {original ? <Text style={s.bubbleOrig}>{msg.text}</Text> : null}
+    <View style={[s.bubbleWrap, meins ? s.wrapMeins : s.wrapFremd]}>
+      <Pressable
+        onLongPress={onLangDruck} delayLongPress={350}
+        style={[s.bubble, meins ? s.bubbleMeins : s.bubbleFremd]}
+      >
+        {!meins && <Text style={s.bubbleName}>{msg.name}</Text>}
+        {zitat && (
+          <View style={[s.zitat, meins && s.zitatMeins]}>
+            {zitat.fehlt ? (
+              <Text style={[s.zitatText, meins && s.bubbleOrigMeins]}>Nachricht nicht mehr da</Text>
+            ) : (
+              <>
+                <Text style={[s.zitatName, meins && s.bubbleOrigMeins]}>{zitat.device === device ? "Du" : zitat.name}</Text>
+                <Text style={[s.zitatText, meins && s.bubbleOrigMeins]} numberOfLines={2}>{kurzText(zitat, lang, device)}</Text>
+              </>
+            )}
+          </View>
+        )}
+        {inhalt}
+      </Pressable>
+      {reakt.length > 0 && (
+        <View style={[s.reaktAnzeige, meins ? s.wrapMeins : s.wrapFremd]}>
+          {reakt.map(([e, n]) => (
+            <Text key={e} style={s.reaktAnzeigeTxt}>{e}{n > 1 ? ` ${n}` : ""}</Text>
+          ))}
+        </View>
+      )}
     </View>
   );
+}
+
+/* Abspielen einer empfangenen (oder eigenen) Sprachnachricht. Der Text
+   darunter ist die Mitschrift, uebersetzt wie jede andere Nachricht. */
+function Sprachnachricht({ id, sekunden, meins }) {
+  const player = useAudioPlayer(medienUrl(id));
+  const status = useAudioPlayerStatus(player);
+  const laeuft = status.playing;
+
+  const umschalten = () => {
+    if (laeuft) { player.pause(); return; }
+    if (status.didJustFinish || (status.duration && status.currentTime >= status.duration - 0.2)) {
+      player.seekTo(0);
+    }
+    player.play();
+  };
+
+  const rest = Math.max(0, Math.round((status.duration || sekunden) - (laeuft ? status.currentTime : 0)));
+  const zeit = `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, "0")}`;
+
+  return (
+    <Pressable onPress={umschalten} style={s.sprache} hitSlop={6}>
+      <Text style={[s.spracheKnopf, meins && s.bubbleTxtMeins]}>{laeuft ? "⏸" : "▶"}</Text>
+      <Text style={[s.spracheZeit, meins && s.bubbleTxtMeins]}>Sprachnachricht · {zeit}</Text>
+    </Pressable>
+  );
+}
+
+/* Sprachaufnahme mit Mitschrift in einem Rutsch: die Spracherkennung
+   schreibt mit und legt die Aufnahme zugleich als WAV-Datei ab
+   (recordingOptions.persist, Android 13+). Ein zweites Programm am
+   Mikrofon waere auf Android unzuverlaessig. */
+function useSprachaufnahme({ lang, onFertig, onFehler }) {
+  const [laeuft, setLaeuft] = useState(false);
+  const [sekunden, setSekunden] = useState(0);
+  const teile = useRef([]);         // fertige Saetze
+  const zwischen = useRef("");      // laufender, noch unfertiger Satz
+  const start = useRef(0);
+  const verwerfen = useRef(false);
+  const datei = useRef(null);
+  const beendet = useRef(false);
+
+  useEffect(() => {
+    if (!laeuft) return;
+    const t = setInterval(() => {
+      const s2 = Math.round((Date.now() - start.current) / 1000);
+      setSekunden(s2);
+      if (s2 >= SPRACHE_MAX_SEK) ExpoSpeechRecognitionModule.stop();
+    }, 500);
+    return () => clearInterval(t);
+  }, [laeuft]);
+
+  useSpeechRecognitionEvent("result", (ev) => {
+    const t = ev.results?.[0]?.transcript || "";
+    if (ev.isFinal) { if (t) teile.current.push(t); zwischen.current = ""; }
+    else zwischen.current = t;
+  });
+  /* "end" und "audioend" kommen nicht immer in derselben Reihenfolge.
+     Abgeschickt wird, sobald beides da ist. */
+  const abschliessen = () => {
+    const uri = datei.current;
+    if (!beendet.current || !uri) return;
+    beendet.current = false;
+    const mitschrift = [...teile.current, zwischen.current].join(" ").replace(/\s+/g, " ").trim();
+    const dauer = Math.max(1, Math.round((Date.now() - start.current) / 1000));
+    if (verwerfen.current) return;
+    onFertig({ uri, sekunden: Math.min(dauer, SPRACHE_MAX_SEK), mitschrift });
+  };
+  useSpeechRecognitionEvent("audioend", (ev) => { datei.current = ev.uri || null; abschliessen(); });
+  useSpeechRecognitionEvent("error", (ev) => {
+    /* "Nichts gehoert" ist kein Fehler, den man melden muss - dann
+       gibt es eben keine Nachricht. */
+    if (ev.error !== "no-speech" && ev.error !== "aborted") {
+      onFehler("Aufnahme nicht möglich: " + (ev.message || ev.error));
+    }
+  });
+  useSpeechRecognitionEvent("end", () => {
+    setLaeuft(false);
+    beendet.current = true;
+    abschliessen();
+  });
+
+  const los = async () => {
+    const recht = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!recht.granted) { onFehler("Ohne Mikrofon-Erlaubnis geht das nicht."); return; }
+    if (Platform.OS === "android" && Platform.Version < 33) {
+      onFehler("Sprachnachrichten brauchen Android 13 oder neuer.");
+      return;
+    }
+    teile.current = []; zwischen.current = ""; datei.current = null; beendet.current = false;
+    verwerfen.current = false;
+    start.current = Date.now();
+    setSekunden(0);
+    setLaeuft(true);
+    ExpoSpeechRecognitionModule.start({
+      lang: erkennerSprache(lang),
+      interimResults: true,
+      continuous: true,
+      recordingOptions: { persist: true, outputSampleRate: 16000, outputEncoding: "pcmFormatInt16" },
+    });
+  };
+
+  return {
+    laeuft, sekunden,
+    start: los,
+    stopp: () => ExpoSpeechRecognitionModule.stop(),
+    abbrechen: () => { verwerfen.current = true; ExpoSpeechRecognitionModule.abort(); },
+  };
+}
+
+/* Eine Zeile fuer Zitate: Text in meiner Sprache, sonst was die Nachricht ist. */
+function kurzText(m, lang, device) {
+  if (m.deleted) return "Nachricht geloescht";
+  const t = m.device !== device && m.tr?.[lang] ? m.tr[lang] : m.text;
+  if (t) return t;
+  if (m.bild) return "📷 Foto";
+  if (m.audioSeconds) return "🎤 Sprachnachricht";
+  if (m.ort) return "📍 Standort";
+  return "";
+}
+
+function useTastaturOffen() {
+  const [offen, setOffen] = useState(false);
+  useEffect(() => {
+    const auf = Keyboard.addListener("keyboardDidShow", () => setOffen(true));
+    const zu = Keyboard.addListener("keyboardDidHide", () => setOffen(false));
+    return () => { auf.remove(); zu.remove(); };
+  }, []);
+  return offen;
 }
 
 function normMsg(m) {
@@ -334,6 +972,11 @@ function normMsg(m) {
     lang: m.lang || "",
     tr: m.tr || {},
     ort: m.ort || null,
+    bild: Boolean(m.bild),
+    audioSeconds: m.audioSeconds || null,
+    reaktionen: m.reaktionen || {},
+    deleted: Boolean(m.deleted),
+    replyTo: m.replyTo || null,
     at: m.at || Date.now(),
   };
 }
@@ -355,7 +998,25 @@ const s = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
 
   /* Startseite */
-  homeWrap: { flex: 1, padding: 22, paddingTop: 36 },
+  homeWrap: { flexGrow: 1, padding: 22, paddingTop: 36 },
+  sprachFeld: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  sprachFeldTxt: { fontSize: 16, color: FARBE.text },
+  sprachPfeil: { fontSize: 16, color: FARBE.grau },
+  modalHinten: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
+  modalBox: { maxHeight: "70%", backgroundColor: FARBE.weiss, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 14, paddingBottom: 24 },
+  modalTitel: { fontSize: 16, fontWeight: "800", color: FARBE.navy, paddingHorizontal: 20, marginBottom: 8 },
+  sprachZeile: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: FARBE.grauHell },
+  sprachZeileTxt: { fontSize: 16, color: FARBE.text },
+  sprachAktiv: { color: FARBE.navy, fontWeight: "800" },
+  meineChats: { marginTop: 18 },
+  chatZeile: { flexDirection: "row", gap: 8, marginBottom: 8 },
+  chatOffen: { flex: 1, flexDirection: "row", alignItems: "center" },
+  chatOffenTxt: { fontSize: 16, color: FARBE.text, flexShrink: 1 },
+  chatWeg: { width: 48, alignItems: "center", justifyContent: "center", paddingHorizontal: 0 },
+  chatWegTxt: { fontSize: 16, color: FARBE.grau },
+  neu: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: "#C0392B", alignItems: "center", justifyContent: "center", paddingHorizontal: 6, marginLeft: 10 },
+  neuTxt: { color: FARBE.weiss, fontSize: 12, fontWeight: "700" },
+  note: { marginTop: 18, padding: 13, borderRadius: 11, backgroundColor: "#F1F2F5", borderLeftWidth: 3, borderLeftColor: FARBE.navy, fontSize: 13, lineHeight: 20, color: FARBE.grau },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   logoDot: { width: 40, height: 40, borderRadius: 12, backgroundColor: FARBE.navy, alignItems: "center", justifyContent: "center" },
   logoDotTxt: { color: FARBE.gold, fontSize: 22, fontWeight: "800" },
@@ -366,11 +1027,6 @@ const s = StyleSheet.create({
     backgroundColor: FARBE.weiss, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 16, color: FARBE.text, borderWidth: 1, borderColor: FARBE.grauHell,
   },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
-  chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, backgroundColor: FARBE.weiss, borderWidth: 1, borderColor: FARBE.grauHell },
-  chipAktiv: { backgroundColor: FARBE.navy, borderColor: FARBE.navy },
-  chipTxt: { color: FARBE.text, fontWeight: "600" },
-  chipTxtAktiv: { color: FARBE.weiss },
   btnPrimary: { backgroundColor: FARBE.navy, borderRadius: 14, paddingVertical: 16, alignItems: "center", marginTop: 6 },
   btnPrimaryTxt: { color: FARBE.weiss, fontSize: 17, fontWeight: "800" },
   btnAus: { opacity: 0.4 },
@@ -390,9 +1046,51 @@ const s = StyleSheet.create({
   liste: { padding: 14, paddingBottom: 18 },
   leer: { color: FARBE.grau, textAlign: "center", marginTop: 40, paddingHorizontal: 20, lineHeight: 20 },
 
-  bubble: { maxWidth: "82%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 10 },
-  bubbleFremd: { backgroundColor: FARBE.weiss, alignSelf: "flex-start", borderTopLeftRadius: 4, borderWidth: 1, borderColor: FARBE.grauHell },
-  bubbleMeins: { backgroundColor: FARBE.navy, alignSelf: "flex-end", borderTopRightRadius: 4 },
+  bubbleWrap: { maxWidth: "82%", marginBottom: 10 },
+  wrapFremd: { alignSelf: "flex-start" },
+  wrapMeins: { alignSelf: "flex-end" },
+  bubble: { borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
+  bubbleFremd: { backgroundColor: FARBE.weiss, borderTopLeftRadius: 4, borderWidth: 1, borderColor: FARBE.grauHell },
+  bubbleMeins: { backgroundColor: FARBE.navy, borderTopRightRadius: 4 },
+  bubbleOrigMeins: { color: "#aeb9cc" },
+  geloescht: { fontStyle: "italic", opacity: 0.6 },
+  foto: { width: 230, height: 230, borderRadius: 10, marginBottom: 6, backgroundColor: FARBE.grauHell },
+  sprache: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4, marginBottom: 4 },
+  spracheKnopf: { fontSize: 22, color: FARBE.navy, width: 24, textAlign: "center" },
+  spracheZeit: { fontSize: 14, color: FARBE.text },
+  reaktAnzeige: { flexDirection: "row", gap: 4, marginTop: -6, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: FARBE.weiss, borderRadius: 12, borderWidth: 1, borderColor: FARBE.grauHell },
+  reaktAnzeigeTxt: { fontSize: 14 },
+  reaktLeiste: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", backgroundColor: FARBE.weiss, borderTopWidth: 1, borderTopColor: FARBE.grauHell, paddingVertical: 8, paddingHorizontal: 10 },
+  reaktKnopf: { padding: 4 },
+  reaktKnopfTxt: { fontSize: 28 },
+  reaktZu: { fontSize: 18, color: FARBE.grau, paddingHorizontal: 6 },
+  aufnahmeRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  aufnahmeAn: { backgroundColor: "#E46A5E" },
+  einladen: { backgroundColor: FARBE.gold, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 },
+  einladenTxt: { color: FARBE.navy, fontWeight: "800", fontSize: 13 },
+  aktionLeiste: { flexDirection: "row", gap: 10, backgroundColor: FARBE.weiss, paddingHorizontal: 12, paddingBottom: 8 },
+  aktion: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: FARBE.hell },
+  aktionTxt: { color: FARBE.navy, fontWeight: "700" },
+  aktionRot: { color: "#9B2C25" },
+  antwortBar: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: FARBE.weiss, borderTopWidth: 1, borderTopColor: FARBE.grauHell, borderLeftWidth: 3, borderLeftColor: FARBE.gold, paddingHorizontal: 12, paddingVertical: 8 },
+  antwortName: { color: FARBE.gold, fontWeight: "700", fontSize: 12 },
+  antwortText: { color: FARBE.text, fontSize: 14 },
+  zitat: { borderLeftWidth: 3, borderLeftColor: FARBE.gold, backgroundColor: FARBE.hell, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginBottom: 6 },
+  zitatMeins: { backgroundColor: FARBE.navy2 },
+  zitatName: { color: FARBE.gold, fontWeight: "700", fontSize: 12 },
+  zitatText: { color: FARBE.grau, fontSize: 13 },
+  anhang: { width: 40, height: 40, borderRadius: 20, backgroundColor: FARBE.hell, alignItems: "center", justifyContent: "center" },
+  emojiKnopfAn: { backgroundColor: FARBE.grauHell },
+  emojiKnopfTxt: { fontSize: 22 },
+  emojiPanel: { height: 260, backgroundColor: FARBE.weiss, borderTopWidth: 1, borderTopColor: FARBE.grauHell },
+  emojiTabs: { flexDirection: "row", paddingHorizontal: 6, paddingTop: 6, gap: 2 },
+  emojiTab: { flex: 1, alignItems: "center", paddingVertical: 6, borderRadius: 10 },
+  emojiTabAn: { backgroundColor: FARBE.hell },
+  emojiTabTxt: { fontSize: 20 },
+  emojiGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 6, paddingBottom: 8 },
+  emojiZelle: { width: "12.5%", alignItems: "center", paddingVertical: 6 },
+  emojiZeichen: { fontSize: 26 },
+  anhangTxt: { fontSize: 26, lineHeight: 28, color: FARBE.navy, fontWeight: "700" },
   bubbleName: { color: FARBE.gold, fontWeight: "700", fontSize: 12, marginBottom: 3 },
   bubbleTxt: { color: FARBE.text, fontSize: 16, lineHeight: 22 },
   bubbleTxtMeins: { color: FARBE.weiss },
