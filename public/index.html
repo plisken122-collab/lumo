@@ -197,6 +197,10 @@
   .sheet-kopf { margin:6px 12px 8px; font-size:13px; color:var(--muted); }
   .sheet-hinweis { margin:8px 14px 4px; font-size:12px; color:var(--muted); line-height:1.4; }
   .sheet-trenner { height:1px; background:var(--line); margin:8px 12px; }
+  .playlink { display:flex; align-items:center; justify-content:center; gap:8px; margin:12px auto 0;
+    width:max-content; padding:8px 16px; border-radius:999px; border:1px solid var(--line, #d8dde6);
+    color:inherit; text-decoration:none; font-size:14px; font-weight:500; }
+  .playlink.hide { display:none; }
   .fuss { margin:14px 0 0; text-align:center; font-size:12.5px; }
   .fuss a { color:var(--muted); }
   .linkish {
@@ -564,6 +568,10 @@
       <p class="note" id="t-privacy"></p>
 
       <button class="primary" id="enter"></button>
+      <a id="playLink" class="playlink hide" href="https://play.google.com/store/apps/details?id=app.diralo.twa" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 2.5v19l10-9.5L4 2.5zm11.4 10.8 2.6 2.5-11 6.2 8.4-8.7zm0-2.6L7 2l11 6.2-2.6 2.5zM19.3 9l2.7 1.5c.8.5.8 1.6 0 2.1L19.3 15l-2.9-3 2.9-3z"/></svg>
+        <span>Google Play</span>
+      </a>
       <p class="fuss"><a href="/impressum" id="f-impressum">Impressum</a> &middot; <a href="/datenschutz" id="f-daten">Datenschutz</a> &middot; <a href="/agb" id="f-agb">AGB</a> &middot; <a href="/widerruf" id="f-widerruf">Widerruf</a> &middot; <a href="/preise" id="f-preise">Preise</a></p>
     </div>
   </section>
@@ -898,6 +906,8 @@ $("enter").onclick = () => {
 let installEreignis = null;
 const schonInstalliert = () =>
   window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const PLAY_URL = "https://play.google.com/store/apps/details?id=app.diralo.twa";
+const istAndroid = () => /android/i.test(navigator.userAgent);
 const istIos = () =>
   /iphone|ipad|ipod/i.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -932,11 +942,16 @@ function zeigeInstallBalken() {
   if (schonInstalliert()) return;
   if ($("chat").classList.contains("hide")) return;   /* erst im Chat */
   try { if (localStorage.getItem("diralo-install")) return; } catch {}
-  if (!installEreignis && !istIos()) return;          /* sonst nichts anzubieten */
+  if (!installEreignis && !istIos() && !istAndroid()) return; /* sonst nichts anzubieten */
 
   $("installTitle").textContent = T("installTitle");
   $("installLater").textContent = T("later");
-  if (installEreignis) {
+  if (istAndroid()) {
+    /* Android: die echte App aus Google Play statt der Web-Installation. */
+    $("installGo").textContent = "Google Play";
+    $("installGo").classList.remove("hide");
+    $("installHint").classList.add("hide");
+  } else if (installEreignis) {
     $("installGo").textContent = T("installBtn");
     $("installGo").classList.remove("hide");
     $("installHint").classList.add("hide");
@@ -950,7 +965,15 @@ function zeigeInstallBalken() {
 }
 
 $("installLater").onclick = () => installBalkenWeg(true);
+/* Google-Play-Knopf auf der Startseite: nicht auf iPhones und nicht in
+   der schon installierten Web-App. */
+if (!istIos() && !schonInstalliert()) $("playLink").classList.remove("hide");
 $("installGo").onclick = async () => {
+  if (istAndroid()) {
+    installBalkenWeg(true);
+    window.open(PLAY_URL, "_blank", "noopener");
+    return;
+  }
   const e = installEreignis;
   installEreignis = null;
   installBalkenWeg(false);
