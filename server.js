@@ -1295,7 +1295,6 @@ Antworte NUR mit JSON, ohne Markdown: {"lautschrift":"<Aussprache in ${ziel}-Sch
 /* ------------------------------- Push ------------------------------- */
 /* Schickt jedem angemeldeten Geraet im Raum die Nachricht in seiner Sprache. */
 async function pushToRoom(room, msg) {
-  if (!pushReady) return;
   let subs = [];
   try {
     subs = await store.getSubscriptions(room);
@@ -1306,8 +1305,18 @@ async function pushToRoom(room, msg) {
 
   for (const sub of subs) {
     if (sub.device === msg.device) continue; // nicht an den Absender
+    const istExpo = !!sub.data?.expo;
+    if (!istExpo && !pushReady) continue;    // Web-Push braucht VAPID
     try {
       const body = await ensure(room, msg.id, clean(sub.lang));
+      if (istExpo) {
+        await expoPush(sub, {
+          title: msg.name,
+          body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : "🎤")),
+          room, id: msg.id,
+        });
+        continue;
+      }
       const payload = JSON.stringify({
         title: msg.name,
         body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : "")),
@@ -1326,7 +1335,62 @@ async function pushToRoom(room, msg) {
   }
 }
 
+/* Native App: Benachrichtigungen laufen ueber den Expo-Push-Dienst, der
+   sie an Firebase (Android) weiterreicht. Ein abgemeldetes Geraet meldet
+   Expo als DeviceNotRegistered - dann fliegt die Anmeldung raus. */
+const EXPO_TOKEN_RE = /^Expo(nent)?PushToken\[[A-Za-z0-9_-]{10,}\]$/;
+async function expoPush(sub, { title, body, room, id }) {
+  const r = await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      to: sub.data.expo, title, body: String(body || "").slice(0, 300),
+      data: { room, id }, sound: "default", channelId: "nachrichten", priority: "high",
+    }),
+  });
+  const j = await r.json().catch(() => ({}));
+  const t = j?.data;
+  if (t?.status === "error") {
+    if (t.details?.error === "DeviceNotRegistered") {
+      await store.deleteSubscription(sub.endpoint).catch(() => {});
+    } else {
+      console.error("Expo-Push fehlgeschlagen:", t.message || t.details?.error);
+    }
+  }
+}
+
 /* ------------------------------ HTTP API ------------------------------ */
+/* Anmeldung der nativen App. Wie die Glocke im Browser gilt sie fuer
+   alle Chats, die die App mitschickt. */
+app.post("/api/expo-push", async (req, res) => {
+  const { token, rooms, device, name, lang } = req.body || {};
+  if (!EXPO_TOKEN_RE.test(String(token || "")) || !device) {
+    return res.status(400).json({ error: "Angaben unvollstaendig" });
+  }
+  const liste = [...new Set(
+    (Array.isArray(rooms) ? rooms : [])
+      .map((r) => String(r || "").toLowerCase().trim().slice(0, 60))
+      .filter(Boolean)
+  )].slice(0, 20);
+  if (!liste.length) return res.status(400).json({ error: "Kein Chat angegeben" });
+  try {
+    for (const r of liste) {
+      await store.saveSubscription({
+        endpoint: "expo:" + token,
+        room: r,
+        device: String(device).slice(0, 60),
+        name: String(name || "Gast").slice(0, 40),
+        lang: clean(lang),
+        data: { expo: token },
+      });
+    }
+    res.json({ ok: true, chats: liste.length });
+  } catch (err) {
+    console.error("Expo-Anmeldung fehlgeschlagen:", err.message);
+    res.status(500).json({ error: "Anmeldung fehlgeschlagen" });
+  }
+});
+
 app.get("/api/push-key", (_req, res) => {
   res.json({ enabled: pushReady, key: VAPID_PUBLIC || null });
 });
