@@ -67,6 +67,11 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    updTitel: "Neue Version verfügbar",
+    updText: "Diralo wurde verbessert. Tippe auf „Aktualisieren“ – das dauert nur einen Moment.",
+    updKnopf: "Aktualisieren",
+    updSpaeter: "Später",
+    updPflicht: "Dieses Update ist nötig, damit Diralo weiter funktioniert.",
     autoAn: "Neue Nachrichten werden jetzt vorgelesen.",
     autoAus: "Automatisches Vorlesen ist aus.",
     keineStimme: "Für diese Sprache ist keine Stimme installiert. Android-Einstellungen → Sprachausgabe (Text-in-Sprache) → Sprachdaten installieren.",
@@ -179,6 +184,11 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    updTitel: "Nova versão disponível",
+    updText: "O Diralo foi melhorado. Toca em „Atualizar“ – demora só um momento.",
+    updKnopf: "Atualizar",
+    updSpaeter: "Mais tarde",
+    updPflicht: "Esta atualização é necessária para o Diralo continuar a funcionar.",
     autoAn: "As novas mensagens vão ser lidas em voz alta.",
     autoAus: "A leitura automática está desligada.",
     keineStimme: "Não há voz instalada para esta língua. Definições do Android → Saída de texto para voz → instalar dados de voz.",
@@ -291,6 +301,11 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    updTitel: "New version available",
+    updText: "Diralo has been improved. Tap “Update” – it only takes a moment.",
+    updKnopf: "Update",
+    updSpaeter: "Later",
+    updPflicht: "This update is required for Diralo to keep working.",
     autoAn: "New messages will now be read aloud.",
     autoAus: "Automatic read-aloud is off.",
     keineStimme: "No voice is installed for this language. Android settings → Text-to-speech output → install voice data.",
@@ -403,6 +418,11 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    updTitel: "Nueva versión disponible",
+    updText: "Diralo ha mejorado. Toca «Actualizar»: solo tarda un momento.",
+    updKnopf: "Actualizar",
+    updSpaeter: "Más tarde",
+    updPflicht: "Esta actualización es necesaria para que Diralo siga funcionando.",
     autoAn: "Los mensajes nuevos se leerán en voz alta.",
     autoAus: "La lectura automática está desactivada.",
     keineStimme: "No hay ninguna voz instalada para este idioma. Ajustes de Android → Salida de texto a voz → instalar datos de voz.",
@@ -515,6 +535,11 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    updTitel: "Nouvelle version disponible",
+    updText: "Diralo a été amélioré. Appuie sur « Mettre à jour » – cela ne prend qu'un instant.",
+    updKnopf: "Mettre à jour",
+    updSpaeter: "Plus tard",
+    updPflicht: "Cette mise à jour est nécessaire pour que Diralo continue de fonctionner.",
     autoAn: "Les nouveaux messages seront lus à voix haute.",
     autoAus: "La lecture automatique est désactivée.",
     keineStimme: "Aucune voix n'est installée pour cette langue. Paramètres Android → Synthèse vocale → installer les données vocales.",
@@ -627,6 +652,11 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    updTitel: "Nuova versione disponibile",
+    updText: "Diralo è stato migliorato. Tocca «Aggiorna»: ci vuole solo un attimo.",
+    updKnopf: "Aggiorna",
+    updSpaeter: "Più tardi",
+    updPflicht: "Questo aggiornamento è necessario perché Diralo continui a funzionare.",
     autoAn: "I nuovi messaggi verranno letti ad alta voce.",
     autoAus: "La lettura automatica è disattivata.",
     keineStimme: "Nessuna voce installata per questa lingua. Impostazioni Android → Sintesi vocale → installa dati vocali.",
@@ -1032,6 +1062,55 @@ function Haupt() {
 }
 
 /* ----------------------------- Startseite ------------------------- */
+/* Update-Hinweis: Beim Start fragt die App den Server nach der neuesten
+   Version. Ist die installierte aelter, bieten wir das Update an; unter
+   der Mindestversion ist es Pflicht (Fenster laesst sich nicht schliessen). */
+const PLAY_ID = Application.applicationId || "app.diralo.twa";
+function playStoreOeffnen() {
+  Linking.openURL(`market://details?id=${PLAY_ID}`)
+    .catch(() => Linking.openURL(`https://play.google.com/store/apps/details?id=${PLAY_ID}`));
+}
+function useUpdateStand() {
+  const [stand, setStand] = useState(null);   // null | "neu" | "pflicht"
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    const meine = Number(Application.nativeBuildVersion || 0);
+    if (!meine) return;
+    fetch(`${SERVER_URL}/api/app-version`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((v) => {
+        if (!v) return;
+        if (meine < Number(v.minimum || 0)) setStand("pflicht");
+        else if (meine < Number(v.aktuell || 0)) setStand("neu");
+      })
+      .catch(() => {});
+  }, []);
+  return [stand, setStand];
+}
+
+function UpdateHinweis() {
+  const [stand, setStand] = useUpdateStand();
+  if (!stand) return null;
+  const pflicht = stand === "pflicht";
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={() => { if (!pflicht) setStand(null); }}>
+      <View style={s.modalHinten} />
+      <View style={s.benennenBox}>
+        <Text style={s.modalTitel}>⬆️ {t("updTitel")}</Text>
+        <Text style={[s.wegText, { marginTop: 8 }]}>{pflicht ? t("updPflicht") : t("updText")}</Text>
+        <Pressable style={[s.btnPrimary, { marginTop: 14 }]} onPress={playStoreOeffnen}>
+          <Text style={s.btnPrimaryTxt}>{t("updKnopf")}</Text>
+        </Pressable>
+        {!pflicht && (
+          <Pressable style={{ marginTop: 12, alignSelf: "center", padding: 6 }} onPress={() => setStand(null)} hitSlop={8}>
+            <Text style={{ color: FARBE.grau, fontSize: 15 }}>{t("updSpaeter")}</Text>
+          </Pressable>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
 function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, onHilfe }) {
   const [code, setCode] = useState("");
   const [chats, setChats] = useState([]);
@@ -1177,6 +1256,7 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, on
       <Text style={s.note}>
         {t("datenschutz")}
       </Text>
+      <UpdateHinweis />
     </ScrollView>
   );
 }
