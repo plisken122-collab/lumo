@@ -67,6 +67,7 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    imChat: "im Chat",
     einlTitel: "Du hast eine Einladung bekommen?",
     einlText: "Gib den Chat-Code aus dem Link ein, dann landest du im selben Chat wie deine Person.",
     neuTitel: "Du möchtest jemanden einladen?",
@@ -175,6 +176,7 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    imChat: "no chat",
     einlTitel: "Recebeste um convite?",
     einlText: "Escreve o código do chat que vem no link e entras no mesmo chat que a outra pessoa.",
     neuTitel: "Queres convidar alguém?",
@@ -283,6 +285,7 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    imChat: "in the chat",
     einlTitel: "Did you get an invitation?",
     einlText: "Enter the chat code from the link and you'll join the same chat as your person.",
     neuTitel: "Want to invite someone?",
@@ -391,6 +394,7 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    imChat: "en el chat",
     einlTitel: "¿Has recibido una invitación?",
     einlText: "Escribe el código del chat que viene en el enlace y entrarás en el mismo chat que la otra persona.",
     neuTitel: "¿Quieres invitar a alguien?",
@@ -499,6 +503,7 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    imChat: "dans le chat",
     einlTitel: "Tu as reçu une invitation ?",
     einlText: "Saisis le code du chat qui figure dans le lien et tu rejoins le même chat que l'autre personne.",
     neuTitel: "Tu veux inviter quelqu'un ?",
@@ -607,6 +612,7 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    imChat: "in chat",
     einlTitel: "Hai ricevuto un invito?",
     einlText: "Inserisci il codice chat che trovi nel link ed entri nella stessa chat dell'altra persona.",
     neuTitel: "Vuoi invitare qualcuno?",
@@ -1705,6 +1711,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   /* Bis zu welchem Zeitpunkt das Gegenueber gelesen hat -> ✓✓ */
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
+  const [anwesend, setAnwesend] = useState([]);   // Namen der anderen, die gerade im Chat sind
   const [chatName, setChatName] = useState("");
   useEffect(() => { chatsLaden().then((l) => setChatName(l.find((c) => c.code === raum)?.name || "")); }, [raum]);
 
@@ -1755,7 +1762,15 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
       if (Number.isFinite(b)) setGelesenBis((alt) => Math.max(alt, b));
     });
     /* Zurueck in die App, waehrend der Chat offen ist: jetzt gelesen. */
-    const appSub = AppState.addEventListener("change", (st) => { if (st === "active") gelesenMelden(); });
+    socket.on("anwesend", (liste) => {
+      setAnwesend((Array.isArray(liste) ? liste : []).filter((w) => w.device !== device).map((w) => w.name));
+    });
+    /* Im Hintergrund gilt man nicht als "im Chat" - Verbindung trennen,
+       beim Zurueckkommen neu verbinden (meldet sich dabei neu an). */
+    const appSub = AppState.addEventListener("change", (st) => {
+      if (st === "active") { if (!socket.connected) socket.connect(); gelesenMelden(); }
+      else if (st === "background") socket.disconnect();
+    });
     /* Uebersetzung fuer EINE Sprache trifft nach ein paar Sekunden ein. */
     socket.on("translated", ({ id, lang: zl, text: t }) => {
       setNachrichten((alt) => alt.map((m) =>
@@ -1973,7 +1988,11 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
         <View style={{ flex: 1 }}>
           <Text style={s.chatTitel} numberOfLines={1}>{chatName || "Chat " + raum}</Text>
-          <Text style={s.chatSub}>{verbunden ? t("verbunden") : t("verbinde")} · {t("du")}: {name} ({lang})</Text>
+          <Text style={s.chatSub} numberOfLines={1}>
+            {!verbunden ? t("verbinde")
+              : anwesend.length ? `🟢 ${[...new Set(anwesend)].join(", ")} · ${t("imChat")}`
+              : `${t("verbunden")} · ${t("du")}: ${name}`}
+          </Text>
         </View>
         <Pressable onPress={() => setAboOffen(true)} style={s.plusKnopf} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>★</Text>
