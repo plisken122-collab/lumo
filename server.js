@@ -1518,6 +1518,16 @@ const HILFE_PRO_TAG = Number(process.env.HILFE_PRO_TAG || 800);
 
 /* Natuerliche Stimme (Google Cloud TTS). POST liefert eine Kennung, GET
    die MP3 dazu - so steht der Text nie in einer Adresse. */
+/* Neueste App-Version (versionCode). Die App vergleicht beim Start und
+   bietet das Update an; unter "minimum" ist es Pflicht. Ueber die
+   Umgebung einstellbar, ohne neuen Server-Code. */
+app.get("/api/app-version", (_req, res) => {
+  res.json({
+    aktuell: Number(process.env.APP_VERSION_AKTUELL || 6),
+    minimum: Number(process.env.APP_VERSION_MINIMUM || 0),
+  });
+});
+
 app.post("/api/sprechen", async (req, res) => {
   if (!stimme.spracheAn) return res.status(503).json({ error: "Stimmen aus" });
   const text = String(req.body?.text || "").trim().slice(0, 600);
