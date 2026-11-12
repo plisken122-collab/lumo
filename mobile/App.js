@@ -67,6 +67,17 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    einlTitel: "Du hast eine Einladung bekommen?",
+    einlText: "Gib den Chat-Code aus dem Link ein, dann landest du im selben Chat wie deine Person.",
+    neuTitel: "Du möchtest jemanden einladen?",
+    neuText: "Das startet einen neuen, leeren Chat. Danach schickst du deiner Person den Link.",
+    leerTitel: "Dieser Chat ist neu",
+    leerText2: "Hier ist noch niemand. Schick deiner Person den Link, damit sie dazukommt.",
+    falschHier: "Du hast selbst eine Einladung bekommen? Dann bist du hier falsch.",
+    codeEingeben: "Zurück und Code eingeben",
+    umbenennen: "Name für diesen Chat",
+    chatNameBsp: "z. B. Maria 💕",
+    speichern: "Speichern",
     fuerMich: "🙈 Für mich löschen",
     geteiltTitel: "Geteilt – übersetzt",
     geteiltLaedt: "Wird übersetzt …",
@@ -164,6 +175,17 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    einlTitel: "Recebeste um convite?",
+    einlText: "Escreve o código do chat que vem no link e entras no mesmo chat que a outra pessoa.",
+    neuTitel: "Queres convidar alguém?",
+    neuText: "Isto cria um chat novo e vazio. Depois envias o link à outra pessoa.",
+    leerTitel: "Este chat é novo",
+    leerText2: "Ainda não está cá ninguém. Envia o link à tua pessoa para ela entrar.",
+    falschHier: "Recebeste tu um convite? Então estás no sítio errado.",
+    codeEingeben: "Voltar e escrever o código",
+    umbenennen: "Nome para este chat",
+    chatNameBsp: "p. ex. Carsten 💕",
+    speichern: "Guardar",
     fuerMich: "🙈 Apagar para mim",
     geteiltTitel: "Partilhado – traduzido",
     geteiltLaedt: "A traduzir …",
@@ -261,6 +283,17 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    einlTitel: "Did you get an invitation?",
+    einlText: "Enter the chat code from the link and you'll join the same chat as your person.",
+    neuTitel: "Want to invite someone?",
+    neuText: "This starts a new, empty chat. Then you send your person the link.",
+    leerTitel: "This chat is new",
+    leerText2: "Nobody is here yet. Send your person the link so they can join.",
+    falschHier: "Did you get an invitation yourself? Then you're in the wrong place.",
+    codeEingeben: "Go back and enter the code",
+    umbenennen: "Name for this chat",
+    chatNameBsp: "e.g. Maria 💕",
+    speichern: "Save",
     fuerMich: "🙈 Delete for me",
     geteiltTitel: "Shared – translated",
     geteiltLaedt: "Translating …",
@@ -358,6 +391,17 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    einlTitel: "¿Has recibido una invitación?",
+    einlText: "Escribe el código del chat que viene en el enlace y entrarás en el mismo chat que la otra persona.",
+    neuTitel: "¿Quieres invitar a alguien?",
+    neuText: "Esto crea un chat nuevo y vacío. Después envías el enlace a tu persona.",
+    leerTitel: "Este chat es nuevo",
+    leerText2: "Todavía no hay nadie. Envía el enlace a tu persona para que entre.",
+    falschHier: "¿Has recibido tú una invitación? Entonces estás en el sitio equivocado.",
+    codeEingeben: "Volver y escribir el código",
+    umbenennen: "Nombre para este chat",
+    chatNameBsp: "p. ej. María 💕",
+    speichern: "Guardar",
     fuerMich: "🙈 Borrar para mí",
     geteiltTitel: "Compartido – traducido",
     geteiltLaedt: "Traduciendo …",
@@ -455,6 +499,17 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    einlTitel: "Tu as reçu une invitation ?",
+    einlText: "Saisis le code du chat qui figure dans le lien et tu rejoins le même chat que l'autre personne.",
+    neuTitel: "Tu veux inviter quelqu'un ?",
+    neuText: "Cela crée un nouveau chat vide. Ensuite tu envoies le lien à ta personne.",
+    leerTitel: "Ce chat est nouveau",
+    leerText2: "Personne n'est encore là. Envoie le lien à ta personne pour qu'elle rejoigne.",
+    falschHier: "Tu as reçu toi-même une invitation ? Alors tu n'es pas au bon endroit.",
+    codeEingeben: "Revenir et saisir le code",
+    umbenennen: "Nom de ce chat",
+    chatNameBsp: "p. ex. Marie 💕",
+    speichern: "Enregistrer",
     fuerMich: "🙈 Supprimer pour moi",
     geteiltTitel: "Partagé – traduit",
     geteiltLaedt: "Traduction …",
@@ -552,6 +607,17 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    einlTitel: "Hai ricevuto un invito?",
+    einlText: "Inserisci il codice chat che trovi nel link ed entri nella stessa chat dell'altra persona.",
+    neuTitel: "Vuoi invitare qualcuno?",
+    neuText: "Così si crea una chat nuova e vuota. Poi mandi il link alla tua persona.",
+    leerTitel: "Questa chat è nuova",
+    leerText2: "Non c'è ancora nessuno. Manda il link alla tua persona perché possa entrare.",
+    falschHier: "Hai ricevuto tu un invito? Allora sei nel posto sbagliato.",
+    codeEingeben: "Torna indietro e inserisci il codice",
+    umbenennen: "Nome di questa chat",
+    chatNameBsp: "es. Maria 💕",
+    speichern: "Salva",
     fuerMich: "🙈 Elimina per me",
     geteiltTitel: "Condiviso – tradotto",
     geteiltLaedt: "Traduzione …",
@@ -691,6 +757,12 @@ async function chatMerken(code) {
   if (da) da.zuletzt = Date.now(); else liste.push({ code, name: "", zuletzt: Date.now() });
   liste.sort((a, b) => (b.zuletzt || 0) - (a.zuletzt || 0));
   try { await AsyncStorage.setItem(CHATS_KEY, JSON.stringify(liste.slice(0, 50))); } catch {}
+}
+async function chatBenennen(code, name) {
+  const liste = await chatsLaden();
+  const da = liste.find((c) => c.code === code);
+  if (da) da.name = String(name || "").trim().slice(0, 40);
+  try { await AsyncStorage.setItem(CHATS_KEY, JSON.stringify(liste)); } catch {}
 }
 async function chatVergessen(code) {
   const liste = (await chatsLaden()).filter((c) => c.code !== code);
@@ -941,6 +1013,7 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, on
   const [chats, setChats] = useState([]);
   const [neues, setNeues] = useState({});
   const [sprachWahl, setSprachWahl] = useState(false);
+  const [benennen, setBenennen] = useState(null);   // { code, name }
   const kannLos = name.trim().length > 0;
 
   const laden = useCallback(async () => {
@@ -987,35 +1060,35 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, on
       />
       <View style={{ height: 20 }} />
 
-      <Pressable
-        style={[s.btnPrimary, !kannLos && s.btnAus]}
-        disabled={!kannLos} onPress={onStart}
-      >
-        <Text style={s.btnPrimaryTxt}>{t("neuerChat")}</Text>
-      </Pressable>
-
-      <View style={s.hilfeRow}>
-        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("dolmetsch")}>
-          <Text style={s.hilfeKnopfTxt}>{t("dolmetscher")}</Text>
-        </Pressable>
-        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("foto")}>
-          <Text style={s.hilfeKnopfTxt}>{t("fotoKnopf")}</Text>
-        </Pressable>
+      {/* Zwei klar getrennte Wege: Wer eine Einladung bekommen hat, soll
+          nicht aus Versehen einen neuen, leeren Chat starten. */}
+      <View style={s.wegKarte}>
+        <Text style={s.wegTitel}>{t("einlTitel")}</Text>
+        <Text style={s.wegText}>{t("einlText")}</Text>
+        <View style={s.joinRow}>
+          <TextInput
+            style={[s.input, s.joinInput]} value={code} onChangeText={setCode}
+            placeholder={t("chatCode")} placeholderTextColor={FARBE.grau}
+            autoCapitalize="none" maxLength={60}
+          />
+          <Pressable
+            style={[s.btnGold, (!kannLos || !code.trim()) && s.btnAus]}
+            disabled={!kannLos || !code.trim()}
+            onPress={() => onJoin(code)}
+          >
+            <Text style={s.btnGoldTxt}>{t("beitreten")}</Text>
+          </Pressable>
+        </View>
       </View>
 
-      <Text style={s.oder}>{t("oderBeitreten")}</Text>
-      <View style={s.joinRow}>
-        <TextInput
-          style={[s.input, s.joinInput]} value={code} onChangeText={setCode}
-          placeholder={t("chatCode")} placeholderTextColor={FARBE.grau}
-          autoCapitalize="none" maxLength={60}
-        />
+      <View style={s.wegKarte}>
+        <Text style={s.wegTitel}>{t("neuTitel")}</Text>
+        <Text style={s.wegText}>{t("neuText")}</Text>
         <Pressable
-          style={[s.btnGold, (!kannLos || !code.trim()) && s.btnAus]}
-          disabled={!kannLos || !code.trim()}
-          onPress={() => onJoin(code)}
+          style={[s.btnPrimary, !kannLos && s.btnAus]}
+          disabled={!kannLos} onPress={onStart}
         >
-          <Text style={s.btnGoldTxt}>{t("beitreten")}</Text>
+          <Text style={s.btnPrimaryTxt}>{t("neuerChat")}</Text>
         </Pressable>
       </View>
 
@@ -1029,9 +1102,16 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, on
                 <Pressable
                   style={[s.input, s.chatOffen, !kannLos && s.btnAus]}
                   disabled={!kannLos} onPress={() => onJoin(c.code)}
+                  onLongPress={() => setBenennen({ code: c.code, name: c.name || "" })}
                 >
-                  <Text style={s.chatOffenTxt} numberOfLines={1}>#{c.code}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.chatOffenTxt} numberOfLines={1}>{c.name || "#" + c.code}</Text>
+                    {c.name ? <Text style={s.chatCodeKlein} numberOfLines={1}>#{c.code}</Text> : null}
+                  </View>
                   {n > 0 && <View style={s.neu}><Text style={s.neuTxt}>{n > 99 ? "99+" : n}</Text></View>}
+                </Pressable>
+                <Pressable style={[s.input, s.chatWeg]} onPress={() => setBenennen({ code: c.code, name: c.name || "" })} hitSlop={4}>
+                  <Text style={s.chatWegTxt}>✎</Text>
                 </Pressable>
                 <Pressable style={[s.input, s.chatWeg]} onPress={() => vergessen(c)} hitSlop={4}>
                   <Text style={s.chatWegTxt}>✕</Text>
@@ -1041,6 +1121,34 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, on
           })}
         </View>
       )}
+
+      <View style={s.hilfeRow}>
+        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("dolmetsch")}>
+          <Text style={s.hilfeKnopfTxt}>{t("dolmetscher")}</Text>
+        </Pressable>
+        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("foto")}>
+          <Text style={s.hilfeKnopfTxt}>{t("fotoKnopf")}</Text>
+        </Pressable>
+      </View>
+
+      <Modal visible={Boolean(benennen)} transparent animationType="fade" onRequestClose={() => setBenennen(null)}>
+        <Pressable style={s.modalHinten} onPress={() => setBenennen(null)} />
+        <View style={s.benennenBox}>
+          <Text style={s.modalTitel}>{t("umbenennen")}</Text>
+          <Text style={s.chatCodeKlein}>#{benennen?.code}</Text>
+          <TextInput
+            style={[s.input, { marginTop: 10 }]} autoFocus maxLength={40}
+            value={benennen?.name || ""} onChangeText={(v) => setBenennen((b) => ({ ...b, name: v }))}
+            placeholder={t("chatNameBsp")} placeholderTextColor={FARBE.grau}
+          />
+          <Pressable
+            style={[s.btnPrimary, { marginTop: 12 }]}
+            onPress={async () => { await chatBenennen(benennen.code, benennen.name); setBenennen(null); laden(); }}
+          >
+            <Text style={s.btnPrimaryTxt}>{t("speichern")}</Text>
+          </Pressable>
+        </View>
+      </Modal>
 
       <Text style={s.note}>
         {t("datenschutz")}
@@ -1597,6 +1705,8 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   /* Bis zu welchem Zeitpunkt das Gegenueber gelesen hat -> ✓✓ */
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
+  const [chatName, setChatName] = useState("");
+  useEffect(() => { chatsLaden().then((l) => setChatName(l.find((c) => c.code === raum)?.name || "")); }, [raum]);
 
   useEffect(() => {
     const socket = io(SERVER_URL, { transports: ["websocket"] });
@@ -1862,7 +1972,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
       <View style={s.chatHead}>
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={s.chatTitel}>Chat {raum}</Text>
+          <Text style={s.chatTitel} numberOfLines={1}>{chatName || "Chat " + raum}</Text>
           <Text style={s.chatSub}>{verbunden ? t("verbunden") : t("verbinde")} · {t("du")}: {name} ({lang})</Text>
         </View>
         <Pressable onPress={() => setAboOffen(true)} style={s.plusKnopf} hitSlop={8}>
@@ -1904,7 +2014,17 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
         onScroll={(e) => { amEnde.current = e.nativeEvent.contentOffset.y < 150; }}
         scrollEventThrottle={100}
         ListEmptyComponent={
-          <Text style={[s.leer, { transform: [{ scaleY: -1 }] }]}>{t("leer")}</Text>
+          <View style={[s.leerBox, { transform: [{ scaleY: -1 }] }]}>
+            <Text style={s.leerTitel}>{t("leerTitel")}</Text>
+            <Text style={s.leerText}>{t("leerText2")}</Text>
+            <Pressable style={[s.btnPrimary, { alignSelf: "stretch", marginTop: 14 }]} onPress={einladen}>
+              <Text style={s.btnPrimaryTxt}>{t("einladen")}</Text>
+            </Pressable>
+            <Text style={[s.leerText, { marginTop: 22 }]}>{t("falschHier")}</Text>
+            <Pressable style={s.leerZurueck} onPress={onBack}>
+              <Text style={s.leerZurueckTxt}>‹ {t("codeEingeben")}</Text>
+            </Pressable>
+          </View>
         }
       />
 
@@ -2419,6 +2539,16 @@ const s = StyleSheet.create({
   fotoKarte: { backgroundColor: FARBE.weiss, borderRadius: 14, padding: 14, marginTop: 14, borderWidth: 1, borderColor: FARBE.grauHell },
   fotoKarteTitel: { fontSize: 12.5, color: FARBE.grau, fontWeight: "800", marginBottom: 6 },
   fotoKarteTxt: { fontSize: 16, color: FARBE.text, lineHeight: 23 },
+  wegKarte: { backgroundColor: FARBE.weiss, borderRadius: 16, padding: 16, marginTop: 14, borderWidth: 1, borderColor: FARBE.grauHell },
+  wegTitel: { fontSize: 16.5, fontWeight: "800", color: FARBE.navy },
+  wegText: { fontSize: 13.5, color: FARBE.grau, marginTop: 4, marginBottom: 12, lineHeight: 19 },
+  chatCodeKlein: { fontSize: 12, color: FARBE.grau, marginTop: 1 },
+  benennenBox: { position: "absolute", left: 20, right: 20, top: "25%", backgroundColor: FARBE.weiss, borderRadius: 18, padding: 18 },
+  leerBox: { alignItems: "center", paddingHorizontal: 24, paddingVertical: 30 },
+  leerTitel: { fontSize: 20, fontWeight: "800", color: FARBE.navy, textAlign: "center" },
+  leerText: { fontSize: 14.5, color: FARBE.grau, textAlign: "center", marginTop: 8, lineHeight: 21 },
+  leerZurueck: { marginTop: 10, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: FARBE.navy },
+  leerZurueckTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 14.5 },
   meta: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 3 },
   metaZeit: { fontSize: 11, color: FARBE.grau },
   haken: { fontSize: 12, color: "#aeb9cc", fontWeight: "700", letterSpacing: -2 },
