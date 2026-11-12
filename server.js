@@ -1071,7 +1071,15 @@ const costOf = (u) => (u.inTokens / 1e6) * PRICE_IN + (u.outTokens / 1e6) * PRIC
    Schlaegt die Abfrage fehl, wird durchgelassen. Lieber eine Handvoll
    Uebersetzungen zu viel als ein Chat, der wegen einer klemmenden
    Datenbank verstummt. */
+/* Chats ohne Monatsgrenze, z. B. der eigene des Betreibers. Kommagetrennt
+   in RAEUME_OHNE_GRENZE; ohne Angabe gilt "algarve". */
+const OHNE_GRENZE = new Set(
+  String(process.env.RAEUME_OHNE_GRENZE ?? "algarve")
+    .split(",").map((r) => r.trim().toLowerCase()).filter(Boolean)
+);
+
 async function imKontingent(room) {
+  if (OHNE_GRENZE.has(String(room || "").toLowerCase())) return true;
   const monat = monatsKennung();
 
   /* Gezaehlt wird je Abo, nicht je Chat: Alle Chats eines Abos teilen
