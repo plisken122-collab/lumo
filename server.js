@@ -1451,6 +1451,66 @@ app.post("/api/unsubscribe", async (req, res) => {
   }
 });
 
+/* ---------------------- Dolmetscher und Foto ----------------------
+   Zwei Helfer der nativen App, die ohne Chat auskommen:
+   - Dolmetscher: zwei Menschen am selben Handy, jeder spricht seine
+     Sprache, die App uebersetzt Satz fuer Satz.
+   - Foto: Speisekarte, Brief, Schild fotografieren - Text lesen,
+     uebersetzen und auf Wunsch einfach erklaeren.
+   Beides kostet Modellaufrufe und haengt an keinem Chat-Kontingent,
+   deshalb je Geraet und je Tag eng begrenzt. Nichts wird gespeichert. */
+const HILFE_PRO_TAG = Number(process.env.HILFE_PRO_TAG || 800);
+
+app.post("/api/dolmetsch", express.json({ limit: "20kb" }), async (req, res) => {
+  const text = String(req.body?.text || "").trim().slice(0, 800);
+  const von = clean(req.body?.von), nach = clean(req.body?.nach);
+  const wer = String(req.body?.device || req.ip).slice(0, 60);
+  if (!text || !von || !nach) return res.status(400).json({ error: "Angaben unvollstaendig" });
+  if (!take(`dolm:${wer}`, 40, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
+  const vonName = LANG_NAMES[von] || von, nachName = LANG_NAMES[nach] || nach;
+  const prompt = `Du bist ein Dolmetscher in einem Gespraech von Angesicht zu Angesicht. Der Text ist gesprochene Sprache auf ${vonName} (${von}), von einer Spracherkennung mitgeschrieben - kleine Erkennungsfehler sinnvoll ausgleichen. Uebersetze natuerlich und muendlich nach ${nachName} (${nach}). Erklaere nichts.
+Text: """${text}"""
+Antworte NUR mit JSON, ohne Markdown: {"uebersetzt":"<Text auf ${nach}>"}`;
+  try {
+    const { result: out, usage } = await claude(prompt);
+    store.logUsage({ room: "__dolmetsch__", target: nach, chars: text.length,
+      inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+    res.json({ uebersetzt: String(out.uebersetzt || "").slice(0, 1500) });
+  } catch (err) {
+    console.error("Dolmetscher fehlgeschlagen:", err.message);
+    res.status(502).json({ error: "Uebersetzung fehlgeschlagen" });
+  }
+});
+
+app.post("/api/foto-text", express.json({ limit: "8mb" }), async (req, res) => {
+  const bild = String(req.body?.bild || "");
+  const lang = clean(req.body?.lang);
+  const erklaeren = req.body?.erklaeren === true;
+  const wer = String(req.body?.device || req.ip).slice(0, 60);
+  if (!bild || !lang || bild.length > 7_500_000 || !/^[A-Za-z0-9+/=]+$/.test(bild)) {
+    return res.status(400).json({ error: "Angaben unvollstaendig" });
+  }
+  if (!take(`foto:${wer}`, 10, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
+  const ziel = LANG_NAMES[lang] || lang;
+  const prompt = `Lies allen Text auf diesem Foto (z. B. Speisekarte, Brief, Schild, Beipackzettel). Uebersetze ihn vollstaendig und gut lesbar nach ${ziel} (${lang}) - Absaetze und Aufzaehlungen beibehalten.${erklaeren ? ` Schreibe ausserdem eine kurze, einfache Erklaerung auf ${ziel}: Worum geht es, was muss der Leser tun oder beachten, gibt es Fristen oder Betraege?` : ""} Ist kein Text zu sehen, gib leere Felder zurueck.
+Antworte NUR mit JSON, ohne Markdown: {"original":"<gelesener Text>","uebersetzt":"<Text auf ${lang}>"${erklaeren ? `,"erklaerung":"<kurze Erklaerung auf ${lang}>"` : ""}}`;
+  try {
+    const { result: out, usage } = await claudeBild(bild, "image/jpeg", prompt);
+    store.logUsage({ room: "__foto__", target: lang, chars: Math.max(1, String(out.original || "").length),
+      inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+    res.json({
+      original: String(out.original || "").slice(0, 6000),
+      uebersetzt: String(out.uebersetzt || "").slice(0, 6000),
+      erklaerung: erklaeren ? String(out.erklaerung || "").slice(0, 2000) : "",
+    });
+  } catch (err) {
+    console.error("Foto-Text fehlgeschlagen:", err.message);
+    res.status(502).json({ error: "Foto konnte nicht gelesen werden" });
+  }
+});
+
 /* ------------------------ Sprachnachrichten ------------------------
    Die Aufnahme kommt als base64 in JSON. Das blaeht sie um ein Drittel
    auf, spart dafuer eine Zusatzbibliothek fuer mehrteilige Formulare -
