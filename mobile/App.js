@@ -14,7 +14,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   View, Text, TextInput, FlatList, Pressable, Image, Alert, Linking,
-  ScrollView, Modal, Share, Platform,
+  ScrollView, Modal, Share, Platform, AppState,
   KeyboardAvoidingView, Keyboard, StyleSheet, StatusBar, ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -114,6 +114,8 @@ const TEXTE = {
     ohneMikro: "Ohne Mikrofon-Erlaubnis geht das nicht.",
     android13: "Sprachnachrichten brauchen Android 13 oder neuer.",
     kanal: "Nachrichten",
+    heute: "Heute",
+    gestern: "Gestern",
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
@@ -171,6 +173,8 @@ const TEXTE = {
     ohneMikro: "Sem permissão do microfone não é possível.",
     android13: "As mensagens de voz precisam do Android 13 ou mais recente.",
     kanal: "Mensagens",
+    heute: "Hoje",
+    gestern: "Ontem",
     ausblenden: "toca para fechar",
   },
   en: {
@@ -228,6 +232,8 @@ const TEXTE = {
     ohneMikro: "Not possible without microphone permission.",
     android13: "Voice messages need Android 13 or newer.",
     kanal: "Messages",
+    heute: "Today",
+    gestern: "Yesterday",
     ausblenden: "tap to dismiss",
   },
 };
@@ -695,9 +701,16 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
      Zurueckscrollen bei jedem Bild, jeder Uebersetzung wieder nach unten. */
   const amEnde = useRef(true);
   const askedRef = useRef(new Set());
+  /* Bis zu welchem Zeitpunkt das Gegenueber gelesen hat -> ✓✓ */
+  const [gelesenBis, setGelesenBis] = useState(0);
 
   useEffect(() => {
     const socket = io(SERVER_URL, { transports: ["websocket"] });
+    /* Melden, dass ich bis jetzt alles gesehen habe - nur wenn die App
+       wirklich vorne ist. Daraus werden beim Absender die Lese-Haken. */
+    const gelesenMelden = () => {
+      if (AppState.currentState === "active") socket.emit("gelesen", { bis: Date.now() });
+    };
     sockRef.current = socket;
 
     socket.on("connect", () => {
@@ -722,6 +735,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
       setNachrichten(arr);
       arr.forEach(frageWennNoetig);
       scrollUnten();
+      gelesenMelden();
     });
     socket.on("message", (msg) => {
       const m = normMsg(msg);
@@ -729,7 +743,15 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
       frageWennNoetig(m);
       if (m.device === device) amEnde.current = true;   // eigene Nachricht: immer runter
       if (amEnde.current) scrollUnten();
+      if (m.device !== device) gelesenMelden();
     });
+    socket.on("gelesen", ({ device: von, bis }) => {
+      if (von === device) return;
+      const b = Number(bis);
+      if (Number.isFinite(b)) setGelesenBis((alt) => Math.max(alt, b));
+    });
+    /* Zurueck in die App, waehrend der Chat offen ist: jetzt gelesen. */
+    const appSub = AppState.addEventListener("change", (st) => { if (st === "active") gelesenMelden(); });
     /* Uebersetzung fuer EINE Sprache trifft nach ein paar Sekunden ein. */
     socket.on("translated", ({ id, lang: zl, text: t }) => {
       setNachrichten((alt) => alt.map((m) =>
@@ -769,7 +791,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
       }));
     });
 
-    return () => { socket.removeAllListeners(); socket.close(); };
+    return () => { appSub.remove(); socket.removeAllListeners(); socket.close(); };
   }, [raum, name, lang, device]);
 
   const scrollUnten = () => {
@@ -922,12 +944,17 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         data={nachrichten}
         keyExtractor={(m) => m.id}
         contentContainerStyle={s.liste}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
+          <>
+          {(index === 0 || !gleicherTag(nachrichten[index - 1].at, item.at)) && (
+            <View style={s.tagWrap}><Text style={s.tag}>{tagText(item.at)}</Text></View>
+          )}
           <Bubble
-            msg={item} lang={lang} device={device}
+            msg={item} lang={lang} device={device} gelesenBis={gelesenBis}
             zitat={item.replyTo ? nachrichten.find((m) => m.id === item.replyTo) || { fehlt: true } : null}
             onLangDruck={() => setReagierenAuf(item)}
           />
+          </>
         )}
         onContentSizeChange={() => { if (amEnde.current) scrollUnten(); }}
         onScroll={(e) => {
@@ -1028,7 +1055,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
 
 /* Eine Sprechblase. Zeigt die Nachricht in MEINER Sprache (sonst Original).
    Langes Druecken oeffnet die Emoji-Leiste. */
-function Bubble({ msg, lang, device, zitat, onLangDruck }) {
+function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis }) {
   const meins = msg.device === device;
   const uebersetzt = !meins && msg.tr && msg.tr[lang];
   const anzeige = meins ? msg.text : (uebersetzt || msg.text);
@@ -1093,6 +1120,14 @@ function Bubble({ msg, lang, device, zitat, onLangDruck }) {
           </View>
         )}
         {inhalt}
+        <View style={s.meta}>
+          <Text style={[s.metaZeit, meins && s.bubbleOrigMeins]}>{uhrzeit(msg.at)}</Text>
+          {meins && (
+            <Text style={[s.haken, msg.at <= gelesenBis && s.hakenGelesen]}>
+              {msg.at <= gelesenBis ? "✓✓" : "✓"}
+            </Text>
+          )}
+        </View>
       </Pressable>
       {reakt.length > 0 && (
         <View style={[s.reaktAnzeige, meins ? s.wrapMeins : s.wrapFremd]}>
@@ -1213,6 +1248,33 @@ function useSprachaufnahme({ lang, onFertig, onFehler }) {
   };
 }
 
+/* Datumstrenner im Chat: "Heute", "Gestern" oder das Datum. */
+function gleicherTag(a, b) {
+  const x = new Date(a), y = new Date(b);
+  return x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth() && x.getDate() === y.getDate();
+}
+function tagText(at) {
+  const jetzt = Date.now();
+  if (gleicherTag(at, jetzt)) return t("heute");
+  if (gleicherTag(at, jetzt - 86400000)) return t("gestern");
+  const d = new Date(at);
+  const loc = uiSprache === "de" ? "de-DE" : uiSprache === "pt" ? "pt-PT" : "en-GB";
+  try {
+    return d.toLocaleDateString(loc, {
+      weekday: "long", day: "numeric", month: "long",
+      ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+    });
+  } catch {
+    return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+  }
+}
+
+/* "14:05" aus dem Zeitstempel. */
+function uhrzeit(at) {
+  const d = new Date(at || Date.now());
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 /* Eine Zeile fuer Zitate: Text in meiner Sprache, sonst was die Nachricht ist. */
 function kurzText(m, lang, device) {
   if (m.deleted) return t("geloescht");
@@ -1323,6 +1385,12 @@ const s = StyleSheet.create({
   bubble: { borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleFremd: { backgroundColor: FARBE.weiss, borderTopLeftRadius: 4, borderWidth: 1, borderColor: FARBE.grauHell },
   bubbleMeins: { backgroundColor: FARBE.navy, borderTopRightRadius: 4 },
+  tagWrap: { alignItems: "center", marginVertical: 8 },
+  tag: { backgroundColor: FARBE.grauHell, color: FARBE.text, fontSize: 12, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, overflow: "hidden" },
+  meta: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 3 },
+  metaZeit: { fontSize: 11, color: FARBE.grau },
+  haken: { fontSize: 12, color: "#aeb9cc", fontWeight: "700", letterSpacing: -2 },
+  hakenGelesen: { color: "#5ec8ff" },
   bubbleOrigMeins: { color: "#aeb9cc" },
   geloescht: { fontStyle: "italic", opacity: 0.6 },
   foto: { width: 230, height: 230, borderRadius: 10, marginBottom: 6, backgroundColor: FARBE.grauHell },
