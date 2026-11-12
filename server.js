@@ -7,6 +7,7 @@ import { dirname, join } from "path";
 import os from "os";
 import crypto from "crypto";
 import webpush from "web-push";
+import * as stimme from "./sprache.js";
 import * as store from "./store.js";
 import * as geld from "./bezahlung.js";
 import * as play from "./playkasse.js";
@@ -1514,6 +1515,36 @@ app.post("/api/unsubscribe", async (req, res) => {
    Beides kostet Modellaufrufe und haengt an keinem Chat-Kontingent,
    deshalb je Geraet und je Tag eng begrenzt. Nichts wird gespeichert. */
 const HILFE_PRO_TAG = Number(process.env.HILFE_PRO_TAG || 800);
+
+/* Natuerliche Stimme (Google Cloud TTS). POST liefert eine Kennung, GET
+   die MP3 dazu - so steht der Text nie in einer Adresse. */
+app.post("/api/sprechen", async (req, res) => {
+  if (!stimme.spracheAn) return res.status(503).json({ error: "Stimmen aus" });
+  const text = String(req.body?.text || "").trim().slice(0, 600);
+  const lang = clean(req.body?.lang);
+  const wer = String(req.body?.device || req.ip).slice(0, 60);
+  if (!text || !lang) return res.status(400).json({ error: "Angaben unvollstaendig" });
+  if (!take(`sprechen:${wer}`, 60, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!take("sprechen:day", Number(process.env.SPRECHEN_PRO_TAG || 3000), 24 * 60 * 60 * 1000)) {
+    return res.status(429).json({ error: "Tagesgrenze" });
+  }
+  try {
+    const { id, neu } = await stimme.sprechen(text, lang, req.body?.langsam === true);
+    if (neu) store.logUsage({ room: "__tts__", target: lang, chars: text.length, inTokens: 0, outTokens: 0 }).catch(() => {});
+    res.json({ id });
+  } catch (err) {
+    console.error("Sprechen fehlgeschlagen:", err.message);
+    res.status(502).json({ error: "Stimme nicht verfuegbar" });
+  }
+});
+
+app.get("/api/sprechen/:id", (req, res) => {
+  const mp3 = stimme.aufnahme(req.params.id);
+  if (!mp3) return res.status(404).end();
+  res.set("Content-Type", "audio/mpeg");
+  res.set("Cache-Control", "private, max-age=3600");
+  res.send(mp3);
+});
 
 app.post("/api/dolmetsch", express.json({ limit: "20kb" }), async (req, res) => {
   const text = String(req.body?.text || "").trim().slice(0, 800);
