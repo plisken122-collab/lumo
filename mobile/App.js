@@ -26,6 +26,7 @@ import { File } from "expo-file-system";
 import * as Notifications from "expo-notifications";
 import * as Speech from "expo-speech";
 import { useShareIntent } from "expo-share-intent";
+import * as Application from "expo-application";
 import {
   initConnection, fetchProducts, requestPurchase, finishTransaction,
   purchaseUpdatedListener, purchaseErrorListener, isUserCancelledError,
@@ -66,6 +67,7 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    fuerMich: "🙈 Für mich löschen",
     geteiltTitel: "Geteilt – übersetzt",
     geteiltLaedt: "Wird übersetzt …",
     dolmetscher: "🎙 Dolmetscher",
@@ -162,6 +164,7 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    fuerMich: "🙈 Apagar para mim",
     geteiltTitel: "Partilhado – traduzido",
     geteiltLaedt: "A traduzir …",
     dolmetscher: "🎙 Intérprete",
@@ -258,6 +261,7 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    fuerMich: "🙈 Delete for me",
     geteiltTitel: "Shared – translated",
     geteiltLaedt: "Translating …",
     dolmetscher: "🎙 Interpreter",
@@ -354,6 +358,7 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    fuerMich: "🙈 Borrar para mí",
     geteiltTitel: "Compartido – traducido",
     geteiltLaedt: "Traduciendo …",
     dolmetscher: "🎙 Intérprete",
@@ -450,6 +455,7 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    fuerMich: "🙈 Supprimer pour moi",
     geteiltTitel: "Partagé – traduit",
     geteiltLaedt: "Traduction …",
     dolmetscher: "🎙 Interprète",
@@ -546,6 +552,7 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    fuerMich: "🙈 Elimina per me",
     geteiltTitel: "Condiviso – tradotto",
     geteiltLaedt: "Traduzione …",
     dolmetscher: "🎙 Interprete",
@@ -784,7 +791,12 @@ async function geraeteId() {
   try {
     let id = await AsyncStorage.getItem("diralo_device");
     if (!id) {
-      id = "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      /* Neue Installation: Die Android-ID bleibt fuer diese App auf diesem
+         Handy gleich, auch nach Deinstallieren und Neuinstallieren. So
+         bleiben eigene Nachrichten eigene (Haken, Loeschen). */
+      let android = "";
+      try { android = Platform.OS === "android" ? Application.getAndroidId() : ""; } catch {}
+      id = android ? "and_" + android : "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
       await AsyncStorage.setItem("diralo_device", id);
     }
     return id;
@@ -1538,6 +1550,19 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   const [antwortAuf, setAntwortAuf] = useState(null);     // Zitat ueber dem Eingabefeld
   /* Vorschau beim Tippen: so kommt meine Nachricht beim anderen an. */
   const [vorschau, setVorschau] = useState(null);
+  /* "Fuer mich loeschen": nur auf diesem Geraet ausgeblendet. */
+  const [versteckt, setVersteckt] = useState([]);
+  useEffect(() => {
+    jsonLaden("diralo_versteckt", {}).then((v) => setVersteckt(Array.isArray(v[raum]) ? v[raum] : []));
+  }, [raum]);
+  const fuerMichLoeschen = async (m) => {
+    const alle = await jsonLaden("diralo_versteckt", {});
+    const liste = [...new Set([...(alle[raum] || []), m.id])].slice(-1000);
+    alle[raum] = liste;
+    AsyncStorage.setItem("diralo_versteckt", JSON.stringify(alle)).catch(() => {});
+    setVersteckt(liste);
+  };
+  const sichtbar = versteckt.length ? nachrichten.filter((m) => !versteckt.includes(m.id)) : nachrichten;
   const [vorschauAus, setVorschauAus] = useState(false);
   const vorschauNr = useRef(0);
   const [emojiAuf, setEmojiAuf] = useState(false);
@@ -1854,12 +1879,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
 
       <FlatList
         ref={listRef}
-        data={nachrichten}
+        data={sichtbar}
         keyExtractor={(m) => m.id}
         contentContainerStyle={s.liste}
         renderItem={({ item, index }) => (
           <>
-          {(index === 0 || !gleicherTag(nachrichten[index - 1].at, item.at)) && (
+          {(index === 0 || !gleicherTag(sichtbar[index - 1].at, item.at)) && (
             <View style={s.tagWrap}><Text style={s.tag}>{tagText(item.at)}</Text></View>
           )}
           <Bubble
@@ -1919,6 +1944,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
               <Text style={s.aktionTxt}>{t("aussprache")}</Text>
             </Pressable>
           )}
+          <Pressable
+            style={s.aktion}
+            onPress={() => { const m = reagierenAuf; setReagierenAuf(null); fuerMichLoeschen(m); }}
+          >
+            <Text style={s.aktionTxt}>{t("fuerMich")}</Text>
+          </Pressable>
           {reagierenAuf.device === device && !reagierenAuf.deleted && (
             <Pressable
               style={s.aktion}
