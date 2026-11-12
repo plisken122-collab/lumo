@@ -20,7 +20,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as Location from "expo-location";
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus, createAudioPlayer } from "expo-audio";
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition";
 import { File } from "expo-file-system";
 import * as Notifications from "expo-notifications";
@@ -2447,12 +2447,33 @@ async function stimmeFuer(code) {
   return passend.sort((a, b) => punkte(b) - punkte(a))[0];
 }
 
-/* Vorlesen mit den Stimmen des Handys - kostenlos, ohne Server.
-   Gibt false zurueck, wenn fuer die Sprache keine Stimme installiert ist. */
+/* Vorlesen: zuerst die natuerliche Stimme vom Server (Google, klingt wie
+   ein Mensch). Klappt das nicht - kein Netz, Server voll -, die Stimme
+   des Handys als Rueckfall. */
+let profiPlayer = null;
+async function profiVorlesen(text, code, langsam) {
+  const r = await fetch(`${SERVER_URL}/api/sprechen`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: String(text).slice(0, 600), lang: code, langsam }),
+  });
+  if (!r.ok) throw new Error("http " + r.status);
+  const { id } = await r.json();
+  const url = `${SERVER_URL}/api/sprechen/${encodeURIComponent(id)}`;
+  if (!profiPlayer) profiPlayer = createAudioPlayer(url);
+  else profiPlayer.replace(url);
+  profiPlayer.play();
+}
+
 async function vorlesen(text, code, langsam = false, onKeineStimme = null) {
   if (!text) return;
+  try { Speech.stop(); } catch {}
+  try { profiPlayer?.pause(); } catch {}
   try {
-    Speech.stop();
+    await profiVorlesen(text, code || "en", langsam);
+    return;
+  } catch {}
+  try {
     const stimme = await stimmeFuer(code);
     if (!stimme && onKeineStimme) { onKeineStimme(); return; }
     Speech.speak(text, {
