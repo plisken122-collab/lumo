@@ -65,6 +65,20 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    dolmetscher: "🎙 Dolmetscher",
+    fotoKnopf: "📷 Foto übersetzen",
+    dolmInfo: "Handy zwischen euch legen. Jeder tippt auf sein Mikrofon und spricht in seiner Sprache.",
+    tippenSprechen: "Tippen und sprechen",
+    hoere: "Ich höre zu …",
+    andereSprache: "Andere Sprache",
+    fotoInfo: "Speisekarte, Brief oder Schild fotografieren – Diralo liest den Text und übersetzt ihn.",
+    erklaeren: "Einfach erklären",
+    erklaerung: "Erklärung",
+    originalText: "Originaltext",
+    keinText: "Auf dem Foto wurde kein Text gefunden.",
+    fotoLesen: "Lese das Foto …",
+    zurueck: "Zurück",
+    hilfeFehler: "Das hat gerade nicht geklappt. Bitte nochmal versuchen.",
     vorschau: "So kommt es an:",
     vorschauAus: "Vorschau aus",
     vorlesen: "🔊 Vorlesen",
@@ -145,6 +159,20 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    dolmetscher: "🎙 Intérprete",
+    fotoKnopf: "📷 Traduzir foto",
+    dolmInfo: "Ponham o telemóvel entre vocês. Cada um toca no seu microfone e fala na sua língua.",
+    tippenSprechen: "Tocar e falar",
+    hoere: "Estou a ouvir …",
+    andereSprache: "Outra língua",
+    fotoInfo: "Fotografa uma ementa, carta ou placa – o Diralo lê o texto e traduz.",
+    erklaeren: "Explicar de forma simples",
+    erklaerung: "Explicação",
+    originalText: "Texto original",
+    keinText: "Não foi encontrado texto na foto.",
+    fotoLesen: "A ler a foto …",
+    zurueck: "Voltar",
+    hilfeFehler: "Não funcionou. Tenta outra vez.",
     vorschau: "Vai chegar assim:",
     vorschauAus: "Desligar pré-visualização",
     vorlesen: "🔊 Ouvir",
@@ -225,6 +253,20 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    dolmetscher: "🎙 Interpreter",
+    fotoKnopf: "📷 Translate photo",
+    dolmInfo: "Put the phone between you. Each person taps their microphone and speaks in their own language.",
+    tippenSprechen: "Tap and speak",
+    hoere: "Listening …",
+    andereSprache: "Other language",
+    fotoInfo: "Take a photo of a menu, letter or sign – Diralo reads the text and translates it.",
+    erklaeren: "Explain simply",
+    erklaerung: "Explanation",
+    originalText: "Original text",
+    keinText: "No text was found in the photo.",
+    fotoLesen: "Reading the photo …",
+    zurueck: "Back",
+    hilfeFehler: "That didn't work. Please try again.",
     vorschau: "It will arrive as:",
     vorschauAus: "Preview off",
     vorlesen: "🔊 Read aloud",
@@ -305,6 +347,20 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    dolmetscher: "🎙 Intérprete",
+    fotoKnopf: "📷 Traducir foto",
+    dolmInfo: "Poned el móvil entre vosotros. Cada uno toca su micrófono y habla en su idioma.",
+    tippenSprechen: "Toca y habla",
+    hoere: "Escuchando …",
+    andereSprache: "Otro idioma",
+    fotoInfo: "Fotografía una carta, menú o cartel – Diralo lee el texto y lo traduce.",
+    erklaeren: "Explicar de forma sencilla",
+    erklaerung: "Explicación",
+    originalText: "Texto original",
+    keinText: "No se encontró texto en la foto.",
+    fotoLesen: "Leyendo la foto …",
+    zurueck: "Volver",
+    hilfeFehler: "No ha funcionado. Inténtalo de nuevo.",
     vorschau: "Llegará así:",
     vorschauAus: "Desactivar vista previa",
     vorlesen: "🔊 Escuchar",
@@ -385,6 +441,20 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    dolmetscher: "🎙 Interprète",
+    fotoKnopf: "📷 Traduire une photo",
+    dolmInfo: "Posez le téléphone entre vous. Chacun touche son micro et parle dans sa langue.",
+    tippenSprechen: "Touche et parle",
+    hoere: "J'écoute …",
+    andereSprache: "Autre langue",
+    fotoInfo: "Photographie un menu, une lettre ou un panneau – Diralo lit le texte et le traduit.",
+    erklaeren: "Expliquer simplement",
+    erklaerung: "Explication",
+    originalText: "Texte original",
+    keinText: "Aucun texte trouvé sur la photo.",
+    fotoLesen: "Lecture de la photo …",
+    zurueck: "Retour",
+    hilfeFehler: "Ça n'a pas marché. Réessaie.",
     vorschau: "Ce sera reçu ainsi :",
     vorschauAus: "Désactiver l'aperçu",
     vorlesen: "🔊 Écouter",
@@ -465,6 +535,20 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    dolmetscher: "🎙 Interprete",
+    fotoKnopf: "📷 Traduci foto",
+    dolmInfo: "Mettete il telefono tra voi. Ognuno tocca il suo microfono e parla nella sua lingua.",
+    tippenSprechen: "Tocca e parla",
+    hoere: "Sto ascoltando …",
+    andereSprache: "Altra lingua",
+    fotoInfo: "Fotografa un menù, una lettera o un cartello – Diralo legge il testo e lo traduce.",
+    erklaeren: "Spiega in modo semplice",
+    erklaerung: "Spiegazione",
+    originalText: "Testo originale",
+    keinText: "Nessun testo trovato nella foto.",
+    fotoLesen: "Leggo la foto …",
+    zurueck: "Indietro",
+    hilfeFehler: "Non ha funzionato. Riprova.",
     vorschau: "Arriverà così:",
     vorschauAus: "Disattiva anteprima",
     vorlesen: "🔊 Ascolta",
@@ -712,6 +796,7 @@ function Haupt() {
   const [name, setName] = useState("");
   const [lang, setLang] = useState(geraeteSprache);
   const [raum, setRaum] = useState(null);     // null = Startseite, sonst Chat
+  const [ansicht, setAnsicht] = useState(null); // "dolmetsch" | "foto" | null
 
   useEffect(() => {
     (async () => {
@@ -784,7 +869,11 @@ function Haupt() {
     <View style={[s.full, { paddingTop: insets.top, backgroundColor: FARBE.navy }]}>
       <StatusBar barStyle="light-content" backgroundColor={FARBE.navy} />
       <View style={s.full}>
-        {raum ? (
+        {ansicht === "dolmetsch" ? (
+          <Dolmetscher lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
+        ) : ansicht === "foto" ? (
+          <FotoUebersetzen lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
+        ) : raum ? (
           <Chat
             raum={raum} name={name.trim()} lang={lang} device={device}
             unten={insets.bottom} oben={insets.top}
@@ -798,6 +887,7 @@ function Haupt() {
             unten={insets.bottom}
             onStart={() => betreten(neuerCode())}
             onJoin={betreten}
+            onHilfe={setAnsicht}
           />
         )}
       </View>
@@ -806,7 +896,7 @@ function Haupt() {
 }
 
 /* ----------------------------- Startseite ------------------------- */
-function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) {
+function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, onHilfe }) {
   const [code, setCode] = useState("");
   const [chats, setChats] = useState([]);
   const [neues, setNeues] = useState({});
@@ -863,6 +953,15 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) 
       >
         <Text style={s.btnPrimaryTxt}>{t("neuerChat")}</Text>
       </Pressable>
+
+      <View style={s.hilfeRow}>
+        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("dolmetsch")}>
+          <Text style={s.hilfeKnopfTxt}>{t("dolmetscher")}</Text>
+        </Pressable>
+        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("foto")}>
+          <Text style={s.hilfeKnopfTxt}>{t("fotoKnopf")}</Text>
+        </Pressable>
+      </View>
 
       <Text style={s.oder}>{t("oderBeitreten")}</Text>
       <View style={s.joinRow}>
@@ -965,6 +1064,202 @@ function EmojiAuswahl({ zuletzt, onWahl }) {
             <Text style={s.emojiZeichen}>{ch}</Text>
           </Pressable>
         ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+/* --------------------------- Dolmetscher ---------------------------
+   Zwei Menschen, ein Handy: Die obere Haelfte steht auf dem Kopf, damit
+   das Gegenueber sie lesen kann. Jeder tippt auf sein Mikrofon und
+   spricht; die Uebersetzung erscheint bei der anderen Haelfte und wird
+   in deren Sprache vorgelesen. */
+function Dolmetscher({ lang, device, unten, onBack }) {
+  const [andere, setAndere] = useState(lang.startsWith("pt") ? "de" : "pt-PT");
+  const [wahl, setWahl] = useState(false);
+  const [aktiv, setAktiv] = useState(null);        // "ich" | "du" | null
+  const [zwischen, setZwischen] = useState("");
+  const [ich, setIch] = useState({ gesagt: "", fuerMich: "" });
+  const [du, setDu] = useState({ gesagt: "", fuerMich: "" });
+  const [laedt, setLaedt] = useState(false);
+  const [fehler, setFehler] = useState(null);
+  const seite = useRef(null);
+  const text = useRef("");
+
+  const sprachVon = (sd) => (sd === "ich" ? lang : andere);
+
+  useSpeechRecognitionEvent("result", (ev) => {
+    const tx = ev.results?.[0]?.transcript || "";
+    text.current = tx;
+    setZwischen(tx);
+  });
+  useSpeechRecognitionEvent("error", (ev) => {
+    if (ev.error !== "no-speech" && ev.error !== "aborted") setFehler(t("aufnahmeFehler") + (ev.message || ev.error));
+  });
+  useSpeechRecognitionEvent("end", async () => {
+    const sd = seite.current;
+    const gesagt = text.current.trim();
+    seite.current = null; setAktiv(null); setZwischen("");
+    if (!sd || !gesagt) return;
+    const von = sprachVon(sd), nach = sd === "ich" ? andere : lang;
+    if (sd === "ich") setIch((a) => ({ ...a, gesagt })); else setDu((a) => ({ ...a, gesagt }));
+    setLaedt(true);
+    try {
+      const r = await fetch(`${SERVER_URL}/api/dolmetsch`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: gesagt, von, nach, device }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uebersetzt) throw new Error();
+      if (sd === "ich") setDu((a) => ({ ...a, fuerMich: j.uebersetzt }));
+      else setIch((a) => ({ ...a, fuerMich: j.uebersetzt }));
+      vorlesen(j.uebersetzt, nach);
+    } catch {
+      setFehler(t("hilfeFehler"));
+    } finally {
+      setLaedt(false);
+    }
+  });
+
+  const sprechen = async (sd) => {
+    setFehler(null);
+    if (aktiv) { ExpoSpeechRecognitionModule.stop(); return; }
+    const recht = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!recht.granted) { setFehler(t("ohneMikro")); return; }
+    try { Speech.stop(); } catch {}
+    seite.current = sd; text.current = ""; setAktiv(sd);
+    ExpoSpeechRecognitionModule.start({ lang: erkennerSprache(sprachVon(sd)), interimResults: true, continuous: false });
+  };
+
+  const Haelfte = ({ sd, daten, oben }) => (
+    <View style={[s.dolmHaelfte, oben && s.dolmOben]}>
+      <Text style={s.dolmSprache}>{sprachName(sprachVon(sd))}</Text>
+      <ScrollView style={{ flex: 1, alignSelf: "stretch" }} contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}>
+        {daten.fuerMich ? <Text style={s.dolmGross}>{daten.fuerMich}</Text> : null}
+        {aktiv === sd && zwischen ? <Text style={s.dolmKlein}>{zwischen}</Text>
+          : daten.gesagt ? <Text style={s.dolmKlein}>„{daten.gesagt}“</Text> : null}
+      </ScrollView>
+      <Pressable
+        style={[s.dolmMikro, aktiv === sd && s.aufnahmeAn, (laedt || (aktiv && aktiv !== sd)) && s.btnAus]}
+        disabled={laedt || Boolean(aktiv && aktiv !== sd)}
+        onPress={() => sprechen(sd)}
+      >
+        <Text style={s.dolmMikroTxt}>{aktiv === sd ? "■" : "🎤"}</Text>
+      </Pressable>
+      <Text style={s.dolmHinweis}>{aktiv === sd ? t("hoere") : t("tippenSprechen")}</Text>
+    </View>
+  );
+
+  return (
+    <View style={[s.full, { backgroundColor: FARBE.hell }]}>
+      <View style={s.chatHead}>
+        <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
+        <Text style={[s.chatTitel, { flex: 1 }]}>{t("dolmetscher")}</Text>
+        <Pressable onPress={() => setWahl(true)} style={s.einladen} hitSlop={8}>
+          <Text style={s.einladenTxt}>{t("andereSprache")}</Text>
+        </Pressable>
+      </View>
+      <Haelfte sd="du" daten={du} oben />
+      <View style={s.dolmTrenner}>
+        {laedt ? <ActivityIndicator color={FARBE.navy} /> : <Text style={s.dolmInfo}>{fehler || t("dolmInfo")}</Text>}
+      </View>
+      <View style={{ flex: 1, paddingBottom: unten }}>
+        <Haelfte sd="ich" daten={ich} />
+      </View>
+      <Sprachauswahl
+        offen={wahl} aktuell={andere}
+        onWahl={(c) => { setAndere(c); setWahl(false); setDu({ gesagt: "", fuerMich: "" }); setIch({ gesagt: "", fuerMich: "" }); }}
+        onZu={() => setWahl(false)}
+      />
+    </View>
+  );
+}
+
+/* -------------------------- Foto uebersetzen -------------------------- */
+function FotoUebersetzen({ lang, device, unten, onBack }) {
+  const [erklaeren, setErklaeren] = useState(true);
+  const [laedt, setLaedt] = useState(false);
+  const [ergebnis, setErgebnis] = useState(null);
+  const [fehler, setFehler] = useState(null);
+  const [zeigeOriginal, setZeigeOriginal] = useState(false);
+
+  const los = async (quelle) => {
+    setFehler(null);
+    try {
+      const recht = quelle === "kamera"
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!recht.granted) { setFehler(quelle === "kamera" ? t("ohneKamera") : t("ohneFotos")); return; }
+      const opt = { mediaTypes: ["images"], quality: 1 };
+      const wahl = quelle === "kamera" ? await ImagePicker.launchCameraAsync(opt) : await ImagePicker.launchImageLibraryAsync(opt);
+      if (wahl.canceled || !wahl.assets?.length) return;
+      setLaedt(true); setErgebnis(null); setZeigeOriginal(false);
+      const a = wahl.assets[0];
+      const resize = a.width > FOTO_MAX_BREITE ? [{ resize: { width: FOTO_MAX_BREITE } }] : [];
+      const klein = await manipulateAsync(a.uri, resize, { compress: 0.8, format: SaveFormat.JPEG, base64: true });
+      const r = await fetch(`${SERVER_URL}/api/foto-text`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bild: klein.base64, lang, erklaeren, device }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error();
+      setErgebnis(j);
+    } catch {
+      setFehler(t("hilfeFehler"));
+    } finally {
+      setLaedt(false);
+    }
+  };
+
+  return (
+    <View style={[s.full, { backgroundColor: FARBE.hell }]}>
+      <View style={s.chatHead}>
+        <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
+        <Text style={[s.chatTitel, { flex: 1 }]}>{t("fotoKnopf")}</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 + unten }}>
+        <Text style={s.claim}>{t("fotoInfo")}</Text>
+        <View style={s.hilfeRow}>
+          <Pressable style={[s.btnPrimary, { flex: 1 }, laedt && s.btnAus]} disabled={laedt} onPress={() => los("kamera")}>
+            <Text style={s.btnPrimaryTxt}>📷 {t("kamera")}</Text>
+          </Pressable>
+          <Pressable style={[s.btnGold, { flex: 1, alignItems: "center", paddingVertical: 14 }, laedt && s.btnAus]} disabled={laedt} onPress={() => los("galerie")}>
+            <Text style={s.btnGoldTxt}>🖼 {t("galerie")}</Text>
+          </Pressable>
+        </View>
+        <Pressable style={s.schalterZeile} onPress={() => setErklaeren(!erklaeren)}>
+          <Text style={s.schalterBox}>{erklaeren ? "☑" : "☐"}</Text>
+          <Text style={s.schalterTxt}>{t("erklaeren")}</Text>
+        </Pressable>
+        {laedt && (
+          <View style={{ alignItems: "center", marginTop: 24 }}>
+            <ActivityIndicator size="large" color={FARBE.navy} />
+            <Text style={s.leer}>{t("fotoLesen")}</Text>
+          </View>
+        )}
+        {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
+        {ergebnis && !ergebnis.uebersetzt && <Text style={s.leer}>{t("keinText")}</Text>}
+        {ergebnis?.erklaerung ? (
+          <View style={s.fotoKarte}>
+            <Text style={s.fotoKarteTitel}>{t("erklaerung")}</Text>
+            <Text style={s.fotoKarteTxt}>{ergebnis.erklaerung}</Text>
+          </View>
+        ) : null}
+        {ergebnis?.uebersetzt ? (
+          <View style={s.fotoKarte}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={[s.fotoKarteTitel, { flex: 1 }]}>{sprachName(lang)}</Text>
+              <Pressable onPress={() => vorlesen(ergebnis.uebersetzt, lang)} hitSlop={8}><Text style={s.vorschauKnopf}>🔊</Text></Pressable>
+            </View>
+            <Text style={s.fotoKarteTxt} selectable>{ergebnis.uebersetzt}</Text>
+          </View>
+        ) : null}
+        {ergebnis?.original ? (
+          <Pressable onPress={() => setZeigeOriginal(!zeigeOriginal)} style={s.fotoKarte}>
+            <Text style={s.fotoKarteTitel}>{t("originalText")} {zeigeOriginal ? "▴" : "▾"}</Text>
+            {zeigeOriginal && <Text style={[s.fotoKarteTxt, { color: FARBE.grau }]} selectable>{ergebnis.original}</Text>}
+          </Pressable>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -1955,6 +2250,25 @@ const s = StyleSheet.create({
   vorschauZurueck: { fontSize: 12.5, color: FARBE.grau, fontStyle: "italic", marginTop: 3 },
   vorschauKnopf: { fontSize: 20 },
   lautKnopf: { fontSize: 15 },
+  hilfeRow: { flexDirection: "row", gap: 10, marginTop: 14 },
+  hilfeKnopf: { flex: 1, borderWidth: 1, borderColor: FARBE.navy, borderRadius: 14, paddingVertical: 12, alignItems: "center", backgroundColor: FARBE.weiss },
+  hilfeKnopfTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 14.5 },
+  dolmHaelfte: { flex: 1, alignItems: "center", paddingHorizontal: 18, paddingVertical: 12 },
+  dolmOben: { transform: [{ rotate: "180deg" }], backgroundColor: "#eef4ff" },
+  dolmSprache: { fontSize: 13, color: FARBE.grau, fontWeight: "700" },
+  dolmGross: { fontSize: 24, color: FARBE.text, textAlign: "center", fontWeight: "600" },
+  dolmKlein: { fontSize: 14, color: FARBE.grau, textAlign: "center", marginTop: 8, fontStyle: "italic" },
+  dolmMikro: { width: 72, height: 72, borderRadius: 36, backgroundColor: FARBE.gold, alignItems: "center", justifyContent: "center", marginTop: 8 },
+  dolmMikroTxt: { fontSize: 30, color: FARBE.navy },
+  dolmHinweis: { fontSize: 12.5, color: FARBE.grau, marginTop: 6 },
+  dolmTrenner: { minHeight: 44, borderTopWidth: 1, borderBottomWidth: 1, borderColor: FARBE.grauHell, backgroundColor: FARBE.weiss, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  dolmInfo: { fontSize: 12.5, color: FARBE.grau, textAlign: "center" },
+  schalterZeile: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 },
+  schalterBox: { fontSize: 22, color: FARBE.navy },
+  schalterTxt: { fontSize: 15, color: FARBE.text },
+  fotoKarte: { backgroundColor: FARBE.weiss, borderRadius: 14, padding: 14, marginTop: 14, borderWidth: 1, borderColor: FARBE.grauHell },
+  fotoKarteTitel: { fontSize: 12.5, color: FARBE.grau, fontWeight: "800", marginBottom: 6 },
+  fotoKarteTxt: { fontSize: 16, color: FARBE.text, lineHeight: 23 },
   meta: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 3 },
   metaZeit: { fontSize: 11, color: FARBE.grau },
   haken: { fontSize: 12, color: "#aeb9cc", fontWeight: "700", letterSpacing: -2 },
