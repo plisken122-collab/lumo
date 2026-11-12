@@ -67,6 +67,8 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    autoAn: "Neue Nachrichten werden jetzt vorgelesen.",
+    autoAus: "Automatisches Vorlesen ist aus.",
     keineStimme: "Für diese Sprache ist keine Stimme installiert. Android-Einstellungen → Sprachausgabe (Text-in-Sprache) → Sprachdaten installieren.",
     imChat: "im Chat",
     einlTitel: "Du hast eine Einladung bekommen?",
@@ -177,6 +179,8 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    autoAn: "As novas mensagens vão ser lidas em voz alta.",
+    autoAus: "A leitura automática está desligada.",
     keineStimme: "Não há voz instalada para esta língua. Definições do Android → Saída de texto para voz → instalar dados de voz.",
     imChat: "no chat",
     einlTitel: "Recebeste um convite?",
@@ -287,6 +291,8 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    autoAn: "New messages will now be read aloud.",
+    autoAus: "Automatic read-aloud is off.",
     keineStimme: "No voice is installed for this language. Android settings → Text-to-speech output → install voice data.",
     imChat: "in the chat",
     einlTitel: "Did you get an invitation?",
@@ -397,6 +403,8 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    autoAn: "Los mensajes nuevos se leerán en voz alta.",
+    autoAus: "La lectura automática está desactivada.",
     keineStimme: "No hay ninguna voz instalada para este idioma. Ajustes de Android → Salida de texto a voz → instalar datos de voz.",
     imChat: "en el chat",
     einlTitel: "¿Has recibido una invitación?",
@@ -507,6 +515,8 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    autoAn: "Les nouveaux messages seront lus à voix haute.",
+    autoAus: "La lecture automatique est désactivée.",
     keineStimme: "Aucune voix n'est installée pour cette langue. Paramètres Android → Synthèse vocale → installer les données vocales.",
     imChat: "dans le chat",
     einlTitel: "Tu as reçu une invitation ?",
@@ -617,6 +627,8 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    autoAn: "I nuovi messaggi verranno letti ad alta voce.",
+    autoAus: "La lettura automatica è disattivata.",
     keineStimme: "Nessuna voce installata per questa lingua. Impostazioni Android → Sintesi vocale → installa dati vocali.",
     imChat: "in chat",
     einlTitel: "Hai ricevuto un invito?",
@@ -1718,6 +1730,20 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
   const [anwesend, setAnwesend] = useState([]);
+  /* Neue Nachrichten automatisch vorlesen (Einstellung bleibt gespeichert). */
+  const [autoVorlesen, setAutoVorlesen] = useState(false);
+  const autoRef = useRef(false);
+  const wartetAufVorlesen = useRef(new Set());
+  useEffect(() => {
+    jsonLaden("diralo_auto_vorlesen", false).then((v) => { setAutoVorlesen(Boolean(v)); autoRef.current = Boolean(v); });
+  }, []);
+  const autoUmschalten = () => {
+    const neu = !autoRef.current;
+    autoRef.current = neu;
+    setAutoVorlesen(neu);
+    AsyncStorage.setItem("diralo_auto_vorlesen", neu ? "true" : "false").catch(() => {});
+    setHinweis(neu ? t("autoAn") : t("autoAus"));
+  };
   /* Erst nach dem Verlauf wissen wir, ob der Chat wirklich leer ist. */
   const [geladen, setGeladen] = useState(false);   // Namen der anderen, die gerade im Chat sind
   const [chatName, setChatName] = useState("");
@@ -1764,6 +1790,11 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
       if (m.device === device) amEnde.current = true;   // eigene Nachricht: immer runter
       if (amEnde.current) scrollUnten();
       if (m.device !== device) gelesenMelden();
+      if (m.device !== device && autoRef.current && m.text && AppState.currentState === "active") {
+        const gleich = String(m.lang || "").split("-")[0] === String(lang).split("-")[0];
+        if (gleich || !/\p{L}/u.test(m.text)) vorlesen(m.text, lang);
+        else wartetAufVorlesen.current.add(m.id);
+      }
     });
     socket.on("gelesen", ({ device: von, bis }) => {
       if (von === device) return;
@@ -1784,6 +1815,10 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
     socket.on("translated", ({ id, lang: zl, text: t }) => {
       setNachrichten((alt) => alt.map((m) =>
         m.id === id ? { ...m, tr: { ...m.tr, [zl]: t } } : m));
+      if (zl === lang && wartetAufVorlesen.current.has(id)) {
+        wartetAufVorlesen.current.delete(id);
+        if (autoRef.current) vorlesen(t, lang);
+      }
     });
     socket.on("vorschauFertig", (d) => {
       if (d && d.nr === vorschauNr.current && d.uebersetzt) setVorschau(d);
@@ -2003,6 +2038,9 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
               : `${t("verbunden")} · ${t("du")}: ${name}`}
           </Text>
         </View>
+        <Pressable onPress={autoUmschalten} style={[s.plusKnopf, autoVorlesen && s.autoAn]} hitSlop={8}>
+          <Text style={s.plusKnopfTxt}>{autoVorlesen ? "🔊" : "🔈"}</Text>
+        </Pressable>
         <Pressable onPress={() => setAboOffen(true)} style={s.plusKnopf} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>★</Text>
         </Pressable>
@@ -2655,6 +2693,7 @@ const s = StyleSheet.create({
   reaktZu: { fontSize: 18, color: FARBE.grau, paddingHorizontal: 6 },
   aufnahmeRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   aufnahmeAn: { backgroundColor: "#E46A5E" },
+  autoAn: { backgroundColor: FARBE.gold },
   plusKnopf: { borderWidth: 1, borderColor: FARBE.gold, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
   plusKnopfTxt: { color: FARBE.gold, fontWeight: "800", fontSize: 14 },
   aboStand: { color: FARBE.text, fontSize: 14, marginBottom: 10 },
