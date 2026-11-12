@@ -1952,6 +1952,39 @@ io.on("connection", (socket) => {
     ausspracheHelfen(room, String(id), clean(lang)).catch(() => {});
   });
 
+  /* Vorschau beim Tippen: wie kommt meine Nachricht beim anderen an -
+     und zur Kontrolle zurueckuebersetzt. Nichts wird gespeichert. Kostet
+     einen Modellaufruf, deshalb eng begrenzt und aufs Kontingent des
+     Chats angerechnet. nr ordnet die Antwort dem richtigen Tippstand zu. */
+  socket.on("vorschau", async ({ text, ziel, nr }) => {
+    const t = String(text || "").trim().slice(0, 600);
+    const zl = clean(ziel);
+    if (!room || !t || !zl || zl === me.lang) return;
+    if (!/\p{L}/u.test(t)) return;
+    if (!take(`vorschau:${me.device}`, 20, 60 * 1000)) return;
+    if (!(await imKontingent(room))) return;
+    if (!take("tr:day", TRANSLATIONS_PER_DAY, 24 * 60 * 60 * 1000)) return;
+    const zielName = LANG_NAMES[zl] || zl;
+    const meinName = LANG_NAMES[me.lang] || me.lang;
+    const prompt = `Du bist die Uebersetzungs-Engine eines Messengers. Uebersetze den Text natuerlich und umgangssprachlich nach ${zielName} (${zl}), so wie ein Muttersprachler ihn tippen wuerde. Uebersetze deine Uebersetzung danach woertlich zurueck nach ${meinName} (${me.lang}), damit der Schreiber pruefen kann, ob der Sinn stimmt. Behalte Emojis und Namen.
+Text: """${t}"""
+Antworte NUR mit JSON, ohne Markdown: {"uebersetzt":"<Text auf ${zl}>","zurueck":"<Rueckuebersetzung auf ${me.lang}>"}`;
+    try {
+      const { result: out, usage } = await claude(prompt);
+      store.logUsage({
+        room, target: zl, chars: t.length,
+        inTokens: usage.inTokens, outTokens: usage.outTokens,
+      }).catch(() => {});
+      socket.emit("vorschauFertig", {
+        nr,
+        uebersetzt: String(out.uebersetzt || "").slice(0, 800),
+        zurueck: String(out.zurueck || "").slice(0, 800),
+      });
+    } catch (err) {
+      console.error("Vorschau fehlgeschlagen:", err.message);
+    }
+  });
+
   /* Probe-Chat: ein KI-Partner, damit ein Besucher die Uebersetzung allein
      erleben kann, ohne dass schon jemand da ist. Bewusst schlank - eine
      Antwort in der Partnersprache samt ihrer Uebersetzung in die Sprache
