@@ -1893,6 +1893,7 @@ io.on("connection", (socket) => {
     if (vorher && vorher !== room) {
       socket.leave(vorher);
       socket.to(vorher).emit("system", { type: "left", name: me.name });
+      anwesendMelden(vorher);
     }
     me = {
       name: String(name || "Gast").slice(0, 40),
@@ -1912,6 +1913,8 @@ io.on("connection", (socket) => {
       socket.emit("history", []);
     }
     socket.to(room).emit("system", { type: "joined", name: me.name });
+    socket.data.wer = { name: me.name, device: me.device };
+    anwesendMelden(room);
   });
 
   /* Nur das Ergebnis der Mitschrift, nie ihr Inhalt: Fehlerkuerzel,
@@ -2171,9 +2174,27 @@ Antworte NUR mit JSON, ohne Markdown: {"reply":"<deine Antwort auf ${partner}>",
   });
 
   socket.on("disconnect", () => {
-    if (room) socket.to(room).emit("system", { type: "left", name: me.name });
+    if (room) {
+      socket.to(room).emit("system", { type: "left", name: me.name });
+      anwesendMelden(room);
+    }
   });
 });
+
+/* Wer ist gerade im Chat? Allen im Raum die Liste schicken (je Geraet
+   einmal), damit die App "Iracema · im Chat" anzeigen kann. Nur Namen
+   und Geraetekennung - nichts, was nicht ohnehin im Chat sichtbar ist. */
+async function anwesendMelden(raum) {
+  try {
+    const socks = await io.in(raum).fetchSockets();
+    const da = new Map();
+    for (const so of socks) {
+      const w = so.data?.wer;
+      if (w?.device && !da.has(w.device)) da.set(w.device, { name: w.name, device: w.device });
+    }
+    io.to(raum).emit("anwesend", [...da.values()]);
+  } catch {}
+}
 
 /* ------------------------------- Start ------------------------------- */
 function lanAddress() {
