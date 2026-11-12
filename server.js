@@ -1347,6 +1347,11 @@ async function pushToRoom(room, msg) {
    sie an Firebase (Android) weiterreicht. Ein abgemeldetes Geraet meldet
    Expo als DeviceNotRegistered - dann fliegt die Anmeldung raus. */
 const EXPO_TOKEN_RE = /^Expo(nent)?PushToken\[[A-Za-z0-9_-]{10,}\]$/;
+/* Diagnose fuer den Admin: die letzten Anmeldungen und Sendeversuche,
+   nur im Speicher und ohne Tokens oder Inhalte. */
+const expoLog = [];
+function expoMerken(e) { expoLog.unshift({ at: Date.now(), ...e }); expoLog.length = Math.min(expoLog.length, 30); }
+
 async function expoPush(sub, { title, body, room, id }) {
   const r = await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
@@ -1358,6 +1363,7 @@ async function expoPush(sub, { title, body, room, id }) {
   });
   const j = await r.json().catch(() => ({}));
   const t = j?.data;
+  expoMerken({ art: "senden", room, http: r.status, status: t?.status || "?", fehler: t?.details?.error || t?.message || null });
   if (t?.status === "error") {
     if (t.details?.error === "DeviceNotRegistered") {
       await store.deleteSubscription(sub.endpoint).catch(() => {});
@@ -1392,11 +1398,17 @@ app.post("/api/expo-push", async (req, res) => {
         data: { expo: token },
       });
     }
+    expoMerken({ art: "anmeldung", chats: liste.length });
     res.json({ ok: true, chats: liste.length });
   } catch (err) {
     console.error("Expo-Anmeldung fehlgeschlagen:", err.message);
     res.status(500).json({ error: "Anmeldung fehlgeschlagen" });
   }
+});
+
+app.get("/api/admin/expo", (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
+  res.json({ log: expoLog });
 });
 
 app.get("/api/push-key", (_req, res) => {
