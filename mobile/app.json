@@ -61,7 +61,18 @@
           "defaultChannel": "nachrichten"
         }
       ],
-      "expo-iap"
-    ]
+      "expo-iap",
+      [
+        "expo-share-intent",
+        {
+          "androidIntentFilters": [
+            "text/*",
+            "image/*"
+          ],
+          "disableIOS": true
+        }
+      ]
+    ],
+    "scheme": "diralo"
   }
 }

@@ -25,6 +25,7 @@ import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-spe
 import { File } from "expo-file-system";
 import * as Notifications from "expo-notifications";
 import * as Speech from "expo-speech";
+import { useShareIntent } from "expo-share-intent";
 import {
   initConnection, fetchProducts, requestPurchase, finishTransaction,
   purchaseUpdatedListener, purchaseErrorListener, isUserCancelledError,
@@ -65,6 +66,8 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    geteiltTitel: "Geteilt – übersetzt",
+    geteiltLaedt: "Wird übersetzt …",
     dolmetscher: "🎙 Dolmetscher",
     fotoKnopf: "📷 Foto übersetzen",
     dolmInfo: "Handy zwischen euch legen. Jeder tippt auf sein Mikrofon und spricht in seiner Sprache.",
@@ -159,6 +162,8 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    geteiltTitel: "Partilhado – traduzido",
+    geteiltLaedt: "A traduzir …",
     dolmetscher: "🎙 Intérprete",
     fotoKnopf: "📷 Traduzir foto",
     dolmInfo: "Ponham o telemóvel entre vocês. Cada um toca no seu microfone e fala na sua língua.",
@@ -253,6 +258,8 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    geteiltTitel: "Shared – translated",
+    geteiltLaedt: "Translating …",
     dolmetscher: "🎙 Interpreter",
     fotoKnopf: "📷 Translate photo",
     dolmInfo: "Put the phone between you. Each person taps their microphone and speaks in their own language.",
@@ -347,6 +354,8 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    geteiltTitel: "Compartido – traducido",
+    geteiltLaedt: "Traduciendo …",
     dolmetscher: "🎙 Intérprete",
     fotoKnopf: "📷 Traducir foto",
     dolmInfo: "Poned el móvil entre vosotros. Cada uno toca su micrófono y habla en su idioma.",
@@ -441,6 +450,8 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    geteiltTitel: "Partagé – traduit",
+    geteiltLaedt: "Traduction …",
     dolmetscher: "🎙 Interprète",
     fotoKnopf: "📷 Traduire une photo",
     dolmInfo: "Posez le téléphone entre vous. Chacun touche son micro et parle dans sa langue.",
@@ -535,6 +546,8 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    geteiltTitel: "Condiviso – tradotto",
+    geteiltLaedt: "Traduzione …",
     dolmetscher: "🎙 Interprete",
     fotoKnopf: "📷 Traduci foto",
     dolmInfo: "Mettete il telefono tra voi. Ognuno tocca il suo microfono e parla nella sua lingua.",
@@ -796,7 +809,20 @@ function Haupt() {
   const [name, setName] = useState("");
   const [lang, setLang] = useState(geraeteSprache);
   const [raum, setRaum] = useState(null);     // null = Startseite, sonst Chat
-  const [ansicht, setAnsicht] = useState(null); // "dolmetsch" | "foto" | null
+  const [ansicht, setAnsicht] = useState(null); // "dolmetsch" | "foto" | "geteilt" | null
+  /* Teilen-Menue von Android: Text oder Bild aus einer anderen App. */
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent({ resetOnBackground: true });
+  const [geteilt, setGeteilt] = useState(null);
+  useEffect(() => {
+    if (!hasShareIntent) return;
+    const bild = (shareIntent.files || []).find((f) => String(f.mimeType || "").startsWith("image/"));
+    const text = shareIntent.text || shareIntent.webUrl || "";
+    if (bild || text.trim()) {
+      setGeteilt({ text: text.trim(), bild: bild?.path || null, nr: Date.now() });
+      setAnsicht("geteilt");
+    }
+    resetShareIntent();
+  }, [hasShareIntent]);
 
   useEffect(() => {
     (async () => {
@@ -869,7 +895,9 @@ function Haupt() {
     <View style={[s.full, { paddingTop: insets.top, backgroundColor: FARBE.navy }]}>
       <StatusBar barStyle="light-content" backgroundColor={FARBE.navy} />
       <View style={s.full}>
-        {ansicht === "dolmetsch" ? (
+        {ansicht === "geteilt" && geteilt ? (
+          <Geteilt daten={geteilt} lang={lang} device={device} unten={insets.bottom} onBack={() => { setAnsicht(null); setGeteilt(null); }} />
+        ) : ansicht === "dolmetsch" ? (
           <Dolmetscher lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
         ) : ansicht === "foto" ? (
           <FotoUebersetzen lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
@@ -1171,6 +1199,92 @@ function Dolmetscher({ lang, device, unten, onBack }) {
         onWahl={(c) => { setAndere(c); setWahl(false); setDu({ gesagt: "", fuerMich: "" }); setIch({ gesagt: "", fuerMich: "" }); }}
         onZu={() => setWahl(false)}
       />
+    </View>
+  );
+}
+
+/* ----------------------------- Geteilt -----------------------------
+   Was ueber "Teilen -> Diralo" aus einer anderen App kommt: Text wird
+   uebersetzt und kurz erklaert, ein Bild wie bei "Foto uebersetzen" gelesen. */
+function Geteilt({ daten, lang, device, unten, onBack }) {
+  const [laedt, setLaedt] = useState(true);
+  const [ergebnis, setErgebnis] = useState(null);
+  const [fehler, setFehler] = useState(null);
+
+  useEffect(() => {
+    let weg = false;
+    (async () => {
+      setLaedt(true); setFehler(null); setErgebnis(null);
+      try {
+        let r;
+        if (daten.bild) {
+          const klein = await manipulateAsync(daten.bild, [{ resize: { width: FOTO_MAX_BREITE } }], {
+            compress: 0.8, format: SaveFormat.JPEG, base64: true,
+          });
+          r = await fetch(`${SERVER_URL}/api/foto-text`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bild: klein.base64, lang, erklaeren: true, device }),
+          });
+        } else {
+          r = await fetch(`${SERVER_URL}/api/text-erklaeren`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: daten.text, lang, erklaeren: true, device }),
+          });
+        }
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error();
+        if (!weg) setErgebnis({ ...j, original: j.original || daten.text });
+      } catch {
+        if (!weg) setFehler(t("hilfeFehler"));
+      } finally {
+        if (!weg) setLaedt(false);
+      }
+    })();
+    return () => { weg = true; };
+  }, [daten.nr]);
+
+  return (
+    <View style={[s.full, { backgroundColor: FARBE.hell }]}>
+      <View style={s.chatHead}>
+        <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
+        <Text style={[s.chatTitel, { flex: 1 }]}>{t("geteiltTitel")}</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 + unten }}>
+        {laedt && (
+          <View style={{ alignItems: "center", marginTop: 24 }}>
+            <ActivityIndicator size="large" color={FARBE.navy} />
+            <Text style={s.leer}>{daten.bild ? t("fotoLesen") : t("geteiltLaedt")}</Text>
+          </View>
+        )}
+        {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
+        {ergebnis && !ergebnis.uebersetzt && <Text style={s.leer}>{t("keinText")}</Text>}
+        {ergebnis?.uebersetzt ? (
+          <View style={s.fotoKarte}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={[s.fotoKarteTitel, { flex: 1 }]}>{sprachName(lang)}</Text>
+              <Pressable onPress={() => vorlesen(ergebnis.uebersetzt, lang)} hitSlop={8}><Text style={s.vorschauKnopf}>🔊</Text></Pressable>
+            </View>
+            <Text style={s.fotoKarteTxt} selectable>{ergebnis.uebersetzt}</Text>
+          </View>
+        ) : null}
+        {ergebnis?.erklaerung ? (
+          <View style={s.fotoKarte}>
+            <Text style={s.fotoKarteTitel}>{t("erklaerung")}</Text>
+            <Text style={s.fotoKarteTxt}>{ergebnis.erklaerung}</Text>
+          </View>
+        ) : null}
+        {ergebnis?.original ? (
+          <View style={s.fotoKarte}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={[s.fotoKarteTitel, { flex: 1 }]}>{t("originalText")}</Text>
+              {ergebnis.sprache ? (
+                <Pressable onPress={() => vorlesen(ergebnis.original, ergebnis.sprache)} hitSlop={8}><Text style={s.vorschauKnopf}>🔊</Text></Pressable>
+              ) : null}
+            </View>
+            <Text style={[s.fotoKarteTxt, { color: FARBE.grau }]} selectable>{ergebnis.original}</Text>
+          </View>
+        ) : null}
+      </ScrollView>
     </View>
   );
 }
