@@ -1062,11 +1062,17 @@ async function claudeBild(daten, mime, prompt) {
   };
 }
 
-async function translate(text, target) {
+async function translate(text, target, kontext = "") {
   const name = LANG_NAMES[target] || target;
   const hint = HINTS[target] ? `\nZielvariante beachten: ${HINTS[target]}` : "";
+  /* Die letzten Nachrichten davor, nur zum Verstehen: Kurze Woerter wie
+     "Chamo" sind oft die Korrektur eines Tippfehlers ("te chsmo" ->
+     "te chamo") oder eine Antwort - ohne Zusammenhang raet die KI falsch. */
+  const umfeld = kontext
+    ? `\nZum Verstaendnis die Nachrichten direkt davor (NICHT uebersetzen, nur als Zusammenhang). Ist der Text die Korrektur eines Tippfehlers aus diesen Nachrichten oder eine Fortsetzung davon, uebersetze ihn passend dazu:\n${kontext}\n`
+    : "";
   const prompt = `Du bist die Uebersetzungs-Engine eines Messengers. Erkenne die Sprache des Textes und uebersetze ihn natuerlich und umgangssprachlich nach ${name} (${target}) - so, wie ein Muttersprachler es in einen Chat tippen wuerde. Behalte Emojis, Namen, Zahlen und den Tonfall. Erklaere nichts, kommentiere nichts.${hint}
-Bei der Erkennung die regionale Variante angeben, wenn sie am Text erkennbar ist: pt-BR oder pt-PT, es-419 oder es, en-US oder en, de-CH oder de, zh-TW oder zh. Sonst nur den Sprachcode.
+Bei der Erkennung die regionale Variante angeben, wenn sie am Text erkennbar ist: pt-BR oder pt-PT, es-419 oder es, en-US oder en, de-CH oder de, zh-TW oder zh. Sonst nur den Sprachcode.${umfeld}
 Text: """${text}"""
 Antworte NUR mit JSON, ohne Markdown: {"detected":"<Sprachcode>","translation":"<Uebersetzung>"}`;
   /* Ein zweiter Versuch faengt kurze Aussetzer der Schnittstelle ab -
@@ -1137,6 +1143,21 @@ async function imKontingent(room) {
   return true;
 }
 
+/* Bis zu vier Nachrichten aus den 15 Minuten vor dieser - als
+   Zusammenhang fuer kurze, mehrdeutige Nachrichten. Lange Texte
+   verstehen sich selbst, da sparen wir uns das. */
+async function kontextVor(room, msg) {
+  if (String(msg.text || "").length > 60) return "";
+  try {
+    const davor = (await store.getHistory(room, 8))
+      .filter((m) => m.id !== msg.id && !m.deleted && m.text && m.at <= msg.at && msg.at - m.at < 15 * 60 * 1000)
+      .slice(-4);
+    return davor.map((m) => `${m.name || "?"}: ${String(m.text).slice(0, 200)}`).join("\n");
+  } catch {
+    return "";
+  }
+}
+
 /* Sorgt dafuer, dass eine Uebersetzung existiert. Gibt den Text zurueck. */
 async function ensure(room, msgId, target) {
   const msg = await store.getMessage(msgId);
@@ -1184,7 +1205,7 @@ async function ensure(room, msgId, target) {
 
   const job = (async () => {
     try {
-      const { result: out, usage } = await translate(msg.text, target);
+      const { result: out, usage } = await translate(msg.text, target, await kontextVor(room, msg));
       store.logUsage({
         room, target, chars: msg.text.length,
         inTokens: usage.inTokens, outTokens: usage.outTokens,
