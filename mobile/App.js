@@ -691,6 +691,9 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
   });
   const sockRef = useRef(null);
   const listRef = useRef(null);
+  /* Nur mitscrollen, wenn man unten ist - sonst springt der Chat beim
+     Zurueckscrollen bei jedem Bild, jeder Uebersetzung wieder nach unten. */
+  const amEnde = useRef(true);
   const askedRef = useRef(new Set());
 
   useEffect(() => {
@@ -724,7 +727,8 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
       const m = normMsg(msg);
       setNachrichten((alt) => [...alt, m]);
       frageWennNoetig(m);
-      scrollUnten();
+      if (m.device === device) amEnde.current = true;   // eigene Nachricht: immer runter
+      if (amEnde.current) scrollUnten();
     });
     /* Uebersetzung fuer EINE Sprache trifft nach ein paar Sekunden ein. */
     socket.on("translated", ({ id, lang: zl, text: t }) => {
@@ -925,7 +929,12 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
             onLangDruck={() => setReagierenAuf(item)}
           />
         )}
-        onContentSizeChange={scrollUnten}
+        onContentSizeChange={() => { if (amEnde.current) scrollUnten(); }}
+        onScroll={(e) => {
+          const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+          amEnde.current = contentSize.height - layoutMeasurement.height - contentOffset.y < 150;
+        }}
+        scrollEventThrottle={100}
         ListEmptyComponent={
           <Text style={s.leer}>{t("leer")}</Text>
         }
