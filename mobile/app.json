@@ -33,8 +33,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": false,
-          "recordAudioAndroid": false,
+          "microphonePermission": "Diralo braucht das Mikrofon für Sprachnachrichten und den Dolmetscher.",
           "enableBackgroundPlayback": false
         }
       ],
@@ -43,7 +42,7 @@
         {
           "photosPermission": "Diralo braucht Zugriff auf deine Fotos, damit du Bilder im Chat senden kannst.",
           "cameraPermission": "Diralo braucht die Kamera, damit du Fotos im Chat senden kannst.",
-          "microphonePermission": false
+          "microphonePermission": "Diralo braucht das Mikrofon für Sprachnachrichten und den Dolmetscher."
         }
       ],
       [
