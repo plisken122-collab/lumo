@@ -991,6 +991,17 @@ const monatsKennung = () => {
   return d.getUTCFullYear() * 100 + d.getUTCMonth();
 };
 
+/* Das Modell soll reines JSON liefern, setzt aber gelegentlich einen Satz
+   davor oder Markdown drumherum. Dann den ersten {...}-Block nehmen, statt
+   die ganze Antwort als Fehler zu werten. */
+function jsonAusAntwort(text) {
+  const roh = String(text || "").replace(/```json|```/g, "").trim();
+  try { return JSON.parse(roh); } catch {}
+  const a = roh.indexOf("{"), b = roh.lastIndexOf("}");
+  if (a >= 0 && b > a) return JSON.parse(roh.slice(a, b + 1));
+  throw new Error("Antwort ist kein JSON: " + roh.slice(0, 120));
+}
+
 async function claude(prompt) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -1010,7 +1021,7 @@ async function claude(prompt) {
   const data = await res.json();
   const text = (data.content || []).map((c) => (c.type === "text" ? c.text : "")).join("");
   return {
-    result: JSON.parse(text.replace(/```json|```/g, "").trim()),
+    result: jsonAusAntwort(text),
     usage: {
       inTokens: data.usage?.input_tokens || 0,
       outTokens: data.usage?.output_tokens || 0,
@@ -1042,7 +1053,7 @@ async function claudeBild(daten, mime, prompt) {
   const data = await res.json();
   const text = (data.content || []).map((c) => (c.type === "text" ? c.text : "")).join("");
   return {
-    result: JSON.parse(text.replace(/```json|```/g, "").trim()),
+    result: jsonAusAntwort(text),
     usage: {
       inTokens: data.usage?.input_tokens || 0,
       outTokens: data.usage?.output_tokens || 0,
@@ -1057,7 +1068,13 @@ async function translate(text, target) {
 Bei der Erkennung die regionale Variante angeben, wenn sie am Text erkennbar ist: pt-BR oder pt-PT, es-419 oder es, en-US oder en, de-CH oder de, zh-TW oder zh. Sonst nur den Sprachcode.
 Text: """${text}"""
 Antworte NUR mit JSON, ohne Markdown: {"detected":"<Sprachcode>","translation":"<Uebersetzung>"}`;
-  return claude(prompt);
+  /* Ein zweiter Versuch faengt kurze Aussetzer der Schnittstelle ab -
+     sonst sieht jeder im Chat "Uebersetzung gerade nicht moeglich". */
+  try { return await claude(prompt); }
+  catch (err) {
+    await new Promise((r) => setTimeout(r, 800));
+    return claude(prompt);
+  }
 }
 
 const costOf = (u) => (u.inTokens / 1e6) * PRICE_IN + (u.outTokens / 1e6) * PRICE_OUT;
