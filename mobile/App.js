@@ -67,6 +67,7 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    keineStimme: "Für diese Sprache ist keine Stimme installiert. Android-Einstellungen → Sprachausgabe (Text-in-Sprache) → Sprachdaten installieren.",
     imChat: "im Chat",
     einlTitel: "Du hast eine Einladung bekommen?",
     einlText: "Gib den Chat-Code aus dem Link ein, dann landest du im selben Chat wie deine Person.",
@@ -82,8 +83,8 @@ const TEXTE = {
     fuerMich: "🙈 Für mich löschen",
     geteiltTitel: "Geteilt – übersetzt",
     geteiltLaedt: "Wird übersetzt …",
-    dolmetscher: "🎙 Dolmetscher",
-    fotoKnopf: "📷 Foto übersetzen",
+    dolmetscher: "🎙\nDolmetscher",
+    fotoKnopf: "📷\nFoto übersetzen",
     dolmInfo: "Handy zwischen euch legen. Jeder tippt auf sein Mikrofon und spricht in seiner Sprache.",
     tippenSprechen: "Tippen und sprechen",
     hoere: "Ich höre zu …",
@@ -99,7 +100,7 @@ const TEXTE = {
     vorschau: "So kommt es an:",
     vorschauAus: "Vorschau aus",
     vorlesen: "🔊 Vorlesen",
-    langsam: "🐢 Langsam",
+    langsam: "🐢 Original langsam",
     aussprache: "🗣 Aussprache",
     ausspracheFehler: "Aussprache-Hilfe gerade nicht möglich.",
     claim: "Chat in jeder Sprache. Jede Nachricht wird automatisch übersetzt.",
@@ -176,6 +177,7 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    keineStimme: "Não há voz instalada para esta língua. Definições do Android → Saída de texto para voz → instalar dados de voz.",
     imChat: "no chat",
     einlTitel: "Recebeste um convite?",
     einlText: "Escreve o código do chat que vem no link e entras no mesmo chat que a outra pessoa.",
@@ -191,8 +193,8 @@ const TEXTE = {
     fuerMich: "🙈 Apagar para mim",
     geteiltTitel: "Partilhado – traduzido",
     geteiltLaedt: "A traduzir …",
-    dolmetscher: "🎙 Intérprete",
-    fotoKnopf: "📷 Traduzir foto",
+    dolmetscher: "🎙\nIntérprete",
+    fotoKnopf: "📷\nTraduzir foto",
     dolmInfo: "Ponham o telemóvel entre vocês. Cada um toca no seu microfone e fala na sua língua.",
     tippenSprechen: "Tocar e falar",
     hoere: "Estou a ouvir …",
@@ -208,7 +210,7 @@ const TEXTE = {
     vorschau: "Vai chegar assim:",
     vorschauAus: "Desligar pré-visualização",
     vorlesen: "🔊 Ouvir",
-    langsam: "🐢 Devagar",
+    langsam: "🐢 Original devagar",
     aussprache: "🗣 Pronúncia",
     ausspracheFehler: "Ajuda de pronúncia indisponível de momento.",
     claim: "Chat em qualquer língua. Cada mensagem é traduzida automaticamente.",
@@ -285,6 +287,7 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    keineStimme: "No voice is installed for this language. Android settings → Text-to-speech output → install voice data.",
     imChat: "in the chat",
     einlTitel: "Did you get an invitation?",
     einlText: "Enter the chat code from the link and you'll join the same chat as your person.",
@@ -300,8 +303,8 @@ const TEXTE = {
     fuerMich: "🙈 Delete for me",
     geteiltTitel: "Shared – translated",
     geteiltLaedt: "Translating …",
-    dolmetscher: "🎙 Interpreter",
-    fotoKnopf: "📷 Translate photo",
+    dolmetscher: "🎙\nInterpreter",
+    fotoKnopf: "📷\nTranslate photo",
     dolmInfo: "Put the phone between you. Each person taps their microphone and speaks in their own language.",
     tippenSprechen: "Tap and speak",
     hoere: "Listening …",
@@ -317,7 +320,7 @@ const TEXTE = {
     vorschau: "It will arrive as:",
     vorschauAus: "Preview off",
     vorlesen: "🔊 Read aloud",
-    langsam: "🐢 Slowly",
+    langsam: "🐢 Original slowly",
     aussprache: "🗣 Pronunciation",
     ausspracheFehler: "Pronunciation help not available right now.",
     claim: "Chat in any language. Every message is translated automatically.",
@@ -394,6 +397,7 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    keineStimme: "No hay ninguna voz instalada para este idioma. Ajustes de Android → Salida de texto a voz → instalar datos de voz.",
     imChat: "en el chat",
     einlTitel: "¿Has recibido una invitación?",
     einlText: "Escribe el código del chat que viene en el enlace y entrarás en el mismo chat que la otra persona.",
@@ -409,8 +413,8 @@ const TEXTE = {
     fuerMich: "🙈 Borrar para mí",
     geteiltTitel: "Compartido – traducido",
     geteiltLaedt: "Traduciendo …",
-    dolmetscher: "🎙 Intérprete",
-    fotoKnopf: "📷 Traducir foto",
+    dolmetscher: "🎙\nIntérprete",
+    fotoKnopf: "📷\nTraducir foto",
     dolmInfo: "Poned el móvil entre vosotros. Cada uno toca su micrófono y habla en su idioma.",
     tippenSprechen: "Toca y habla",
     hoere: "Escuchando …",
@@ -426,7 +430,7 @@ const TEXTE = {
     vorschau: "Llegará así:",
     vorschauAus: "Desactivar vista previa",
     vorlesen: "🔊 Escuchar",
-    langsam: "🐢 Despacio",
+    langsam: "🐢 Original despacio",
     aussprache: "🗣 Pronunciación",
     ausspracheFehler: "Ayuda de pronunciación no disponible ahora.",
     claim: "Chatea en cualquier idioma. Cada mensaje se traduce automáticamente.",
@@ -503,6 +507,7 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    keineStimme: "Aucune voix n'est installée pour cette langue. Paramètres Android → Synthèse vocale → installer les données vocales.",
     imChat: "dans le chat",
     einlTitel: "Tu as reçu une invitation ?",
     einlText: "Saisis le code du chat qui figure dans le lien et tu rejoins le même chat que l'autre personne.",
@@ -518,8 +523,8 @@ const TEXTE = {
     fuerMich: "🙈 Supprimer pour moi",
     geteiltTitel: "Partagé – traduit",
     geteiltLaedt: "Traduction …",
-    dolmetscher: "🎙 Interprète",
-    fotoKnopf: "📷 Traduire une photo",
+    dolmetscher: "🎙\nInterprète",
+    fotoKnopf: "📷\nTraduire une photo",
     dolmInfo: "Posez le téléphone entre vous. Chacun touche son micro et parle dans sa langue.",
     tippenSprechen: "Touche et parle",
     hoere: "J'écoute …",
@@ -535,7 +540,7 @@ const TEXTE = {
     vorschau: "Ce sera reçu ainsi :",
     vorschauAus: "Désactiver l'aperçu",
     vorlesen: "🔊 Écouter",
-    langsam: "🐢 Lentement",
+    langsam: "🐢 Original lentement",
     aussprache: "🗣 Prononciation",
     ausspracheFehler: "Aide à la prononciation indisponible pour le moment.",
     claim: "Discute dans n'importe quelle langue. Chaque message est traduit automatiquement.",
@@ -612,6 +617,7 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    keineStimme: "Nessuna voce installata per questa lingua. Impostazioni Android → Sintesi vocale → installa dati vocali.",
     imChat: "in chat",
     einlTitel: "Hai ricevuto un invito?",
     einlText: "Inserisci il codice chat che trovi nel link ed entri nella stessa chat dell'altra persona.",
@@ -627,8 +633,8 @@ const TEXTE = {
     fuerMich: "🙈 Elimina per me",
     geteiltTitel: "Condiviso – tradotto",
     geteiltLaedt: "Traduzione …",
-    dolmetscher: "🎙 Interprete",
-    fotoKnopf: "📷 Traduci foto",
+    dolmetscher: "🎙\nInterprete",
+    fotoKnopf: "📷\nTraduci foto",
     dolmInfo: "Mettete il telefono tra voi. Ognuno tocca il suo microfono e parla nella sua lingua.",
     tippenSprechen: "Tocca e parla",
     hoere: "Sto ascoltando …",
@@ -644,7 +650,7 @@ const TEXTE = {
     vorschau: "Arriverà così:",
     vorschauAus: "Disattiva anteprima",
     vorlesen: "🔊 Ascolta",
-    langsam: "🐢 Lentamente",
+    langsam: "🐢 Originale lentamente",
     aussprache: "🗣 Pronuncia",
     ausspracheFehler: "Aiuto pronuncia non disponibile ora.",
     claim: "Chatta in qualsiasi lingua. Ogni messaggio viene tradotto automaticamente.",
@@ -2025,6 +2031,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
           )}
           <Bubble
             msg={item} lang={lang} device={device} gelesenBis={gelesenBis}
+            onKeineStimme={() => setHinweis(t("keineStimme"))}
             zitat={item.replyTo ? nachrichten.find((m) => m.id === item.replyTo) || { fehlt: true } : null}
             onLangDruck={() => setReagierenAuf(item)}
           />
@@ -2070,7 +2077,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
           {reagierenAuf.text && !reagierenAuf.deleted && reagierenAuf.device !== device && (
             <Pressable
               style={s.aktion}
-              onPress={() => vorlesen(reagierenAuf.text, reagierenAuf.detected || reagierenAuf.lang, true)}
+              onPress={() => vorlesen(reagierenAuf.text, reagierenAuf.detected || reagierenAuf.lang, true, () => setHinweis(t("keineStimme")))}
             >
               <Text style={s.aktionTxt}>{t("langsam")}</Text>
             </Pressable>
@@ -2185,7 +2192,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
 
 /* Eine Sprechblase. Zeigt die Nachricht in MEINER Sprache (sonst Original).
    Langes Druecken oeffnet die Emoji-Leiste. */
-function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis }) {
+function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStimme }) {
   const meins = msg.device === device;
   const uebersetzt = !meins && msg.tr && msg.tr[lang];
   const anzeige = meins ? msg.text : (uebersetzt || msg.text);
@@ -2254,7 +2261,10 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis }) {
         {inhalt}
         <View style={s.meta}>
           {!meins && msg.text ? (
-            <Pressable onPress={() => vorlesen(msg.text, msg.detected || msg.lang)} hitSlop={10} style={{ marginRight: "auto" }}>
+            <Pressable
+              onPress={() => (uebersetzt ? vorlesen(uebersetzt, lang, false, onKeineStimme) : vorlesen(msg.text, msg.detected || msg.lang, false, onKeineStimme))}
+              hitSlop={10} style={{ marginRight: "auto" }}
+            >
               <Text style={s.lautKnopf}>🔊</Text>
             </Pressable>
           ) : null}
@@ -2407,11 +2417,40 @@ function tagText(at) {
 }
 
 /* Vorlesen mit den Stimmen des Handys - kostenlos, ohne Server. */
-function vorlesen(text, code, langsam = false) {
+/* Beste installierte Stimme fuer eine Sprache: genaue Region vor gleicher
+   Sprache, "Enhanced" vor normal, lokal vor Netz. Ohne passende Stimme
+   wuerde Android mit einer fremden Stimme lesen - das klingt furchtbar. */
+let stimmenListe = null;
+async function stimmeFuer(code) {
+  try {
+    if (!stimmenListe) stimmenListe = await Speech.getAvailableVoicesAsync();
+  } catch { stimmenListe = []; }
+  const ziel = erkennerSprache(code || "en").toLowerCase().replace("_", "-");
+  const basis = ziel.split("-")[0];
+  const passend = (stimmenListe || []).filter((v) =>
+    String(v.language || "").toLowerCase().replace("_", "-").split("-")[0] === basis);
+  if (!passend.length) return null;
+  const punkte = (v) => {
+    const l = String(v.language || "").toLowerCase().replace("_", "-");
+    const id = String(v.identifier || "").toLowerCase();
+    return (l === ziel ? 4 : 0) + (v.quality === "Enhanced" ? 2 : 0) + (id.includes("network") ? 0 : 1);
+  };
+  return passend.sort((a, b) => punkte(b) - punkte(a))[0];
+}
+
+/* Vorlesen mit den Stimmen des Handys - kostenlos, ohne Server.
+   Gibt false zurueck, wenn fuer die Sprache keine Stimme installiert ist. */
+async function vorlesen(text, code, langsam = false, onKeineStimme = null) {
   if (!text) return;
   try {
     Speech.stop();
-    Speech.speak(text, { language: erkennerSprache(code || "en"), rate: langsam ? 0.55 : 0.95 });
+    const stimme = await stimmeFuer(code);
+    if (!stimme && onKeineStimme) { onKeineStimme(); return; }
+    Speech.speak(text, {
+      language: erkennerSprache(code || "en"),
+      ...(stimme ? { voice: stimme.identifier } : {}),
+      rate: langsam ? 0.55 : 0.95,
+    });
   } catch {}
 }
 
@@ -2540,8 +2579,8 @@ const s = StyleSheet.create({
   vorschauKnopf: { fontSize: 20 },
   lautKnopf: { fontSize: 15 },
   hilfeRow: { flexDirection: "row", gap: 10, marginTop: 14 },
-  hilfeKnopf: { flex: 1, borderWidth: 1, borderColor: FARBE.navy, borderRadius: 14, paddingVertical: 12, alignItems: "center", backgroundColor: FARBE.weiss },
-  hilfeKnopfTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 14.5 },
+  hilfeKnopf: { flex: 1, borderWidth: 1, borderColor: FARBE.navy, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 8, alignItems: "center", justifyContent: "center", backgroundColor: FARBE.weiss },
+  hilfeKnopfTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 14.5, textAlign: "center" },
   dolmHaelfte: { flex: 1, alignItems: "center", paddingHorizontal: 18, paddingVertical: 12 },
   dolmOben: { transform: [{ rotate: "180deg" }], backgroundColor: "#eef4ff" },
   dolmSprache: { fontSize: 13, color: FARBE.grau, fontWeight: "700" },
