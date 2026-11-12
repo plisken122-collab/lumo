@@ -1717,7 +1717,9 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   /* Bis zu welchem Zeitpunkt das Gegenueber gelesen hat -> ✓✓ */
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
-  const [anwesend, setAnwesend] = useState([]);   // Namen der anderen, die gerade im Chat sind
+  const [anwesend, setAnwesend] = useState([]);
+  /* Erst nach dem Verlauf wissen wir, ob der Chat wirklich leer ist. */
+  const [geladen, setGeladen] = useState(false);   // Namen der anderen, die gerade im Chat sind
   const [chatName, setChatName] = useState("");
   useEffect(() => { chatsLaden().then((l) => setChatName(l.find((c) => c.code === raum)?.name || "")); }, [raum]);
 
@@ -1750,6 +1752,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
     socket.on("history", (liste) => {
       const arr = Array.isArray(liste) ? liste.map(normMsg) : [];
       setNachrichten(arr);
+      setGeladen(true);
       arr.forEach(frageWennNoetig);
       scrollUnten();
       gelesenMelden();
@@ -2040,7 +2043,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
         onScroll={(e) => { amEnde.current = e.nativeEvent.contentOffset.y < 150; }}
         scrollEventThrottle={100}
         ListEmptyComponent={
-          <View style={[s.leerBox, { transform: [{ scaleY: -1 }] }]}>
+          !geladen ? (
+            <ActivityIndicator color={FARBE.navy} style={{ marginVertical: 40 }} />
+          ) : (
+          /* Die umgedrehte Liste dreht auf Android auch diesen Inhalt um
+             180 Grad - hier zurueckdrehen, sonst steht er gespiegelt da. */
+          <View style={[s.leerBox, { transform: [{ rotate: "180deg" }] }]}>
             <Text style={s.leerTitel}>{t("leerTitel")}</Text>
             <Text style={s.leerText}>{t("leerText2")}</Text>
             <Pressable style={[s.btnPrimary, { alignSelf: "stretch", marginTop: 14 }]} onPress={einladen}>
@@ -2051,6 +2059,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
               <Text style={s.leerZurueckTxt}>‹ {t("codeEingeben")}</Text>
             </Pressable>
           </View>
+          )
         }
       />
 
