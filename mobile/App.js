@@ -23,6 +23,7 @@ import * as Location from "expo-location";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition";
 import { File } from "expo-file-system";
+import * as Notifications from "expo-notifications";
 /* Android zeichnet die App bis unter Status- und Navigationsleiste
    (edge-to-edge). Das SafeAreaView aus react-native hilft nur auf iOS -
    die Abstaende kommen deshalb von hier, auf beiden Systemen. */
@@ -53,6 +54,202 @@ const sprachName = (code) => SPRACHEN.find((x) => x.code === code)?.label || cod
 /* Einladung wie in der Web-App: Link mit dem Code hinter #c=. */
 const WEB_URL = "https://diralo.app";
 const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
+
+/* ------------------------------ Texte ------------------------------
+   Die Oberflaeche folgt der in der App gewaehlten Sprache: Deutsch,
+   Portugiesisch, sonst Englisch. */
+const TEXTE = {
+  de: {
+    claim: "Chat in jeder Sprache. Jede Nachricht wird automatisch übersetzt.",
+    deinName: "Dein Name",
+    nameBsp: "z. B. Carsten",
+    deineSprache: "Deine Sprache",
+    neuerChat: "Neuen Chat starten",
+    oderBeitreten: "oder einem Chat beitreten",
+    chatCode: "Chat-Code",
+    beitreten: "Beitreten",
+    meineChats: "Meine Chats",
+    datenschutz: "Zum Übersetzen wird jede Nachricht an einen Server geschickt und ist dort lesbar — anders als bei WhatsApp. Schreib nichts hinein, was niemand sonst sehen soll. Nach 30 Tagen wird alles gelöscht.",
+    ausListe: "aus der Liste nehmen?",
+    abbrechen: "Abbrechen",
+    entfernen: "Entfernen",
+    nochKeine: "Noch keine benutzt.",
+    kontingent: "Das kostenlose Übersetzungs-Kontingent ist erreicht. Mit Diralo Plus geht es unbegrenzt weiter.",
+    uebersFehler: "Übersetzung gerade nicht möglich. Nachricht wird im Original gezeigt.",
+    zuVieleJoins: "Zu viele Beitritts-Versuche. Bitte kurz warten.",
+    langsamer: "Etwas langsamer - zu viele Nachrichten in kurzer Zeit.",
+    fremdGeraet: "Diese Nachricht wurde von einem anderen Gerät geschrieben und lässt sich hier nicht löschen.",
+    loeschenFehler: "Löschen gerade nicht möglich. Bitte später nochmal.",
+    spracheLang: "Die Sprachnachricht ist zu lang.",
+    spracheFehler: "Sprachnachricht konnte nicht gesendet werden.",
+    einladung: "Schreib mit mir in Diralo — jeder in seiner Sprache:",
+    fuerAlleFrage: "Für alle löschen?",
+    verschwindet: "Die Nachricht verschwindet auch beim Gegenüber.",
+    loeschen: "Löschen",
+    ohneKamera: "Ohne Kamera-Erlaubnis geht das nicht.",
+    ohneFotos: "Ohne Zugriff auf die Fotos geht das nicht.",
+    fotoGross: "Das Foto ist zu groß.",
+    fotoFehler: "Foto konnte nicht gesendet werden.",
+    ohneStandort: "Ohne Standort-Erlaubnis geht das nicht.",
+    standortFehler: "Standort konnte nicht ermittelt werden.",
+    senden: "Senden",
+    galerie: "Foto aus Galerie",
+    kamera: "Kamera",
+    standort: "Standort",
+    einladen: "Einladen",
+    verbunden: "verbunden",
+    verbinde: "verbinde ...",
+    du: "du",
+    Du: "Du",
+    leer: "Noch keine Nachrichten. Schreib die erste - sie wird automatisch übersetzt.",
+    antworten: "↩ Antworten",
+    fuerAlle: "🗑 Für alle löschen",
+    schreiben: "Nachricht schreiben ...",
+    geloescht: "Nachricht gelöscht",
+    kartenTipp: "Zum Öffnen in der Karte tippen",
+    nichtMehrDa: "Nachricht nicht mehr da",
+    sprachnachricht: "Sprachnachricht",
+    foto: "Foto",
+    aufnahmeFehler: "Aufnahme nicht möglich: ",
+    ohneMikro: "Ohne Mikrofon-Erlaubnis geht das nicht.",
+    android13: "Sprachnachrichten brauchen Android 13 oder neuer.",
+    kanal: "Nachrichten",
+    ausblenden: "tippen zum Ausblenden",
+  },
+  pt: {
+    claim: "Chat em qualquer língua. Cada mensagem é traduzida automaticamente.",
+    deinName: "O teu nome",
+    nameBsp: "p. ex. Maria",
+    deineSprache: "A tua língua",
+    neuerChat: "Iniciar novo chat",
+    oderBeitreten: "ou entrar num chat",
+    chatCode: "Código do chat",
+    beitreten: "Entrar",
+    meineChats: "Os meus chats",
+    datenschutz: "Para traduzir, cada mensagem é enviada para um servidor e pode ser lida lá — ao contrário do WhatsApp. Não escrevas nada que mais ninguém deva ver. Ao fim de 30 dias tudo é apagado.",
+    ausListe: "remover da lista?",
+    abbrechen: "Cancelar",
+    entfernen: "Remover",
+    nochKeine: "Ainda nenhum usado.",
+    kontingent: "Atingiste o limite gratuito de traduções. Com o Diralo Plus continua sem limites.",
+    uebersFehler: "Tradução não disponível de momento. A mensagem aparece no original.",
+    zuVieleJoins: "Demasiadas tentativas de entrada. Espera um pouco.",
+    langsamer: "Mais devagar - demasiadas mensagens em pouco tempo.",
+    fremdGeraet: "Esta mensagem foi escrita noutro dispositivo e não pode ser apagada aqui.",
+    loeschenFehler: "Não é possível apagar agora. Tenta mais tarde.",
+    spracheLang: "A mensagem de voz é demasiado longa.",
+    spracheFehler: "Não foi possível enviar a mensagem de voz.",
+    einladung: "Escreve comigo no Diralo — cada um na sua língua:",
+    fuerAlleFrage: "Apagar para todos?",
+    verschwindet: "A mensagem desaparece também para a outra pessoa.",
+    loeschen: "Apagar",
+    ohneKamera: "Sem permissão da câmara não é possível.",
+    ohneFotos: "Sem acesso às fotos não é possível.",
+    fotoGross: "A foto é demasiado grande.",
+    fotoFehler: "Não foi possível enviar a foto.",
+    ohneStandort: "Sem permissão de localização não é possível.",
+    standortFehler: "Não foi possível obter a localização.",
+    senden: "Enviar",
+    galerie: "Foto da galeria",
+    kamera: "Câmara",
+    standort: "Localização",
+    einladen: "Convidar",
+    verbunden: "ligado",
+    verbinde: "a ligar ...",
+    du: "tu",
+    Du: "Tu",
+    leer: "Ainda sem mensagens. Escreve a primeira - é traduzida automaticamente.",
+    antworten: "↩ Responder",
+    fuerAlle: "🗑 Apagar para todos",
+    schreiben: "Escreve uma mensagem ...",
+    geloescht: "Mensagem apagada",
+    kartenTipp: "Toca para abrir no mapa",
+    nichtMehrDa: "Mensagem já não existe",
+    sprachnachricht: "Mensagem de voz",
+    foto: "Foto",
+    aufnahmeFehler: "Gravação não possível: ",
+    ohneMikro: "Sem permissão do microfone não é possível.",
+    android13: "As mensagens de voz precisam do Android 13 ou mais recente.",
+    kanal: "Mensagens",
+    ausblenden: "toca para fechar",
+  },
+  en: {
+    claim: "Chat in any language. Every message is translated automatically.",
+    deinName: "Your name",
+    nameBsp: "e.g. Maria",
+    deineSprache: "Your language",
+    neuerChat: "Start new chat",
+    oderBeitreten: "or join a chat",
+    chatCode: "Chat code",
+    beitreten: "Join",
+    meineChats: "My chats",
+    datenschutz: "To translate, every message is sent to a server and is readable there — unlike WhatsApp. Don't write anything nobody else should see. Everything is deleted after 30 days.",
+    ausListe: "remove from the list?",
+    abbrechen: "Cancel",
+    entfernen: "Remove",
+    nochKeine: "None used yet.",
+    kontingent: "The free translation quota is used up. Diralo Plus continues without limits.",
+    uebersFehler: "Translation not possible right now. The message is shown in the original.",
+    zuVieleJoins: "Too many join attempts. Please wait a moment.",
+    langsamer: "Slow down - too many messages in a short time.",
+    fremdGeraet: "This message was written on another device and can't be deleted here.",
+    loeschenFehler: "Can't delete right now. Please try again later.",
+    spracheLang: "The voice message is too long.",
+    spracheFehler: "The voice message could not be sent.",
+    einladung: "Chat with me on Diralo — each in their own language:",
+    fuerAlleFrage: "Delete for everyone?",
+    verschwindet: "The message also disappears for the other person.",
+    loeschen: "Delete",
+    ohneKamera: "Not possible without camera permission.",
+    ohneFotos: "Not possible without access to photos.",
+    fotoGross: "The photo is too large.",
+    fotoFehler: "The photo could not be sent.",
+    ohneStandort: "Not possible without location permission.",
+    standortFehler: "Could not determine the location.",
+    senden: "Send",
+    galerie: "Photo from gallery",
+    kamera: "Camera",
+    standort: "Location",
+    einladen: "Invite",
+    verbunden: "connected",
+    verbinde: "connecting ...",
+    du: "you",
+    Du: "You",
+    leer: "No messages yet. Write the first one - it will be translated automatically.",
+    antworten: "↩ Reply",
+    fuerAlle: "🗑 Delete for everyone",
+    schreiben: "Write a message ...",
+    geloescht: "Message deleted",
+    kartenTipp: "Tap to open in maps",
+    nichtMehrDa: "Message no longer available",
+    sprachnachricht: "Voice message",
+    foto: "Photo",
+    aufnahmeFehler: "Recording not possible: ",
+    ohneMikro: "Not possible without microphone permission.",
+    android13: "Voice messages need Android 13 or newer.",
+    kanal: "Messages",
+    ausblenden: "tap to dismiss",
+  },
+};
+let uiSprache = "de";
+const uiCode = (code) => {
+  const c = String(code || "").toLowerCase();
+  return c.startsWith("de") ? "de" : c.startsWith("pt") ? "pt" : "en";
+};
+const t = (k) => TEXTE[uiSprache]?.[k] ?? TEXTE.en[k] ?? k;
+
+/* Startsprache fuer neue Nutzer: die des Handys, falls Diralo sie kennt. */
+function geraeteSprache() {
+  try {
+    const loc = Intl.DateTimeFormat().resolvedOptions().locale || "";
+    const genau = SPRACHEN.find((x) => x.code.toLowerCase() === loc.toLowerCase());
+    if (genau) return genau.code;
+    const basis = loc.split("-")[0].toLowerCase();
+    const passend = SPRACHEN.find((x) => x.code.toLowerCase().split("-")[0] === basis);
+    if (passend) return passend.code;
+  } catch {}
+  return "en";
+}
 
 /* ---------------------------- Meine Chats ---------------------------
    Wie in der Web-App: die Liste liegt nur auf diesem Geraet. Dazu je
@@ -85,6 +282,46 @@ async function gelesenSetzen(code) {
   g[code] = Date.now();
   try { await AsyncStorage.setItem(GELESEN_KEY, JSON.stringify(g)); } catch {}
 }
+/* ------------------------- Push-Benachrichtigungen -------------------------
+   Der Server schickt ueber den Expo-Push-Dienst. Angemeldet wird das Geraet
+   fuer alle "Meine Chats" auf einmal - wie die Glocke in der Web-App. Im
+   gerade offenen Chat zeigt die App keine Meldung, die Nachricht ist ja
+   schon zu sehen. */
+const EAS_PROJECT_ID = "09d4805b-90d1-4164-a87e-17aa42d73a5f";
+let offenerRaum = null;
+Notifications.setNotificationHandler({
+  handleNotification: async (n) => {
+    const zeigen = n?.request?.content?.data?.room !== offenerRaum;
+    return { shouldShowBanner: zeigen, shouldShowList: zeigen, shouldPlaySound: zeigen, shouldSetBadge: false };
+  },
+});
+
+async function pushAnmelden({ device, name, lang }) {
+  try {
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("nachrichten", {
+        name: t("kanal"),
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: "default",
+      });
+    }
+    let { status } = await Notifications.getPermissionsAsync();
+    if (status !== "granted") ({ status } = await Notifications.requestPermissionsAsync());
+    if (status !== "granted") return;
+    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: EAS_PROJECT_ID });
+    const rooms = (await chatsLaden()).map((c) => c.code).slice(0, 20);
+    if (!token || !rooms.length) return;
+    await fetch(`${SERVER_URL}/api/expo-push`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, rooms, device, name, lang }),
+    });
+  } catch (e) {
+    /* Ohne Push laeuft alles andere weiter - nur leise protokollieren. */
+    console.log("Push-Anmeldung:", e?.message);
+  }
+}
+
 async function neuesHolen(liste, device) {
   if (!liste.length) return {};
   const g = await jsonLaden(GELESEN_KEY, {});
@@ -158,7 +395,7 @@ function Haupt() {
   const [bereit, setBereit] = useState(false);
   const [device, setDevice] = useState(null);
   const [name, setName] = useState("");
-  const [lang, setLang] = useState("de");
+  const [lang, setLang] = useState(geraeteSprache);
   const [raum, setRaum] = useState(null);     // null = Startseite, sonst Chat
 
   useEffect(() => {
@@ -183,7 +420,30 @@ function Haupt() {
     } catch {}
     await chatMerken(c);
     setRaum(c);
-  }, [name, lang]);
+    pushAnmelden({ device, name: name.trim(), lang });
+  }, [name, lang, device]);
+
+  /* Offener Chat: dort keine Meldung zeigen. */
+  useEffect(() => { offenerRaum = raum; }, [raum]);
+
+  /* Tipp auf eine Benachrichtigung oeffnet ihren Chat - auch wenn die App
+     dadurch erst gestartet wurde. */
+  useEffect(() => {
+    if (!bereit) return;
+    const oeffnen = (antwort) => {
+      const r = antwort?.notification?.request?.content?.data?.room;
+      if (r && name.trim()) setRaum(String(r));
+    };
+    Notifications.getLastNotificationResponseAsync().then(oeffnen).catch(() => {});
+    const sub = Notifications.addNotificationResponseReceivedListener(oeffnen);
+    return () => sub.remove();
+  }, [bereit]);
+
+  /* Beim Start neu anmelden: Das Token kann sich aendern, und die Liste
+     der Chats soll beim Server aktuell bleiben. */
+  useEffect(() => {
+    if (bereit && device && name.trim()) pushAnmelden({ device, name: name.trim(), lang });
+  }, [bereit, device]);
 
   /* Beim Verlassen gilt der Chat als gelesen - sonst zaehlte die
      Startseite eigene, gerade gesehene Nachrichten als neu. */
@@ -191,6 +451,8 @@ function Haupt() {
     if (raum) await gelesenSetzen(raum);
     setRaum(null);
   }, [raum]);
+
+  uiSprache = uiCode(lang);
 
   if (!bereit) {
     return (
@@ -244,9 +506,9 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) 
   useEffect(() => { laden(); }, [laden]);
 
   const vergessen = (c) => {
-    Alert.alert(`„#${c.code}“ aus der Liste nehmen?`, null, [
-      { text: "Abbrechen", style: "cancel" },
-      { text: "Entfernen", style: "destructive", onPress: async () => { await chatVergessen(c.code); laden(); } },
+    Alert.alert(`„#${c.code}“ ${t("ausListe")}`, null, [
+      { text: t("abbrechen"), style: "cancel" },
+      { text: t("entfernen"), style: "destructive", onPress: async () => { await chatVergessen(c.code); laden(); } },
     ]);
   };
 
@@ -259,16 +521,16 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) 
         <View style={s.logoDot}><Text style={s.logoDotTxt}>D</Text></View>
         <Text style={s.brand}>Diralo</Text>
       </View>
-      <Text style={s.claim}>Chat in jeder Sprache. Jede Nachricht wird automatisch uebersetzt.</Text>
+      <Text style={s.claim}>{t("claim")}</Text>
 
-      <Text style={s.label}>Dein Name</Text>
+      <Text style={s.label}>{t("deinName")}</Text>
       <TextInput
         style={s.input} value={name} onChangeText={setName}
-        placeholder="z. B. Carsten" placeholderTextColor={FARBE.grau}
+        placeholder={t("nameBsp")} placeholderTextColor={FARBE.grau}
         maxLength={40}
       />
 
-      <Text style={s.label}>Deine Sprache</Text>
+      <Text style={s.label}>{t("deineSprache")}</Text>
       <Pressable style={[s.input, s.sprachFeld]} onPress={() => setSprachWahl(true)}>
         <Text style={s.sprachFeldTxt}>{sprachName(lang)}</Text>
         <Text style={s.sprachPfeil}>▾</Text>
@@ -284,14 +546,14 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) 
         style={[s.btnPrimary, !kannLos && s.btnAus]}
         disabled={!kannLos} onPress={onStart}
       >
-        <Text style={s.btnPrimaryTxt}>Neuen Chat starten</Text>
+        <Text style={s.btnPrimaryTxt}>{t("neuerChat")}</Text>
       </Pressable>
 
-      <Text style={s.oder}>oder einem Chat beitreten</Text>
+      <Text style={s.oder}>{t("oderBeitreten")}</Text>
       <View style={s.joinRow}>
         <TextInput
           style={[s.input, s.joinInput]} value={code} onChangeText={setCode}
-          placeholder="Chat-Code" placeholderTextColor={FARBE.grau}
+          placeholder={t("chatCode")} placeholderTextColor={FARBE.grau}
           autoCapitalize="none" maxLength={60}
         />
         <Pressable
@@ -299,13 +561,13 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) 
           disabled={!kannLos || !code.trim()}
           onPress={() => onJoin(code)}
         >
-          <Text style={s.btnGoldTxt}>Beitreten</Text>
+          <Text style={s.btnGoldTxt}>{t("beitreten")}</Text>
         </Pressable>
       </View>
 
       {chats.length > 0 && (
         <View style={s.meineChats}>
-          <Text style={s.label}>Meine Chats</Text>
+          <Text style={s.label}>{t("meineChats")}</Text>
           {chats.slice(0, 8).map((c) => {
             const n = neues[c.code] || 0;
             return (
@@ -327,7 +589,7 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin }) 
       )}
 
       <Text style={s.note}>
-        Zum Übersetzen wird jede Nachricht an einen Server geschickt und ist dort lesbar — anders als bei WhatsApp. Schreib nichts hinein, was niemand sonst sehen soll. Nach 30 Tagen wird alles gelöscht.
+        {t("datenschutz")}
       </Text>
     </ScrollView>
   );
@@ -339,7 +601,7 @@ function Sprachauswahl({ offen, aktuell, onWahl, onZu }) {
     <Modal visible={offen} transparent animationType="slide" onRequestClose={onZu}>
       <Pressable style={s.modalHinten} onPress={onZu} />
       <View style={s.modalBox}>
-        <Text style={s.modalTitel}>Deine Sprache</Text>
+        <Text style={s.modalTitel}>{t("deineSprache")}</Text>
         <FlatList
           data={SPRACHEN}
           keyExtractor={(x) => x.code}
@@ -382,7 +644,7 @@ function EmojiAuswahl({ zuletzt, onWahl }) {
         ))}
       </View>
       <ScrollView contentContainerStyle={s.emojiGrid} keyboardShouldPersistTaps="always">
-        {zeichen.length === 0 && <Text style={s.leer}>Noch keine benutzt.</Text>}
+        {zeichen.length === 0 && <Text style={s.leer}>{t("nochKeine")}</Text>}
         {zeichen.map((ch, i) => (
           <Pressable key={ch + i} onPress={() => onWahl(ch)} style={s.emojiZelle}>
             <Text style={s.emojiZeichen}>{ch}</Text>
@@ -474,22 +736,22 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         m.id === id ? { ...m, detected: dl } : m));
     });
     socket.on("quotaReached", () => {
-      setHinweis("Das kostenlose Uebersetzungs-Kontingent ist erreicht. Mit Diralo Plus geht es unbegrenzt weiter.");
+      setHinweis(t("kontingent"));
     });
     socket.on("translationError", () => {
-      setHinweis("Uebersetzung gerade nicht moeglich. Nachricht wird im Original gezeigt.");
+      setHinweis(t("uebersFehler"));
     });
     socket.on("system", (ev) => {
-      if (ev?.type === "tooManyJoins") setHinweis("Zu viele Beitritts-Versuche. Bitte kurz warten.");
+      if (ev?.type === "tooManyJoins") setHinweis(t("zuVieleJoins"));
     });
-    socket.on("tooFast", () => setHinweis("Etwas langsamer - zu viele Nachrichten in kurzer Zeit."));
+    socket.on("tooFast", () => setHinweis(t("langsamer")));
     /* Reaktion von irgendwem im Raum (auch die eigene kommt so zurueck).
        Leeres Emoji = aufgehoben. */
     /* Der Server loescht nur, was dieses Geraet selbst geschrieben hat. */
     socket.on("deleteFailed", ({ grund }) => {
       setHinweis(grund === "nicht erlaubt"
-        ? "Diese Nachricht wurde von einem anderen Gerät geschrieben und lässt sich hier nicht löschen."
-        : "Löschen gerade nicht möglich. Bitte später nochmal.");
+        ? t("fremdGeraet")
+        : t("loeschenFehler"));
     });
     socket.on("deleted", ({ id }) => {
       setNachrichten((alt) => alt.map((m) => (m.id === id ? { ...m, deleted: true, text: "" } : m)));
@@ -533,10 +795,10 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         }),
       });
       if (!antwort.ok) {
-        setHinweis(antwort.status === 413 ? "Die Sprachnachricht ist zu lang." : "Sprachnachricht konnte nicht gesendet werden.");
+        setHinweis(antwort.status === 413 ? t("spracheLang") : t("spracheFehler"));
       }
     } catch {
-      setHinweis("Sprachnachricht konnte nicht gesendet werden.");
+      setHinweis(t("spracheFehler"));
     } finally {
       setLaedt(false);
       try { new File(uri).delete(); } catch {}
@@ -545,15 +807,15 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
 
   const einladen = () => {
     Share.share({
-      message: `Schreib mit mir in Diralo — jeder in seiner Sprache: ${einladungsLink(raum)}`,
+      message: `${t("einladung")} ${einladungsLink(raum)}`,
     }).catch(() => {});
   };
 
   /* Nur die eigene Nachricht; der Server prueft das ohnehin am Geraet. */
   const loeschen = (m) => {
-    Alert.alert("Für alle löschen?", "Die Nachricht verschwindet auch beim Gegenüber.", [
-      { text: "Abbrechen", style: "cancel" },
-      { text: "Löschen", style: "destructive", onPress: () => sockRef.current?.emit("deleteForAll", { id: m.id }) },
+    Alert.alert(t("fuerAlleFrage"), t("verschwindet"), [
+      { text: t("abbrechen"), style: "cancel" },
+      { text: t("loeschen"), style: "destructive", onPress: () => sockRef.current?.emit("deleteForAll", { id: m.id }) },
     ]);
   };
 
@@ -565,7 +827,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!recht.granted) {
-        setHinweis(quelle === "kamera" ? "Ohne Kamera-Erlaubnis geht das nicht." : "Ohne Zugriff auf die Fotos geht das nicht.");
+        setHinweis(quelle === "kamera" ? t("ohneKamera") : t("ohneFotos"));
         return;
       }
       const opt = { mediaTypes: ["images"], quality: 1 };
@@ -589,12 +851,12 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         }),
       });
       if (!antwort.ok) {
-        setHinweis(antwort.status === 413 ? "Das Foto ist zu gross." : "Foto konnte nicht gesendet werden.");
+        setHinweis(antwort.status === 413 ? t("fotoGross") : t("fotoFehler"));
         return;
       }
       setText("");
     } catch {
-      setHinweis("Foto konnte nicht gesendet werden.");
+      setHinweis(t("fotoFehler"));
     } finally {
       setLaedt(false);
     }
@@ -603,20 +865,20 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
   const standortSenden = async () => {
     try {
       const recht = await Location.requestForegroundPermissionsAsync();
-      if (!recht.granted) { setHinweis("Ohne Standort-Erlaubnis geht das nicht."); return; }
+      if (!recht.granted) { setHinweis(t("ohneStandort")); return; }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       sockRef.current?.emit("sendOrt", { lat: pos.coords.latitude, lng: pos.coords.longitude });
     } catch {
-      setHinweis("Standort konnte nicht ermittelt werden.");
+      setHinweis(t("standortFehler"));
     }
   };
 
   const anhangMenue = () => {
     Keyboard.dismiss();
-    Alert.alert("Senden", null, [
-      { text: "Foto aus Galerie", onPress: () => fotoSenden("galerie") },
-      { text: "Kamera", onPress: () => fotoSenden("kamera") },
-      { text: "Standort", onPress: standortSenden },
+    Alert.alert(t("senden"), null, [
+      { text: t("galerie"), onPress: () => fotoSenden("galerie") },
+      { text: t("kamera"), onPress: () => fotoSenden("kamera") },
+      { text: t("standort"), onPress: standortSenden },
     ], { cancelable: true });
   };
 
@@ -638,16 +900,16 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
         <View style={{ flex: 1 }}>
           <Text style={s.chatTitel}>Chat {raum}</Text>
-          <Text style={s.chatSub}>{verbunden ? "verbunden" : "verbinde ..."} · du: {name} ({lang})</Text>
+          <Text style={s.chatSub}>{verbunden ? t("verbunden") : t("verbinde")} · {t("du")}: {name} ({lang})</Text>
         </View>
         <Pressable onPress={einladen} style={s.einladen} hitSlop={8}>
-          <Text style={s.einladenTxt}>Einladen</Text>
+          <Text style={s.einladenTxt}>{t("einladen")}</Text>
         </Pressable>
       </View>
 
       {hinweis && (
         <Pressable onPress={() => setHinweis(null)} style={s.hinweis}>
-          <Text style={s.hinweisTxt}>{hinweis}  (tippen zum Ausblenden)</Text>
+          <Text style={s.hinweisTxt}>{hinweis}  ({t("ausblenden")})</Text>
         </Pressable>
       )}
 
@@ -665,7 +927,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         )}
         onContentSizeChange={scrollUnten}
         ListEmptyComponent={
-          <Text style={s.leer}>Noch keine Nachrichten. Schreib die erste - sie wird automatisch uebersetzt.</Text>
+          <Text style={s.leer}>{t("leer")}</Text>
         }
       />
 
@@ -687,14 +949,14 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
             style={s.aktion}
             onPress={() => { setAntwortAuf(reagierenAuf); setReagierenAuf(null); }}
           >
-            <Text style={s.aktionTxt}>↩ Antworten</Text>
+            <Text style={s.aktionTxt}>{t("antworten")}</Text>
           </Pressable>
           {reagierenAuf.device === device && !reagierenAuf.deleted && (
             <Pressable
               style={s.aktion}
               onPress={() => { const m = reagierenAuf; setReagierenAuf(null); loeschen(m); }}
             >
-              <Text style={[s.aktionTxt, s.aktionRot]}>🗑 Für alle löschen</Text>
+              <Text style={[s.aktionTxt, s.aktionRot]}>{t("fuerAlle")}</Text>
             </Pressable>
           )}
         </View>
@@ -702,7 +964,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
       {antwortAuf && (
         <View style={s.antwortBar}>
           <View style={{ flex: 1 }}>
-            <Text style={s.antwortName}>{antwortAuf.device === device ? "Du" : antwortAuf.name}</Text>
+            <Text style={s.antwortName}>{antwortAuf.device === device ? t("Du") : antwortAuf.name}</Text>
             <Text style={s.antwortText} numberOfLines={1}>{kurzText(antwortAuf, lang, device)}</Text>
           </View>
           <Pressable onPress={() => setAntwortAuf(null)} hitSlop={8}>
@@ -729,20 +991,20 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
           style={s.eingabeInput} value={text} onChangeText={setText}
           onSelectionChange={(e) => { auswahlRef.current = e.nativeEvent.selection; }}
           onFocus={() => setEmojiAuf(false)}
-          placeholder="Nachricht schreiben ..." placeholderTextColor={FARBE.grau}
+          placeholder={t("schreiben")} placeholderTextColor={FARBE.grau}
           multiline
         />
         {/* Leeres Feld: Mikrofon statt Senden - wie bei WhatsApp. Tippen
             startet die Aufnahme, nochmal tippen schickt sie ab. */}
         {text.trim() ? (
           <Pressable style={s.senden} onPress={senden}>
-            <Text style={s.sendenTxt}>Senden</Text>
+            <Text style={s.sendenTxt}>{t("senden")}</Text>
           </Pressable>
         ) : aufnahme.laeuft ? (
           <View style={s.aufnahmeRow}>
             <Pressable onPress={aufnahme.abbrechen} hitSlop={8}><Text style={s.reaktZu}>✕</Text></Pressable>
             <Pressable style={[s.senden, s.aufnahmeAn]} onPress={aufnahme.stopp}>
-              <Text style={s.sendenTxt}>● {aufnahme.sekunden}s  Senden</Text>
+              <Text style={s.sendenTxt}>● {aufnahme.sekunden}s  {t("senden")}</Text>
             </Pressable>
           </View>
         ) : (
@@ -767,7 +1029,7 @@ function Bubble({ msg, lang, device, zitat, onLangDruck }) {
   if (msg.deleted) {
     return (
       <View style={[s.bubble, meins ? s.bubbleMeins : s.bubbleFremd]}>
-        <Text style={[txtStil, s.geloescht]}>Nachricht geloescht</Text>
+        <Text style={[txtStil, s.geloescht]}>{t("geloescht")}</Text>
       </View>
     );
   }
@@ -777,8 +1039,8 @@ function Bubble({ msg, lang, device, zitat, onLangDruck }) {
     const karte = `https://www.google.com/maps/search/?api=1&query=${msg.ort.lat},${msg.ort.lng}`;
     inhalt = (
       <Pressable onPress={() => Linking.openURL(karte)} onLongPress={onLangDruck}>
-        <Text style={txtStil}>📍 Standort</Text>
-        <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>Zum Oeffnen in der Karte tippen</Text>
+        <Text style={txtStil}>📍 {t("standort")}</Text>
+        <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>{t("kartenTipp")}</Text>
       </Pressable>
     );
   } else {
@@ -812,10 +1074,10 @@ function Bubble({ msg, lang, device, zitat, onLangDruck }) {
         {zitat && (
           <View style={[s.zitat, meins && s.zitatMeins]}>
             {zitat.fehlt ? (
-              <Text style={[s.zitatText, meins && s.bubbleOrigMeins]}>Nachricht nicht mehr da</Text>
+              <Text style={[s.zitatText, meins && s.bubbleOrigMeins]}>{t("nichtMehrDa")}</Text>
             ) : (
               <>
-                <Text style={[s.zitatName, meins && s.bubbleOrigMeins]}>{zitat.device === device ? "Du" : zitat.name}</Text>
+                <Text style={[s.zitatName, meins && s.bubbleOrigMeins]}>{zitat.device === device ? t("Du") : zitat.name}</Text>
                 <Text style={[s.zitatText, meins && s.bubbleOrigMeins]} numberOfLines={2}>{kurzText(zitat, lang, device)}</Text>
               </>
             )}
@@ -855,7 +1117,7 @@ function Sprachnachricht({ id, sekunden, meins }) {
   return (
     <Pressable onPress={umschalten} style={s.sprache} hitSlop={6}>
       <Text style={[s.spracheKnopf, meins && s.bubbleTxtMeins]}>{laeuft ? "⏸" : "▶"}</Text>
-      <Text style={[s.spracheZeit, meins && s.bubbleTxtMeins]}>Sprachnachricht · {zeit}</Text>
+      <Text style={[s.spracheZeit, meins && s.bubbleTxtMeins]}>{t("sprachnachricht")} · {zeit}</Text>
     </Pressable>
   );
 }
@@ -905,7 +1167,7 @@ function useSprachaufnahme({ lang, onFertig, onFehler }) {
     /* "Nichts gehoert" ist kein Fehler, den man melden muss - dann
        gibt es eben keine Nachricht. */
     if (ev.error !== "no-speech" && ev.error !== "aborted") {
-      onFehler("Aufnahme nicht möglich: " + (ev.message || ev.error));
+      onFehler(t("aufnahmeFehler") + (ev.message || ev.error));
     }
   });
   useSpeechRecognitionEvent("end", () => {
@@ -916,9 +1178,9 @@ function useSprachaufnahme({ lang, onFertig, onFehler }) {
 
   const los = async () => {
     const recht = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!recht.granted) { onFehler("Ohne Mikrofon-Erlaubnis geht das nicht."); return; }
+    if (!recht.granted) { onFehler(t("ohneMikro")); return; }
     if (Platform.OS === "android" && Platform.Version < 33) {
-      onFehler("Sprachnachrichten brauchen Android 13 oder neuer.");
+      onFehler(t("android13"));
       return;
     }
     teile.current = []; zwischen.current = ""; datei.current = null; beendet.current = false;
@@ -944,12 +1206,12 @@ function useSprachaufnahme({ lang, onFertig, onFehler }) {
 
 /* Eine Zeile fuer Zitate: Text in meiner Sprache, sonst was die Nachricht ist. */
 function kurzText(m, lang, device) {
-  if (m.deleted) return "Nachricht geloescht";
+  if (m.deleted) return t("geloescht");
   const t = m.device !== device && m.tr?.[lang] ? m.tr[lang] : m.text;
   if (t) return t;
-  if (m.bild) return "📷 Foto";
-  if (m.audioSeconds) return "🎤 Sprachnachricht";
-  if (m.ort) return "📍 Standort";
+  if (m.bild) return "📷 " + t("foto");
+  if (m.audioSeconds) return "🎤 " + t("sprachnachricht");
+  if (m.ort) return "📍 " + t("standort");
   return "";
 }
 

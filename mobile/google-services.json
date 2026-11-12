@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "76971931296",
+    "project_id": "diralo-41d60",
+    "storage_bucket": "diralo-41d60.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:76971931296:android:225f439862499012e83bc5",
+        "android_client_info": {
+          "package_name": "app.diralo.twa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkGB8YlpCIiieBpzSKXyEJTfNFtlYMr-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

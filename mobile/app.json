@@ -12,13 +12,14 @@
     },
     "android": {
       "package": "app.diralo.twa",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#122036",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -51,7 +52,15 @@
           "locationWhenInUsePermission": "Diralo braucht deinen Standort nur, wenn du ihn im Chat teilst."
         }
       ],
-      "expo-speech-recognition"
+      "expo-speech-recognition",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#122036",
+          "defaultChannel": "nachrichten"
+        }
+      ]
     ]
   }
 }
