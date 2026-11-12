@@ -24,6 +24,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition";
 import { File } from "expo-file-system";
 import * as Notifications from "expo-notifications";
+import * as Speech from "expo-speech";
 import {
   initConnection, fetchProducts, requestPurchase, finishTransaction,
   purchaseUpdatedListener, purchaseErrorListener, isUserCancelledError,
@@ -64,6 +65,12 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    vorschau: "So kommt es an:",
+    vorschauAus: "Vorschau aus",
+    vorlesen: "🔊 Vorlesen",
+    langsam: "🐢 Langsam",
+    aussprache: "🗣 Aussprache",
+    ausspracheFehler: "Aussprache-Hilfe gerade nicht möglich.",
     claim: "Chat in jeder Sprache. Jede Nachricht wird automatisch übersetzt.",
     deinName: "Dein Name",
     nameBsp: "z. B. Carsten",
@@ -138,6 +145,12 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    vorschau: "Vai chegar assim:",
+    vorschauAus: "Desligar pré-visualização",
+    vorlesen: "🔊 Ouvir",
+    langsam: "🐢 Devagar",
+    aussprache: "🗣 Pronúncia",
+    ausspracheFehler: "Ajuda de pronúncia indisponível de momento.",
     claim: "Chat em qualquer língua. Cada mensagem é traduzida automaticamente.",
     deinName: "O teu nome",
     nameBsp: "p. ex. Maria",
@@ -212,6 +225,12 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    vorschau: "It will arrive as:",
+    vorschauAus: "Preview off",
+    vorlesen: "🔊 Read aloud",
+    langsam: "🐢 Slowly",
+    aussprache: "🗣 Pronunciation",
+    ausspracheFehler: "Pronunciation help not available right now.",
     claim: "Chat in any language. Every message is translated automatically.",
     deinName: "Your name",
     nameBsp: "e.g. Maria",
@@ -286,6 +305,12 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    vorschau: "Llegará así:",
+    vorschauAus: "Desactivar vista previa",
+    vorlesen: "🔊 Escuchar",
+    langsam: "🐢 Despacio",
+    aussprache: "🗣 Pronunciación",
+    ausspracheFehler: "Ayuda de pronunciación no disponible ahora.",
     claim: "Chatea en cualquier idioma. Cada mensaje se traduce automáticamente.",
     deinName: "Tu nombre",
     nameBsp: "p. ej. María",
@@ -360,6 +385,12 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    vorschau: "Ce sera reçu ainsi :",
+    vorschauAus: "Désactiver l'aperçu",
+    vorlesen: "🔊 Écouter",
+    langsam: "🐢 Lentement",
+    aussprache: "🗣 Prononciation",
+    ausspracheFehler: "Aide à la prononciation indisponible pour le moment.",
     claim: "Discute dans n'importe quelle langue. Chaque message est traduit automatiquement.",
     deinName: "Ton prénom",
     nameBsp: "p. ex. Marie",
@@ -434,6 +465,12 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    vorschau: "Arriverà così:",
+    vorschauAus: "Disattiva anteprima",
+    vorlesen: "🔊 Ascolta",
+    langsam: "🐢 Lentamente",
+    aussprache: "🗣 Pronuncia",
+    ausspracheFehler: "Aiuto pronuncia non disponibile ora.",
     claim: "Chatta in qualsiasi lingua. Ogni messaggio viene tradotto automaticamente.",
     deinName: "Il tuo nome",
     nameBsp: "es. Maria",
@@ -1090,6 +1127,10 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   const [laedt, setLaedt] = useState(false);          // Foto wird hochgeladen
   const [reagierenAuf, setReagierenAuf] = useState(null); // Nachricht fuer die Emoji-Leiste
   const [antwortAuf, setAntwortAuf] = useState(null);     // Zitat ueber dem Eingabefeld
+  /* Vorschau beim Tippen: so kommt meine Nachricht beim anderen an. */
+  const [vorschau, setVorschau] = useState(null);
+  const [vorschauAus, setVorschauAus] = useState(false);
+  const vorschauNr = useRef(0);
   const [emojiAuf, setEmojiAuf] = useState(false);
   const [zuletztEmoji, setZuletztEmoji] = useState([]);
   const auswahlRef = useRef({ start: 0, end: 0 });
@@ -1175,6 +1216,13 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
       setNachrichten((alt) => alt.map((m) =>
         m.id === id ? { ...m, tr: { ...m.tr, [zl]: t } } : m));
     });
+    socket.on("vorschauFertig", (d) => {
+      if (d && d.nr === vorschauNr.current && d.uebersetzt) setVorschau(d);
+    });
+    socket.on("ausspracheFertig", ({ id, text: lt }) => {
+      if (lt) setHinweis("🗣 " + lt);
+    });
+    socket.on("ausspracheFehler", () => setHinweis(t("ausspracheFehler")));
     socket.on("lang", ({ id, lang: dl }) => {
       setNachrichten((alt) => alt.map((m) =>
         m.id === id ? { ...m, detected: dl } : m));
@@ -1216,6 +1264,34 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   const scrollUnten = () => {
     setTimeout(() => { try { listRef.current?.scrollToEnd({ animated: true }); } catch {} }, 80);
   };
+
+  /* Sprache des Gegenuebers: aus seiner letzten Nachricht. */
+  const partnerSprache = (() => {
+    for (let i = nachrichten.length - 1; i >= 0; i--) {
+      const m = nachrichten[i];
+      if (m.device !== device && !m.deleted && (m.detected || m.lang)) return m.detected || m.lang;
+    }
+    return null;
+  })();
+  const gleicheSprache = (a, b) => String(a || "").split("-")[0] === String(b || "").split("-")[0];
+
+  useEffect(() => {
+    jsonLaden("diralo_vorschau_aus", false).then((v) => setVorschauAus(Boolean(v)));
+  }, []);
+
+  useEffect(() => {
+    const roh = text.trim();
+    vorschauNr.current += 1;
+    const nr = vorschauNr.current;
+    if (vorschauAus || roh.length < 3 || !partnerSprache || gleicheSprache(partnerSprache, lang)) {
+      setVorschau(null);
+      return;
+    }
+    const tm = setTimeout(() => {
+      sockRef.current?.emit("vorschau", { text: roh, ziel: partnerSprache, nr });
+    }, 1100);
+    return () => clearTimeout(tm);
+  }, [text, partnerSprache, lang, vorschauAus]);
 
   const senden = () => {
     const t = text.trim();
@@ -1415,6 +1491,25 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
           >
             <Text style={s.aktionTxt}>{t("antworten")}</Text>
           </Pressable>
+          {reagierenAuf.text && !reagierenAuf.deleted && reagierenAuf.device !== device && (
+            <Pressable
+              style={s.aktion}
+              onPress={() => vorlesen(reagierenAuf.text, reagierenAuf.detected || reagierenAuf.lang, true)}
+            >
+              <Text style={s.aktionTxt}>{t("langsam")}</Text>
+            </Pressable>
+          )}
+          {reagierenAuf.text && !reagierenAuf.deleted && reagierenAuf.device !== device && (
+            <Pressable
+              style={s.aktion}
+              onPress={() => {
+                const m = reagierenAuf; setReagierenAuf(null);
+                sockRef.current?.emit("aussprache", { id: m.id, lang });
+              }}
+            >
+              <Text style={s.aktionTxt}>{t("aussprache")}</Text>
+            </Pressable>
+          )}
           {reagierenAuf.device === device && !reagierenAuf.deleted && (
             <Pressable
               style={s.aktion}
@@ -1436,6 +1531,30 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
           </Pressable>
         </View>
       )}
+
+      {vorschau && text.trim() ? (
+        <View style={s.vorschauBox}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.vorschauTitel}>{t("vorschau")}</Text>
+            <Text style={s.vorschauText}>{vorschau.uebersetzt}</Text>
+            {vorschau.zurueck ? <Text style={s.vorschauZurueck}>↩ {vorschau.zurueck}</Text> : null}
+          </View>
+          <View style={{ gap: 10, alignItems: "center" }}>
+            <Pressable onPress={() => vorlesen(vorschau.uebersetzt, partnerSprache)} hitSlop={8}>
+              <Text style={s.vorschauKnopf}>🔊</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setVorschauAus(true); setVorschau(null);
+                AsyncStorage.setItem("diralo_vorschau_aus", "true").catch(() => {});
+              }}
+              hitSlop={8} accessibilityLabel={t("vorschauAus")}
+            >
+              <Text style={s.reaktZu}>✕</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
 
       {emojiAuf && <EmojiAuswahl zuletzt={zuletztEmoji} onWahl={emojiEinfuegen} />}
 
@@ -1550,6 +1669,11 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis }) {
         )}
         {inhalt}
         <View style={s.meta}>
+          {!meins && msg.text ? (
+            <Pressable onPress={() => vorlesen(msg.text, msg.detected || msg.lang)} hitSlop={10} style={{ marginRight: "auto" }}>
+              <Text style={s.lautKnopf}>🔊</Text>
+            </Pressable>
+          ) : null}
           <Text style={[s.metaZeit, meins && s.bubbleOrigMeins]}>{uhrzeit(msg.at)}</Text>
           {meins && (
             <Text style={[s.haken, msg.at <= gelesenBis && s.hakenGelesen]}>
@@ -1698,6 +1822,15 @@ function tagText(at) {
   }
 }
 
+/* Vorlesen mit den Stimmen des Handys - kostenlos, ohne Server. */
+function vorlesen(text, code, langsam = false) {
+  if (!text) return;
+  try {
+    Speech.stop();
+    Speech.speak(text, { language: erkennerSprache(code || "en"), rate: langsam ? 0.55 : 0.95 });
+  } catch {}
+}
+
 /* "14:05" aus dem Zeitstempel. */
 function uhrzeit(at) {
   const d = new Date(at || Date.now());
@@ -1816,6 +1949,12 @@ const s = StyleSheet.create({
   bubbleMeins: { backgroundColor: FARBE.navy, borderTopRightRadius: 4 },
   tagWrap: { alignItems: "center", marginVertical: 8 },
   tag: { backgroundColor: FARBE.grauHell, color: FARBE.text, fontSize: 12, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, overflow: "hidden" },
+  vorschauBox: { flexDirection: "row", gap: 10, backgroundColor: "#eef4ff", borderTopWidth: 1, borderTopColor: FARBE.grauHell, paddingHorizontal: 14, paddingVertical: 8 },
+  vorschauTitel: { fontSize: 11.5, color: FARBE.grau, fontWeight: "700" },
+  vorschauText: { fontSize: 15, color: FARBE.text, marginTop: 2 },
+  vorschauZurueck: { fontSize: 12.5, color: FARBE.grau, fontStyle: "italic", marginTop: 3 },
+  vorschauKnopf: { fontSize: 20 },
+  lautKnopf: { fontSize: 15 },
   meta: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 3 },
   metaZeit: { fontSize: 11, color: FARBE.grau },
   haken: { fontSize: 12, color: "#aeb9cc", fontWeight: "700", letterSpacing: -2 },
@@ -1847,7 +1986,7 @@ const s = StyleSheet.create({
   aboZuTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 15 },
   einladen: { backgroundColor: FARBE.gold, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 },
   einladenTxt: { color: FARBE.navy, fontWeight: "800", fontSize: 13 },
-  aktionLeiste: { flexDirection: "row", gap: 10, backgroundColor: FARBE.weiss, paddingHorizontal: 12, paddingBottom: 8 },
+  aktionLeiste: { flexDirection: "row", flexWrap: "wrap", gap: 10, backgroundColor: FARBE.weiss, paddingHorizontal: 12, paddingBottom: 8 },
   aktion: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: FARBE.hell },
   aktionTxt: { color: FARBE.navy, fontWeight: "700" },
   aktionRot: { color: "#9B2C25" },
