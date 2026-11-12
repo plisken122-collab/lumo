@@ -68,7 +68,7 @@ const io = new Server(http);
 const kleinesJson = express.json({ limit: "64kb" });
 const rohesJson = express.raw({ type: "*/*", limit: "1mb" });
 app.use((req, res, next) => {
-  if (req.path === "/api/voice" || req.path === "/api/bild") return next();
+  if (req.path === "/api/voice" || req.path === "/api/bild" || req.path === "/api/foto-text") return next();
   if (req.path === "/api/stripe") return rohesJson(req, res, next);
   return kleinesJson(req, res, next);
 });
@@ -1404,6 +1404,31 @@ app.post("/api/expo-push", async (req, res) => {
     console.error("Expo-Anmeldung fehlgeschlagen:", err.message);
     res.status(500).json({ error: "Anmeldung fehlgeschlagen" });
   }
+});
+
+/* Admin: Nachrichten eines Chats nach Text suchen und eine davon fuer
+   alle loeschen - fuer Nachrichten, deren Geraet nicht mehr existiert
+   (z. B. nach einer Neuinstallation der App). */
+app.get("/api/admin/suche", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
+  const room = raumCode(req.query.room);
+  const q = String(req.query.q || "").toLowerCase().trim();
+  if (!room || !q) return res.status(400).json({ error: "room und q angeben" });
+  const liste = await store.getHistory(room, 500);
+  res.json(liste.filter((m) => !m.deleted && String(m.text || "").toLowerCase().includes(q))
+    .map((m) => ({ id: m.id, name: m.name, text: String(m.text || "").slice(0, 200), at: m.at })));
+});
+
+app.post("/api/admin/loeschen", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
+  const id = String(req.body?.id || "");
+  const room = raumCode(req.body?.room);
+  if (!id || !room) return res.status(400).json({ error: "id und room angeben" });
+  const msg = await store.getMessage(id);
+  if (!msg) return res.status(404).json({ error: "Nachricht nicht gefunden" });
+  const ok = await store.deleteForAll(id, msg.device);
+  if (ok) io.to(room).emit("deleted", { id });
+  res.json({ ok });
 });
 
 app.get("/api/admin/expo", (req, res) => {
