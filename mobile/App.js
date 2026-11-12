@@ -108,7 +108,7 @@ const TEXTE = {
     leer: "Noch keine Nachrichten. Schreib die erste - sie wird automatisch übersetzt.",
     antworten: "↩ Antworten",
     fuerAlle: "🗑 Für alle löschen",
-    schreiben: "Nachricht schreiben ...",
+    schreiben: "Nachricht",
     geloescht: "Nachricht gelöscht",
     kartenTipp: "Zum Öffnen in der Karte tippen",
     nichtMehrDa: "Nachricht nicht mehr da",
@@ -182,7 +182,7 @@ const TEXTE = {
     leer: "Ainda sem mensagens. Escreve a primeira - é traduzida automaticamente.",
     antworten: "↩ Responder",
     fuerAlle: "🗑 Apagar para todos",
-    schreiben: "Escreve uma mensagem ...",
+    schreiben: "Mensagem",
     geloescht: "Mensagem apagada",
     kartenTipp: "Toca para abrir no mapa",
     nichtMehrDa: "Mensagem já não existe",
@@ -256,7 +256,7 @@ const TEXTE = {
     leer: "No messages yet. Write the first one - it will be translated automatically.",
     antworten: "↩ Reply",
     fuerAlle: "🗑 Delete for everyone",
-    schreiben: "Write a message ...",
+    schreiben: "Message",
     geloescht: "Message deleted",
     kartenTipp: "Tap to open in maps",
     nichtMehrDa: "Message no longer available",
@@ -527,7 +527,7 @@ function Haupt() {
         {raum ? (
           <Chat
             raum={raum} name={name.trim()} lang={lang} device={device}
-            unten={insets.bottom}
+            unten={insets.bottom} oben={insets.top}
             onBack={verlassen}
           />
         ) : (
@@ -856,7 +856,7 @@ function AboFenster({ offen, raum, onZu, onHinweis }) {
 }
 
 /* ------------------------------- Chat ----------------------------- */
-function Chat({ raum, name, lang, device, unten, onBack }) {
+function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   /* Offene Tastatur deckt die Navigationsleiste ab - dann braucht die
      Eingabezeile unten keinen eigenen Abstand mehr. */
   const tastatur = useTastaturOffen();
@@ -1116,7 +1116,13 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
   return (
     /* "padding" auch auf Android: edge-to-edge schaltet das automatische
        Verkleinern des Fensters ab, sonst laege die Tastatur ueber dem Feld. */
-    <KeyboardAvoidingView style={s.full} behavior="padding">
+    <KeyboardAvoidingView
+      style={s.full} behavior="padding"
+      /* Der Chat sitzt unter der Statusleiste (paddingTop im Elternteil).
+         Ohne diesen Ausgleich rechnet die Tastatur-Hoehe genau um die
+         Statusleiste zu kurz, und die Eingabezeile rutscht halb darunter. */
+      keyboardVerticalOffset={oben}
+    >
       {/* Kopfzeile */}
       <View style={s.chatHead}>
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
