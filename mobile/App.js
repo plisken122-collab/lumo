@@ -11,7 +11,7 @@
  * jede fremde Nachricht in DEINER Sprache (msg.tr[meineSprache]), sonst
  * den Originaltext.
  */
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   View, Text, TextInput, FlatList, Pressable, Image, Alert, Linking,
   ScrollView, Modal, Share, Platform, AppState,
@@ -1563,6 +1563,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
     setVersteckt(liste);
   };
   const sichtbar = versteckt.length ? nachrichten.filter((m) => !versteckt.includes(m.id)) : nachrichten;
+  const umgedreht = useMemo(() => sichtbar.slice().reverse(), [sichtbar]);
   const [vorschauAus, setVorschauAus] = useState(false);
   const vorschauNr = useRef(0);
   const [emojiAuf, setEmojiAuf] = useState(false);
@@ -1695,8 +1696,9 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
     return () => { appSub.remove(); socket.removeAllListeners(); socket.close(); };
   }, [raum, name, lang, device]);
 
+  /* Die Liste ist umgedreht (inverted): ganz unten heisst Versatz 0. */
   const scrollUnten = () => {
-    setTimeout(() => { try { listRef.current?.scrollToEnd({ animated: true }); } catch {} }, 80);
+    setTimeout(() => { try { listRef.current?.scrollToOffset({ offset: 0, animated: true }); } catch {} }, 60);
   };
 
   /* Sprache des Gegenuebers: aus seiner letzten Nachricht. */
@@ -1879,12 +1881,17 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
 
       <FlatList
         ref={listRef}
-        data={sichtbar}
+        /* Umgedrehte Liste wie bei WhatsApp: die neueste Nachricht steht
+           von selbst unten. Kein Nachscrollen per Code mehr - das liess
+           lange Chats beim Nachladen hoch und runter springen. */
+        inverted
+        data={umgedreht}
         keyExtractor={(m) => m.id}
         contentContainerStyle={s.liste}
+        maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
         renderItem={({ item, index }) => (
           <>
-          {(index === 0 || !gleicherTag(sichtbar[index - 1].at, item.at)) && (
+          {(index === umgedreht.length - 1 || !gleicherTag(umgedreht[index + 1].at, item.at)) && (
             <View style={s.tagWrap}><Text style={s.tag}>{tagText(item.at)}</Text></View>
           )}
           <Bubble
@@ -1894,14 +1901,10 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
           />
           </>
         )}
-        onContentSizeChange={() => { if (amEnde.current) scrollUnten(); }}
-        onScroll={(e) => {
-          const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-          amEnde.current = contentSize.height - layoutMeasurement.height - contentOffset.y < 150;
-        }}
+        onScroll={(e) => { amEnde.current = e.nativeEvent.contentOffset.y < 150; }}
         scrollEventThrottle={100}
         ListEmptyComponent={
-          <Text style={s.leer}>{t("leer")}</Text>
+          <Text style={[s.leer, { transform: [{ scaleY: -1 }] }]}>{t("leer")}</Text>
         }
       />
 
