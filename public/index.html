@@ -621,6 +621,10 @@
           <p class="leer-text" id="t-leerText"></p>
           <button id="leerEinladen" class="primary"></button>
           <button id="leerDemo" class="secondary" type="button"></button>
+          <!-- Wer selbst eingeladen wurde und hier landet, hat aus Versehen
+               einen neuen Chat gestartet - deutlich zurueckschicken. -->
+          <p class="leer-text" id="t-leerFalsch" style="margin-top:22px"></p>
+          <button id="leerZurueck" class="secondary" type="button"></button>
         </div>
       </div>
     </div>
@@ -845,7 +849,7 @@ function applyLanguage(code) {
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
   for (const key of ["tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
-                      "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText"]) {
+                      "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText", "leerFalsch"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
   }
@@ -861,6 +865,7 @@ function applyLanguage(code) {
   $("newChat").textContent = L.t("newChat");
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
+  $("leerZurueck").textContent = L.t("leerZurueck");
   $("leerDemo").textContent = L.t("demoBtn");
   $("demoLanding").textContent = L.t("demoLanding");
   $("invitedNote").textContent = L.t("invitedTo");
@@ -2724,6 +2729,7 @@ function updateBell() {
 
 $("inviteBtn").onclick = einladen;
 $("leerEinladen").onclick = einladen;
+$("leerZurueck").onclick = zurStartseite;
 
 /* Tippt jemand einen Einladungslink an, waehrend Diralo schon offen ist,
    aendert sich nur die Adresse hinter der Raute - die Seite laedt nicht
