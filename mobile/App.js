@@ -24,6 +24,10 @@ import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition";
 import { File } from "expo-file-system";
 import * as Notifications from "expo-notifications";
+import {
+  initConnection, fetchProducts, requestPurchase, finishTransaction,
+  purchaseUpdatedListener, purchaseErrorListener, isUserCancelledError,
+} from "expo-iap";
 /* Android zeichnet die App bis unter Status- und Navigationsleiste
    (edge-to-edge). Das SafeAreaView aus react-native hilft nur auf iOS -
    die Abstaende kommen deshalb von hier, auf beiden Systemen. */
@@ -114,6 +118,21 @@ const TEXTE = {
     ohneMikro: "Ohne Mikrofon-Erlaubnis geht das nicht.",
     android13: "Sprachnachrichten brauchen Android 13 oder neuer.",
     kanal: "Nachrichten",
+    aboTitel: "Mehr Übersetzungen",
+    aboText: "Bezahlt wird über Google Play. Jederzeit im Play Store kündbar.",
+    aboStand: "Dieser Chat: {b} von {g} Übersetzungen diesen Monat.",
+    aboAktiv: "Dieser Chat hat Diralo {p}.",
+    plusName: "Plus",
+    plusText: "1.500 Übersetzungen im Monat, bis zu 3 Chats",
+    familieName: "Familie",
+    familieText: "5.000 Übersetzungen im Monat, bis zu 10 Chats",
+    monat: "pro Monat",
+    jahr: "pro Jahr",
+    aboNichtDa: "Abos sind gerade nicht verfügbar. Bitte später nochmal.",
+    aboDanke: "Danke! Dieser Chat ist jetzt freigeschaltet.",
+    aboWartet: "Die Zahlung wird noch bestätigt. Das kann ein paar Minuten dauern.",
+    aboFehler: "Der Kauf konnte nicht abgeschlossen werden.",
+    schliessen: "Schließen",
     heute: "Heute",
     gestern: "Gestern",
     ausblenden: "tippen zum Ausblenden",
@@ -173,6 +192,21 @@ const TEXTE = {
     ohneMikro: "Sem permissão do microfone não é possível.",
     android13: "As mensagens de voz precisam do Android 13 ou mais recente.",
     kanal: "Mensagens",
+    aboTitel: "Mais traduções",
+    aboText: "O pagamento é feito pelo Google Play. Podes cancelar a qualquer momento na Play Store.",
+    aboStand: "Este chat: {b} de {g} traduções este mês.",
+    aboAktiv: "Este chat tem o Diralo {p}.",
+    plusName: "Plus",
+    plusText: "1.500 traduções por mês, até 3 chats",
+    familieName: "Família",
+    familieText: "5.000 traduções por mês, até 10 chats",
+    monat: "por mês",
+    jahr: "por ano",
+    aboNichtDa: "As assinaturas não estão disponíveis de momento. Tenta mais tarde.",
+    aboDanke: "Obrigado! Este chat está agora desbloqueado.",
+    aboWartet: "O pagamento ainda está a ser confirmado. Pode demorar alguns minutos.",
+    aboFehler: "Não foi possível concluir a compra.",
+    schliessen: "Fechar",
     heute: "Hoje",
     gestern: "Ontem",
     ausblenden: "toca para fechar",
@@ -232,6 +266,21 @@ const TEXTE = {
     ohneMikro: "Not possible without microphone permission.",
     android13: "Voice messages need Android 13 or newer.",
     kanal: "Messages",
+    aboTitel: "More translations",
+    aboText: "Billed through Google Play. Cancel anytime in the Play Store.",
+    aboStand: "This chat: {b} of {g} translations this month.",
+    aboAktiv: "This chat has Diralo {p}.",
+    plusName: "Plus",
+    plusText: "1,500 translations per month, up to 3 chats",
+    familieName: "Family",
+    familieText: "5,000 translations per month, up to 10 chats",
+    monat: "per month",
+    jahr: "per year",
+    aboNichtDa: "Subscriptions are not available right now. Please try again later.",
+    aboDanke: "Thank you! This chat is now unlocked.",
+    aboWartet: "The payment is still being confirmed. This can take a few minutes.",
+    aboFehler: "The purchase could not be completed.",
+    schliessen: "Close",
     heute: "Today",
     gestern: "Yesterday",
     ausblenden: "tap to dismiss",
@@ -661,6 +710,151 @@ function EmojiAuswahl({ zuletzt, onWahl }) {
   );
 }
 
+/* ------------------------------ Abo -------------------------------
+   Kauf ueber Google Play. Der Kauf passiert im Geraet; den Beleg
+   (purchaseToken) prueft der Server bei Google und schaltet dann den Chat
+   frei (/api/play-kauf). Erst danach wird der Kauf hier abgeschlossen -
+   sonst erstattet Google ihn nach drei Tagen.
+   Die Produkt-IDs muessen genau so in der Play Console heissen. */
+const PLAY_SKUS = ["diralo_plus_monat", "diralo_plus_jahr", "diralo_familie_monat", "diralo_familie_jahr"];
+
+function AboFenster({ offen, raum, onZu, onHinweis }) {
+  const [produkte, setProdukte] = useState([]);
+  const [plan, setPlan] = useState(null);
+  const [fehler, setFehler] = useState(null);
+  const [kauftGerade, setKauftGerade] = useState(false);
+  const raumRef = useRef(raum);
+  raumRef.current = raum;
+
+  /* Kauf-Ergebnisse kommen als Ereignis, auch wenn das Fenster schon zu ist. */
+  useEffect(() => {
+    const ok = purchaseUpdatedListener(async (kauf) => {
+      const token = kauf?.purchaseToken || kauf?.purchaseTokenAndroid;
+      if (!token) return;
+      try {
+        const r = await fetch(`${SERVER_URL}/api/play-kauf`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ room: raumRef.current, token }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j.fertig) {
+          await finishTransaction({ purchase: kauf, isConsumable: false }).catch(() => {});
+          onHinweis(t("aboDanke"));
+          onZu();
+        } else if (j.wartet) {
+          onHinweis(t("aboWartet"));
+        } else {
+          onHinweis(t("aboFehler") + (j.error ? ` (${j.error})` : ""));
+        }
+      } catch {
+        onHinweis(t("aboFehler"));
+      } finally {
+        setKauftGerade(false);
+      }
+    });
+    const err = purchaseErrorListener((e) => {
+      setKauftGerade(false);
+      if (!isUserCancelledError(e)) onHinweis(t("aboFehler"));
+    });
+    return () => { ok.remove(); err.remove(); };
+  }, []);
+
+  useEffect(() => {
+    if (!offen) return;
+    let weg = false;
+    setFehler(null);
+    (async () => {
+      try {
+        const r = await fetch(`${SERVER_URL}/api/plan?room=${encodeURIComponent(raum)}`);
+        if (r.ok && !weg) setPlan(await r.json());
+      } catch {}
+      try {
+        await initConnection();
+        const liste = await fetchProducts({ skus: PLAY_SKUS, type: "subs" });
+        const sortiert = (liste || []).slice().sort((a, b) => PLAY_SKUS.indexOf(a.id) - PLAY_SKUS.indexOf(b.id));
+        if (!weg) {
+          setProdukte(sortiert);
+          if (!sortiert.length) setFehler(t("aboNichtDa"));
+        }
+      } catch {
+        if (!weg) setFehler(t("aboNichtDa"));
+      }
+    })();
+    return () => { weg = true; };
+  }, [offen, raum]);
+
+  const kaufen = async (prod) => {
+    const angebot = (prod.subscriptionOffers || []).find((o) => o.offerTokenAndroid);
+    if (!angebot) { onHinweis(t("aboNichtDa")); return; }
+    setKauftGerade(true);
+    try {
+      await requestPurchase({
+        request: {
+          google: {
+            skus: [prod.id],
+            subscriptionOffers: [{ sku: prod.id, offerToken: angebot.offerTokenAndroid }],
+          },
+        },
+        type: "subs",
+      });
+    } catch (e) {
+      setKauftGerade(false);
+      if (!isUserCancelledError(e)) onHinweis(t("aboFehler"));
+    }
+  };
+
+  const preis = (prod) => {
+    const angebot = (prod.subscriptionOffers || []).find((o) => o.offerTokenAndroid);
+    return angebot?.displayPrice || prod.displayPrice || "";
+  };
+
+  return (
+    <Modal visible={offen} transparent animationType="slide" onRequestClose={onZu}>
+      <Pressable style={s.modalHinten} onPress={onZu} />
+      <View style={s.modalBox}>
+        <Text style={s.modalTitel}>{t("aboTitel")}</Text>
+        {plan && (
+          <Text style={s.aboStand}>
+            {plan.bezahlt
+              ? t("aboAktiv").replace("{p}", plan.plan === "familie" ? t("familieName") : t("plusName"))
+              : t("aboStand").replace("{b}", String(plan.benutzt ?? 0)).replace("{g}", String(plan.grenze ?? 0))}
+          </Text>
+        )}
+        {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
+        {!fehler && produkte.length === 0 && <ActivityIndicator color={FARBE.navy} style={{ marginVertical: 20 }} />}
+        <ScrollView style={{ maxHeight: 360 }}>
+          {produkte.map((prod) => {
+            const familie = prod.id.includes("familie");
+            const jahr = prod.id.endsWith("jahr");
+            return (
+              <Pressable
+                key={prod.id}
+                style={[s.aboZeile, kauftGerade && s.btnAus]}
+                disabled={kauftGerade}
+                onPress={() => kaufen(prod)}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={s.aboName}>{familie ? t("familieName") : t("plusName")}</Text>
+                  <Text style={s.aboBeschr}>{familie ? t("familieText") : t("plusText")}</Text>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={s.aboPreis}>{preis(prod)}</Text>
+                  <Text style={s.aboBeschr}>{jahr ? t("jahr") : t("monat")}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+        <Text style={s.aboHinweis}>{t("aboText")}</Text>
+        <Pressable style={s.aboZu} onPress={onZu}>
+          <Text style={s.aboZuTxt}>{t("schliessen")}</Text>
+        </Pressable>
+      </View>
+    </Modal>
+  );
+}
+
 /* ------------------------------- Chat ----------------------------- */
 function Chat({ raum, name, lang, device, unten, onBack }) {
   /* Offene Tastatur deckt die Navigationsleiste ab - dann braucht die
@@ -703,6 +897,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
   const askedRef = useRef(new Set());
   /* Bis zu welchem Zeitpunkt das Gegenueber gelesen hat -> ✓✓ */
   const [gelesenBis, setGelesenBis] = useState(0);
+  const [aboOffen, setAboOffen] = useState(false);
 
   useEffect(() => {
     const socket = io(SERVER_URL, { transports: ["websocket"] });
@@ -763,6 +958,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
     });
     socket.on("quotaReached", () => {
       setHinweis(t("kontingent"));
+      setAboOffen(true);
     });
     socket.on("translationError", () => {
       setHinweis(t("uebersFehler"));
@@ -928,6 +1124,9 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
           <Text style={s.chatTitel}>Chat {raum}</Text>
           <Text style={s.chatSub}>{verbunden ? t("verbunden") : t("verbinde")} · {t("du")}: {name} ({lang})</Text>
         </View>
+        <Pressable onPress={() => setAboOffen(true)} style={s.plusKnopf} hitSlop={8}>
+          <Text style={s.plusKnopfTxt}>★</Text>
+        </Pressable>
         <Pressable onPress={einladen} style={s.einladen} hitSlop={8}>
           <Text style={s.einladenTxt}>{t("einladen")}</Text>
         </Pressable>
@@ -1033,14 +1232,14 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
         {/* Leeres Feld: Mikrofon statt Senden - wie bei WhatsApp. Tippen
             startet die Aufnahme, nochmal tippen schickt sie ab. */}
         {text.trim() ? (
-          <Pressable style={s.senden} onPress={senden}>
-            <Text style={s.sendenTxt}>{t("senden")}</Text>
+          <Pressable style={s.senden} onPress={senden} accessibilityLabel={t("senden")}>
+            <Text style={s.sendenPfeil}>➤</Text>
           </Pressable>
         ) : aufnahme.laeuft ? (
           <View style={s.aufnahmeRow}>
             <Pressable onPress={aufnahme.abbrechen} hitSlop={8}><Text style={s.reaktZu}>✕</Text></Pressable>
-            <Pressable style={[s.senden, s.aufnahmeAn]} onPress={aufnahme.stopp}>
-              <Text style={s.sendenTxt}>● {aufnahme.sekunden}s  {t("senden")}</Text>
+            <Pressable style={[s.senden, s.aufnahmeAn, s.aufnahmeBreit]} onPress={aufnahme.stopp}>
+              <Text style={s.sendenTxt}>● {aufnahme.sekunden}s ➤</Text>
             </Pressable>
           </View>
         ) : (
@@ -1049,6 +1248,7 @@ function Chat({ raum, name, lang, device, unten, onBack }) {
           </Pressable>
         )}
       </View>
+      <AboFenster offen={aboOffen} raum={raum} onZu={() => setAboOffen(false)} onHinweis={setHinweis} />
     </KeyboardAvoidingView>
   );
 }
@@ -1405,6 +1605,17 @@ const s = StyleSheet.create({
   reaktZu: { fontSize: 18, color: FARBE.grau, paddingHorizontal: 6 },
   aufnahmeRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   aufnahmeAn: { backgroundColor: "#E46A5E" },
+  plusKnopf: { borderWidth: 1, borderColor: FARBE.gold, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
+  plusKnopfTxt: { color: FARBE.gold, fontWeight: "800", fontSize: 14 },
+  aboStand: { color: FARBE.text, fontSize: 14, marginBottom: 10 },
+  aboFehler: { color: "#9B2C25", fontSize: 14, marginVertical: 10 },
+  aboZeile: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: FARBE.grauHell, borderRadius: 14, padding: 14, marginBottom: 10, backgroundColor: FARBE.weiss },
+  aboName: { fontSize: 16, fontWeight: "800", color: FARBE.navy },
+  aboBeschr: { fontSize: 12.5, color: FARBE.grau, marginTop: 2 },
+  aboPreis: { fontSize: 16, fontWeight: "800", color: FARBE.text },
+  aboHinweis: { fontSize: 12, color: FARBE.grau, marginTop: 4, textAlign: "center" },
+  aboZu: { alignSelf: "center", marginTop: 12, paddingVertical: 8, paddingHorizontal: 18 },
+  aboZuTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 15 },
   einladen: { backgroundColor: FARBE.gold, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 },
   einladenTxt: { color: FARBE.navy, fontWeight: "800", fontSize: 13 },
   aktionLeiste: { flexDirection: "row", gap: 10, backgroundColor: FARBE.weiss, paddingHorizontal: 12, paddingBottom: 8 },
@@ -1435,8 +1646,10 @@ const s = StyleSheet.create({
   bubbleTxtMeins: { color: FARBE.weiss },
   bubbleOrig: { color: FARBE.grau, fontSize: 12, marginTop: 5, fontStyle: "italic" },
 
-  eingabe: { flexDirection: "row", alignItems: "flex-end", gap: 8, padding: 10, backgroundColor: FARBE.weiss, borderTopWidth: 1, borderTopColor: FARBE.grauHell },
+  eingabe: { flexDirection: "row", alignItems: "flex-end", gap: 6, padding: 10, backgroundColor: FARBE.weiss, borderTopWidth: 1, borderTopColor: FARBE.grauHell },
   eingabeInput: { flex: 1, maxHeight: 120, backgroundColor: FARBE.hell, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 16, color: FARBE.text },
-  senden: { backgroundColor: FARBE.gold, borderRadius: 20, paddingHorizontal: 18, paddingVertical: 11 },
+  senden: { width: 44, height: 44, borderRadius: 22, backgroundColor: FARBE.gold, alignItems: "center", justifyContent: "center" },
+  sendenPfeil: { color: FARBE.navy, fontSize: 20, marginLeft: 3 },
+  aufnahmeBreit: { width: undefined, paddingHorizontal: 14 },
   sendenTxt: { color: FARBE.navy, fontWeight: "800" },
 });
