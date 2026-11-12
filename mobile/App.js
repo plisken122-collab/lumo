@@ -2055,8 +2055,10 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis }) {
 
   if (msg.deleted) {
     return (
-      <View style={[s.bubble, meins ? s.bubbleMeins : s.bubbleFremd]}>
-        <Text style={[txtStil, s.geloescht]}>{t("geloescht")}</Text>
+      <View style={[s.bubbleWrap, meins ? s.wrapMeins : s.wrapFremd]}>
+        <View style={[s.bubble, meins ? s.bubbleMeins : s.bubbleFremd]}>
+          <Text style={[txtStil, s.geloescht]}>{t("geloescht")}</Text>
+        </View>
       </View>
     );
   }
