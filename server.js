@@ -1483,6 +1483,35 @@ Antworte NUR mit JSON, ohne Markdown: {"uebersetzt":"<Text auf ${nach}>"}`;
   }
 });
 
+/* Text aus einer anderen App (Teilen-Menue von Android): uebersetzen
+   und auf Wunsch kurz erklaeren - Redewendungen, Tonfall, was gemeint ist. */
+app.post("/api/text-erklaeren", express.json({ limit: "40kb" }), async (req, res) => {
+  const text = String(req.body?.text || "").trim().slice(0, 4000);
+  const lang = clean(req.body?.lang);
+  const erklaeren = req.body?.erklaeren !== false;
+  const wer = String(req.body?.device || req.ip).slice(0, 60);
+  if (!text || !lang) return res.status(400).json({ error: "Angaben unvollstaendig" });
+  if (!take(`teilen:${wer}`, 20, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
+  const ziel = LANG_NAMES[lang] || lang;
+  const prompt = `Der folgende Text wurde aus einer anderen App geteilt (z. B. eine Chatnachricht, ein Post oder eine E-Mail). Erkenne die Sprache und uebersetze ihn natuerlich nach ${ziel} (${lang}).${erklaeren ? ` Schreibe ausserdem eine kurze Erklaerung auf ${ziel}: Was ist gemeint, welcher Tonfall (freundlich, ironisch, foermlich, veraergert ...), gibt es Redewendungen oder kulturelle Anspielungen? Hoechstens 3 kurze Saetze. Ist alles eindeutig, reicht ein Satz.` : ""}
+Text: """${text}"""
+Antworte NUR mit JSON, ohne Markdown: {"sprache":"<Sprachcode des Originals>","uebersetzt":"<Text auf ${lang}>"${erklaeren ? `,"erklaerung":"<Erklaerung auf ${lang}>"` : ""}}`;
+  try {
+    const { result: out, usage } = await claude(prompt);
+    store.logUsage({ room: "__teilen__", target: lang, chars: text.length,
+      inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+    res.json({
+      sprache: clean(out.sprache) || "",
+      uebersetzt: String(out.uebersetzt || "").slice(0, 6000),
+      erklaerung: erklaeren ? String(out.erklaerung || "").slice(0, 1500) : "",
+    });
+  } catch (err) {
+    console.error("Text erklaeren fehlgeschlagen:", err.message);
+    res.status(502).json({ error: "Uebersetzung fehlgeschlagen" });
+  }
+});
+
 app.post("/api/foto-text", express.json({ limit: "8mb" }), async (req, res) => {
   const bild = String(req.body?.bild || "");
   const lang = clean(req.body?.lang);
