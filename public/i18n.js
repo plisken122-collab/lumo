@@ -11,6 +11,7 @@
 window.LUMO_T = (function () {
   const S = {
     de: {
+      alleinText: "👋 Noch liest niemand mit. Schick den Link an die Person, mit der du schreiben willst – sie liest alles in ihrer Sprache.", alleinWa: "WhatsApp", alleinLink: "Link teilen",
       demoCap: "Einer schreibt — der andere liest in seiner eigenen Sprache",
       reply: "Antworten", replyGone: "Nachricht nicht mehr da",
       aussprache: "Aussprache", ausspracheTitel: "So sprichst du das aus",
@@ -95,6 +96,7 @@ window.LUMO_T = (function () {
       gateWrong: "Das Wort stimmt nicht.", gateOffline: "Keine Verbindung. Nochmal versuchen.",
     },
     en: {
+      alleinText: "👋 Nobody else is here yet. Send the link to the person you want to talk to – they'll read everything in their own language.", alleinWa: "WhatsApp", alleinLink: "Share link",
       demoCap: "One writes — the other reads in their own language",
       reply: "Reply", replyGone: "Message no longer available",
       aussprache: "Pronunciation", ausspracheTitel: "How to say it",
@@ -179,6 +181,7 @@ window.LUMO_T = (function () {
       gateWrong: "That word isn't right.", gateOffline: "No connection. Try again.",
     },
     "pt-PT": {
+      alleinText: "👋 Ainda ninguém está a ler. Envia a ligação à pessoa com quem queres falar – ela lê tudo na língua dela.", alleinWa: "WhatsApp", alleinLink: "Partilhar ligação",
       demoCap: "Um escreve — o outro lê na sua própria língua",
       reply: "Responder", replyGone: "Mensagem já não existe",
       aussprache: "Pronúncia", ausspracheTitel: "Como se diz isto",
@@ -263,6 +266,7 @@ window.LUMO_T = (function () {
       gateWrong: "A palavra não está certa.", gateOffline: "Sem ligação. Tenta outra vez.",
     },
     "pt-BR": {
+      alleinText: "👋 Ainda ninguém está lendo. Mande o link para a pessoa com quem você quer conversar – ela lê tudo no idioma dela.", alleinWa: "WhatsApp", alleinLink: "Compartilhar link",
       demoCap: "Um escreve — o outro lê no seu próprio idioma",
       reply: "Responder", replyGone: "Mensagem não disponível",
       aussprache: "Pronúncia", ausspracheTitel: "Como falar isso",
@@ -347,6 +351,7 @@ window.LUMO_T = (function () {
       gateWrong: "A palavra não confere.", gateOffline: "Sem conexão. Tente de novo.",
     },
     es: {
+      alleinText: "👋 Todavía no hay nadie más. Envía el enlace a la persona con la que quieres hablar: lo leerá todo en su idioma.", alleinWa: "WhatsApp", alleinLink: "Compartir enlace",
       tagline: "Cada uno escribe en su idioma. Cada uno lee en el suyo.",
       freeStart: "Empieza gratis", back: "Atrás",
       nameLabel: "Tu nombre", namePlaceholder: "Nombre",
@@ -418,6 +423,7 @@ window.LUMO_T = (function () {
       gateWrong: "La palabra no es correcta.", gateOffline: "Sin conexión. Inténtalo otra vez.",
     },
     fr: {
+      alleinText: "👋 Personne d'autre n'est encore là. Envoie le lien à la personne avec qui tu veux parler – elle lira tout dans sa langue.", alleinWa: "WhatsApp", alleinLink: "Partager le lien",
       tagline: "Chacun écrit dans sa langue. Chacun lit dans la sienne.",
       freeStart: "Commence gratuitement", back: "Retour",
       nameLabel: "Ton nom", namePlaceholder: "Nom",
@@ -489,6 +495,7 @@ window.LUMO_T = (function () {
       gateWrong: "Ce mot n'est pas le bon.", gateOffline: "Pas de connexion. Réessaie.",
     },
     it: {
+      alleinText: "👋 Non c'è ancora nessun altro. Invia il link alla persona con cui vuoi parlare: leggerà tutto nella sua lingua.", alleinWa: "WhatsApp", alleinLink: "Condividi link",
       tagline: "Ognuno scrive nella sua lingua. Ognuno legge nella propria.",
       freeStart: "Inizia gratis", back: "Indietro",
       nameLabel: "Il tuo nome", namePlaceholder: "Nome",

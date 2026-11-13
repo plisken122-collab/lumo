@@ -242,6 +242,17 @@
     padding:24px; text-align:center; pointer-events:none;
   }
   .leer.hide { display:none; }
+  /* Allein im Chat geschrieben, aber noch niemand eingeladen: Leiste ueber
+     dem Eingabefeld. Die meisten Besucher schreiben ein paar Saetze und
+     gehen - ohne je zu sehen, wie das Gegenueber die Uebersetzung liest. */
+  .allein { margin-top:10px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px 12px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .allein.hide { display:none; }
+  .allein-text { flex:1 1 180px; margin:0; font-size:13.5px; line-height:1.4; }
+  .allein-knoepfe { display:flex; gap:6px; flex:0 0 auto; }
+  .allein button { border-radius:10px; padding:8px 12px; font-size:13.5px; font-weight:600; border:none; cursor:pointer; }
+  .allein .wa { background:#25D366; color:#fff; }
+  .allein .link { background:var(--mine); color:#fff; }
+  .allein .zu { background:transparent; color:var(--muted); padding:8px 4px; font-weight:400; }
   .leer-inner { max-width:320px; pointer-events:auto; }
   .leer-titel { margin:0 0 8px; font-size:16px; font-weight:500; }
   .leer-text { margin:0 0 18px; font-size:14px; color:var(--muted); line-height:1.5; }
@@ -642,6 +653,14 @@
       </div>
       <button id="antwortWeg" class="antwort-weg" type="button" aria-label="">✕</button>
     </div>
+    <div id="allein" class="allein hide">
+      <p class="allein-text" id="t-alleinText"></p>
+      <div class="allein-knoepfe">
+        <button id="alleinWa" class="wa" type="button"></button>
+        <button id="alleinLink" class="link" type="button"></button>
+        <button id="alleinZu" class="zu" type="button" aria-label="">✕</button>
+      </div>
+    </div>
     <!-- "... schreibt gerade" - erscheint live, waehrend das Gegenueber tippt. -->
     <div id="tippt" class="tippt hide">
       <span id="tipptName"></span>
@@ -866,6 +885,9 @@ function applyLanguage(code) {
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
   $("leerZurueck").textContent = L.t("leerZurueck");
+  $("t-alleinText").textContent = L.t("alleinText");
+  $("alleinWa").textContent = L.t("alleinWa");
+  $("alleinLink").textContent = L.t("alleinLink");
   $("leerDemo").textContent = L.t("demoBtn");
   $("demoLanding").textContent = L.t("demoLanding");
   $("invitedNote").textContent = L.t("invitedTo");
@@ -1227,6 +1249,15 @@ function aktualisiereLeer() {
   if (leer) leer.classList.toggle("hide", !istLeer);
   /* Solange die Mitte einlaedt, waere der Einladen-Knopf oben doppelt. */
   $("inviteBtn").classList.toggle("hide", istLeer);
+  /* Schon geschrieben, aber noch nie jemand anderes hier: Einladeleiste.
+     Im Probe-Chat nicht - dort antwortet die Demo und hat ihren eigenen
+     Hinweis. Weggeklickt bleibt sie fuer diesen Chat weg. */
+  let andere = false;
+  for (const m of msgs.values()) if (m.device !== deviceId && m.device !== "demo") { andere = true; break; }
+  let weg = false;
+  try { weg = sessionStorage.getItem("diralo-allein-zu") === me.room; } catch {}
+  const allein = $("allein");
+  if (allein) allein.classList.toggle("hide", istLeer || andere || demoAktiv || weg);
 }
 
 /* Standort in eine Blase setzen: eine antippbare Karte. Tippen oeffnet
@@ -2640,6 +2671,21 @@ function einladungsLink(code) {
   return location.origin + "/#c=" + encodeURIComponent(code);
 }
 
+/* Einladungstext: Englisch + Portugiesisch, siehe einladen(). */
+function einladungsText() {
+  const L2 = window.LUMO_T;
+  return L2.en("inviteText") + "\n" + L2.inSprache("pt-PT", "inviteText");
+}
+
+/* Direkt in WhatsApp - dort sitzen die meisten, die man einladen will.
+   Ein Tippen weniger als ueber das Teilen-Menue. */
+function einladenWhatsApp() {
+  if (demoAktiv) { demoAus(); aktualisiereLeer(); }
+  melde("einladung");
+  const text = einladungsText() + "\n" + einladungsLink(me.room);
+  window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+}
+
 async function einladen() {
   /* Aus dem Probe-Chat heraus eingeladen? Dann die Demo beenden, damit die
      naechsten Nachrichten in den echten Raum gehen und nicht mehr an die KI -
@@ -2729,6 +2775,12 @@ function updateBell() {
 
 $("inviteBtn").onclick = einladen;
 $("leerEinladen").onclick = einladen;
+$("alleinLink").onclick = einladen;
+$("alleinWa").onclick = einladenWhatsApp;
+$("alleinZu").onclick = () => {
+  try { sessionStorage.setItem("diralo-allein-zu", me.room); } catch {}
+  $("allein").classList.add("hide");
+};
 $("leerZurueck").onclick = zurStartseite;
 
 /* Tippt jemand einen Einladungslink an, waehrend Diralo schon offen ist,
