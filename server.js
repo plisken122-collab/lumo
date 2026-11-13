@@ -821,13 +821,13 @@ app.get("/api/admin/daten", async (req, res) => {
       store.getUsage(30),
       store.getUsage(365),
       store.getDemoUsage(30),
-      store.gespraeche(7).catch(() => null),
+      store.personenGruppen(7).catch(() => null),
     ]);
     const kostenMonat = costOf(monat.total);
     const kostenDemo = costOf(demo);
     res.json({
       trichter,
-      chats: { aktiv7, aktiv30, gespraeche7 },
+      chats: { aktiv7, aktiv30, gruppen7: gespraeche7 },
       abos,
       push,
       uebersetzungen: { monat: monat.total.count, jahr: gesamt.total.count },

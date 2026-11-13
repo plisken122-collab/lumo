@@ -1012,6 +1012,67 @@ export async function gespraeche(days = 7) {
   return rows[0]?.n || 0;
 }
 
+/* Gespraeche nach Personen statt nach Chats.
+
+   Ein Chat-Code ist kein Gespraech: Dieselben zwei Menschen haben oft
+   mehrere Chats (neu angelegt, alte App + neue App, Handy + Rechner).
+   Darum verbinden wir alle Chats, die ein Geraet gemeinsam haben, zu
+   einer Gruppe. Eine Gruppe mit 2+ Geraeten ist ein Gespraech; eine
+   Gruppe mit einem Geraet ist jemand, der allein ausprobiert hat.
+   Testgeraete ("test_...") zaehlen nicht. Nur Summen, keine Codes,
+   keine Namen. */
+export async function personenGruppen(days = 7) {
+  const seit = Date.now() - days * 24 * 60 * 60 * 1000;
+  let zeilen;
+  if (!usingDatabase) {
+    const je = new Map();
+    for (const m of mem.messages.values()) {
+      if (m.at < seit) continue;
+      const k = m.room + "|" + m.device;
+      const z = je.get(k) || { room: m.room, device: m.device, n: 0, lang: m.lang, last: 0 };
+      z.n++; z.last = Math.max(z.last, m.at); je.set(k, z);
+    }
+    zeilen = [...je.values()];
+  } else {
+    ({ rows: zeilen } = await pool.query(
+      `SELECT room, device, COUNT(*)::int AS n, MAX(lang) AS lang, MAX(at) AS last
+         FROM messages WHERE at >= $1 AND device IS NOT NULL GROUP BY room, device`, [seit]
+    ));
+  }
+  zeilen = zeilen.filter((z) => z.device && !String(z.device).startsWith("test_"));
+
+  /* Vereinigen: Raum und Geraet sind Knoten, jede Zeile verbindet beide. */
+  const eltern = new Map();
+  const finde = (x) => {
+    while (eltern.get(x) !== x) { eltern.set(x, eltern.get(eltern.get(x))); x = eltern.get(x); }
+    return x;
+  };
+  const knoten = (x) => { if (!eltern.has(x)) eltern.set(x, x); return x; };
+  for (const z of zeilen) {
+    const a = finde(knoten("r:" + z.room)), b = finde(knoten("d:" + z.device));
+    if (a !== b) eltern.set(a, b);
+  }
+  const gruppen = new Map();
+  for (const z of zeilen) {
+    const w = finde("r:" + z.room);
+    const g = gruppen.get(w) || { geraete: new Set(), raeume: new Set(), sprachen: new Set(), nachrichten: 0, zuletzt: 0 };
+    g.geraete.add(z.device); g.raeume.add(z.room);
+    if (z.lang) g.sprachen.add(String(z.lang).split("-")[0]);
+    g.nachrichten += Number(z.n); g.zuletzt = Math.max(g.zuletzt, Number(z.last));
+    gruppen.set(w, g);
+  }
+  const liste = [...gruppen.values()].map((g) => ({
+    geraete: g.geraete.size, chats: g.raeume.size, nachrichten: g.nachrichten,
+    sprachen: [...g.sprachen].sort(), zuletzt: g.zuletzt,
+  }));
+  const gespraeche = liste.filter((g) => g.geraete >= 2).sort((a, b) => b.zuletzt - a.zuletzt);
+  return {
+    gespraeche: gespraeche.length,
+    allein: liste.filter((g) => g.geraete < 2).length,
+    liste: gespraeche.slice(0, 30),
+  };
+}
+
 export async function aktiveChats(days = 7) {
   const seit = Date.now() - days * 24 * 60 * 60 * 1000;
   if (!usingDatabase) {

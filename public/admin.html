@@ -75,6 +75,13 @@
   <div id="dash" class="hide">
     <div class="kacheln" id="kacheln"></div>
 
+    <div class="card hide" id="gespraecheCard">
+      <h2>Gespräche (7 Tage)</h2>
+      <div id="gespraeche"></div>
+      <p class="small" style="margin-top:10px">Dieselben Personen zählen einmal – auch wenn sie mehrere
+      Chats, Handy und Rechner oder alte und neue App benutzen. Ein Gerät ≈ eine Person.</p>
+    </div>
+
     <div class="card">
       <h2>Letzte 14 Tage</h2>
       <div id="trichter"></div>
@@ -130,6 +137,23 @@ $("go").onclick = anmelden;
 $("wort").addEventListener("keydown", (e) => { if (e.key === "Enter") anmelden(); });
 
 const nf = new Intl.NumberFormat("de-DE");
+
+/* Jede Zeile ein Gespraech - dieselben Personen zaehlen einmal, egal
+   wie viele Chats oder Geraete sie benutzen. */
+function zeichneGespraeche(g) {
+  const karte = $("gespraecheCard");
+  if (!g || !g.liste.length) { karte.classList.add("hide"); return; }
+  karte.classList.remove("hide");
+  const zeit = (t) => new Date(t).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  $("gespraeche").innerHTML = g.liste.map((x, i) =>
+    `<div class="reihe" style="align-items:baseline">` +
+    `<div class="name" style="font-weight:500">Gespräch ${i + 1}</div>` +
+    `<div style="flex:1" class="small">` +
+    `<b style="color:var(--ink)">${x.geraete}</b> Geräte · ` +
+    `<b style="color:var(--ink)">${x.chats}</b> ${x.chats === 1 ? "Chat" : "Chats"} · ` +
+    `<b style="color:var(--ink)">${nf.format(x.nachrichten)}</b> Nachrichten · ` +
+    `${x.sprachen.join(" ↔ ") || "?"} · zuletzt ${zeit(x.zuletzt)}</div></div>`).join("");
+}
 
 function kachel(zahl, titel, neben, klein) {
   return `<div class="kachel"><div class="zahl${klein ? " klein" : ""}">${zahl}</div>` +
@@ -207,10 +231,12 @@ async function laden() {
     const d = await a.json();
 
     const demo = d.demo || { monat: 0, kostenUsd: 0 };
+    const g = d.chats.gruppen7;
+    zeichneGespraeche(g);
     const demoStarts = (d.trichter.summe && d.trichter.summe.demo) || 0;
     $("kacheln").innerHTML =
-      kachel(nf.format(d.chats.gespraeche7 ?? d.chats.aktiv7), "Echte Gespräche",
-        "7 Tage, mind. 2 Personen · " + nf.format(d.chats.aktiv7) + " Chats mit Nachrichten") +
+      kachel(nf.format(g ? g.gespraeche : d.chats.aktiv7), "Gespräche",
+        g ? "7 Tage, je Personenpaar/-gruppe einmal · " + nf.format(g.allein) + " allein ausprobiert" : "7 Tage") +
       kachel(nf.format(d.abos.plus + d.abos.familie), "Zahlende Abos",
              d.abos.plus + "× Plus · " + d.abos.familie + "× Familie") +
       kachel(d.umsatzMonatEur.toFixed(2) + " €", "Umsatz / Monat", "wiederkehrend", true) +
