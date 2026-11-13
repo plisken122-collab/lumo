@@ -812,7 +812,7 @@ app.get("/api/trichter", async (req, res) => {
 app.get("/api/admin/daten", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   try {
-    const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt, demo] = await Promise.all([
+    const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt, demo, gespraeche7] = await Promise.all([
       store.trichter(14),
       store.aktiveChats(7),
       store.aktiveChats(30),
@@ -821,12 +821,13 @@ app.get("/api/admin/daten", async (req, res) => {
       store.getUsage(30),
       store.getUsage(365),
       store.getDemoUsage(30),
+      store.gespraeche(7).catch(() => null),
     ]);
     const kostenMonat = costOf(monat.total);
     const kostenDemo = costOf(demo);
     res.json({
       trichter,
-      chats: { aktiv7, aktiv30 },
+      chats: { aktiv7, aktiv30, gespraeche7 },
       abos,
       push,
       uebersetzungen: { monat: monat.total.count, jahr: gesamt.total.count },

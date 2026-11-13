@@ -209,7 +209,8 @@ async function laden() {
     const demo = d.demo || { monat: 0, kostenUsd: 0 };
     const demoStarts = (d.trichter.summe && d.trichter.summe.demo) || 0;
     $("kacheln").innerHTML =
-      kachel(nf.format(d.chats.aktiv7), "Aktive Chats", "7 Tage · " + nf.format(d.chats.aktiv30) + " in 30") +
+      kachel(nf.format(d.chats.gespraeche7 ?? d.chats.aktiv7), "Echte Gespräche",
+        "7 Tage, mind. 2 Personen · " + nf.format(d.chats.aktiv7) + " Chats mit Nachrichten") +
       kachel(nf.format(d.abos.plus + d.abos.familie), "Zahlende Abos",
              d.abos.plus + "× Plus · " + d.abos.familie + "× Familie") +
       kachel(d.umsatzMonatEur.toFixed(2) + " €", "Umsatz / Monat", "wiederkehrend", true) +

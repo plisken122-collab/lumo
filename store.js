@@ -990,6 +990,28 @@ export async function neueNachrichten(paare, device) {
    Nachrichteninhalte. Ein Chat-Code ist ein Zugangsschluessel; ihn
    anzuzeigen hiesse, dem Admin Zutritt zu fremden Gespraechen zu geben.
 ------------------------------------------------------------------- */
+/* Chats, in denen in den letzten Tagen mindestens zwei verschiedene
+   Geraete geschrieben haben - also echte Gespraeche. Viele Besucher der
+   Webseite probieren allein in einem eigenen Chat; die zaehlen hier nicht. */
+export async function gespraeche(days = 7) {
+  const seit = Date.now() - days * 24 * 60 * 60 * 1000;
+  if (!usingDatabase) {
+    const je = new Map();
+    for (const m of mem.messages.values()) {
+      if (m.at < seit) continue;
+      if (!je.has(m.room)) je.set(m.room, new Set());
+      je.get(m.room).add(m.device);
+    }
+    return [...je.values()].filter((g) => g.size >= 2).length;
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM (
+       SELECT room FROM messages WHERE at >= $1 GROUP BY room HAVING COUNT(DISTINCT device) >= 2
+     ) g`, [seit]
+  );
+  return rows[0]?.n || 0;
+}
+
 export async function aktiveChats(days = 7) {
   const seit = Date.now() - days * 24 * 60 * 60 * 1000;
   if (!usingDatabase) {
