@@ -130,24 +130,44 @@ function ImAnruf({ lang, video, t, onEnde }) {
 
   /* Untertitel: je Sprecher die letzte Zeile. Fremde in meiner Sprache
      (Uebersetzung, sobald der Satz fertig ist), meine eigenen klein. */
-  const [zeilen, setZeilen] = useState({});
+  /* fertig: die letzten zwei fertigen Saetze (bleiben je nach Laenge
+     7-15 s stehen); live: der Satz, der gerade gesprochen wird - er
+     verdraengt die fertigen nicht mehr. */
+  const [fertig, setFertig] = useState([]);     // [{ id, text, original }]
+  const [live, setLive] = useState({});         // von -> { text, uebersetzt }
   const [eigene, setEigene] = useState("");
-  const weg = useRef({});
+  const letzterFertig = useRef({});
+  const zaehler = useRef(0);
+  const uhren = useRef([]);
   useDataChannel("untertitel", (msg) => {
     let d;
     try { d = JSON.parse(utf8(msg.payload)); } catch { return; }
     if (!d?.text) return;
     if (d.von === localParticipant?.identity) { setEigene(d.text); return; }
-    const gleich = String(d.lang || "").split("-")[0] === String(lang).split("-")[0];
-    const uebersetzt = d.tr?.[lang] || Object.entries(d.tr || {}).find(([k]) => k.split("-")[0] === String(lang).split("-")[0])?.[1];
-    const zeile = d.fertig
-      ? { text: gleich ? d.text : (uebersetzt || d.text), original: gleich ? null : d.text, fertig: true }
-      : { text: d.text, original: null, fertig: false };
-    setZeilen((alt) => ({ ...alt, [d.von]: zeile }));
-    clearTimeout(weg.current[d.von]);
-    weg.current[d.von] = setTimeout(() => setZeilen((alt) => { const n = { ...alt }; delete n[d.von]; return n; }), 9000);
+    const basis = String(lang).split("-")[0];
+    const gleich = String(d.lang || "").split("-")[0] === basis;
+    const uebersetzt = d.tr?.[lang] || Object.entries(d.tr || {}).find(([k]) => k.split("-")[0] === basis)?.[1];
+    if (!d.fertig) {
+      /* Verspaetete Zwischenstaende eines schon fertigen Satzes nicht
+         wieder anzeigen. */
+      const lf = letzterFertig.current[d.von];
+      if (lf && lf.startsWith(d.text.replace(/[.,!?]+$/, ""))) return;
+      setLive((alt) => {
+        const vorher = alt[d.von];
+        const neu = { text: d.text, uebersetzt: gleich ? null : (uebersetzt || (vorher && d.text.startsWith(vorher.text.slice(0, 10)) ? vorher.uebersetzt : null)) };
+        return { ...alt, [d.von]: neu };
+      });
+      return;
+    }
+    letzterFertig.current[d.von] = d.text;
+    setLive((alt) => { const n = { ...alt }; delete n[d.von]; return n; });
+    const id = ++zaehler.current;
+    const zeile = { id, text: gleich ? d.text : (uebersetzt || d.text), original: gleich ? null : d.text };
+    setFertig((alt) => [...alt, zeile].slice(-2));
+    const dauer = Math.min(15000, Math.max(7000, 4000 + zeile.text.length * 70));
+    uhren.current.push(setTimeout(() => setFertig((alt) => alt.filter((z) => z.id !== id)), dauer));
   });
-  useEffect(() => () => Object.values(weg.current).forEach(clearTimeout), []);
+  useEffect(() => () => uhren.current.forEach(clearTimeout), []);
 
   const name = andere[0]?.name || andere[0]?.identity || "";
   const [sek, setSek] = useState(0);
@@ -187,10 +207,16 @@ function ImAnruf({ lang, video, t, onEnde }) {
       </View>
 
       <View style={st.untertitelBox} pointerEvents="none">
-        {Object.entries(zeilen).map(([von, z]) => (
-          <View key={von} style={st.untertitel}>
-            <Text style={[st.utText, !z.fertig && st.utVorlaeufig]}>{z.text}</Text>
+        {fertig.map((z) => (
+          <View key={z.id} style={st.untertitel}>
+            <Text style={st.utText}>{z.text}</Text>
             {z.original ? <Text style={st.utOriginal}>{z.original}</Text> : null}
+          </View>
+        ))}
+        {Object.entries(live).map(([von, z]) => (
+          <View key={"live" + von} style={st.untertitel}>
+            <Text style={[st.utText, st.utVorlaeufig]}>{z.uebersetzt || z.text} …</Text>
+            {z.uebersetzt ? <Text style={st.utOriginal}>{z.text}</Text> : null}
           </View>
         ))}
         {eigene ? <Text style={st.utEigene} numberOfLines={2}>🎙 {eigene}</Text> : null}

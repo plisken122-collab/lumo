@@ -21,6 +21,48 @@ const SECRET = (process.env.LIVEKIT_API_SECRET || "").trim();
 export const anrufAn = Boolean(URL && KEY && SECRET);
 
 const BOT = "diralo-untertitel";
+
+/* Schnelle Uebersetzung fuer Untertitel: Google Translate antwortet in
+   rund 0,2 s - die KI-Uebersetzung braucht 1-2 s, zu lang fuer Live-
+   Untertitel. Faellt Google aus (API aus, Fehler), gibt es null. */
+let gAuth = null;
+let googleAus = false;
+async function googleUebersetzen(text, ziel, quelle) {
+  if (googleAus) return null;
+  const konto = dienstkonto();
+  if (!konto) return null;
+  try {
+    if (!gAuth) {
+      const { GoogleAuth } = await import("google-auth-library");
+      gAuth = new GoogleAuth({
+        credentials: { client_email: konto.client_email, private_key: konto.private_key },
+        projectId: konto.project_id, scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+      });
+    }
+    const token = (await (await gAuth.getClient()).getAccessToken()).token;
+    const r = await fetch("https://translation.googleapis.com/language/translate/v2", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json", "x-goog-user-project": konto.project_id },
+      body: JSON.stringify({ q: text, target: zielCode(ziel), source: zielCode(quelle), format: "text" }),
+    });
+    if (r.status === 403) { googleAus = true; console.error("Google Translate ist aus - Untertitel nutzen die KI-Uebersetzung."); return null; }
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j.data?.translations?.[0]?.translatedText || null;
+  } catch {
+    return null;
+  }
+}
+/* Diralo-Sprachcode -> Google-Translate-Code. */
+const zielCode = (c) => {
+  const x = String(c || "en");
+  if (x === "zh-TW") return "zh-TW";
+  if (x === "zh") return "zh-CN";
+  if (x === "pt-PT") return "pt-PT";
+  if (x.startsWith("pt")) return "pt";
+  if (x === "no") return "no";
+  return x.split("-")[0];
+};
 const raumName = (room) => "diralo-" + String(room).toLowerCase();
 
 /* Zugangsschein fuer einen Teilnehmer. Name und Sprache stehen in den
@@ -69,13 +111,36 @@ export async function untertitelStarten(room, uebersetze) {
       if (track.kind !== TrackKind.KIND_AUDIO || person.identity === BOT) return;
       eintrag.hoerer.get(person.identity)?.();
       const lang = spracheVon(person);
-      const stop = mitschreiben(new AudioStream(track, 16000, 1), lang, konto, async (text, fertig) => {
-        if (!fertig) { senden({ von: person.identity, lang, text, fertig: false }); return; }
+      /* Waehrend des Sprechens: hoechstens alle 1,2 s und erst ab drei
+         neuen Woertern vorlaeufig uebersetzen (nur die schnelle Google-
+         Uebersetzung). Fertige Saetze: schnell, sonst KI als Rueckfall. */
+      let zuletztZwischen = 0;
+      let woerterZwischen = 0;
+      const uebersetzeAlle = async (text, schnellNur) => {
         const tr = {};
-        for (const ziel of andereSprachen(person.identity)) {
-          if (ziel.split("-")[0] === lang.split("-")[0]) continue;
-          try { tr[ziel] = await uebersetze(text, ziel); } catch {}
+        await Promise.all(andereSprachen(person.identity).map(async (ziel) => {
+          if (ziel.split("-")[0] === lang.split("-")[0]) return;
+          let t = await googleUebersetzen(text, ziel, lang);
+          if (!t && !schnellNur) { try { t = await uebersetze(text, ziel); } catch {} }
+          if (t) tr[ziel] = t;
+        }));
+        return tr;
+      };
+      const stop = mitschreiben(new AudioStream(track, 16000, 1), lang, konto, async (text, fertig) => {
+        if (!fertig) {
+          senden({ von: person.identity, lang, text, fertig: false });
+          const woerter = text.split(/\s+/).length;
+          if (Date.now() - zuletztZwischen > 1200 && woerter - woerterZwischen >= 3) {
+            zuletztZwischen = Date.now();
+            woerterZwischen = woerter;
+            const tr = await uebersetzeAlle(text, true);
+            if (Object.keys(tr).length) senden({ von: person.identity, lang, text, tr, fertig: false });
+          }
+          return;
         }
+        zuletztZwischen = 0;
+        woerterZwischen = 0;
+        const tr = await uebersetzeAlle(text, false);
         senden({ von: person.identity, lang, text, tr, fertig: true });
       });
       eintrag.hoerer.set(person.identity, stop);
