@@ -27,6 +27,7 @@ import * as Notifications from "expo-notifications";
 import * as Speech from "expo-speech";
 import { useShareIntent } from "expo-share-intent";
 import * as Application from "expo-application";
+import { Anruf, Klingeln } from "./Anruf";
 import {
   initConnection, fetchProducts, requestPurchase, finishTransaction,
   purchaseUpdatedListener, purchaseErrorListener, isUserCancelledError,
@@ -67,6 +68,17 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    anrufen: "Anrufen",
+    anrufSprache: "📞 Sprachanruf",
+    anrufVideo: "🎥 Videoanruf",
+    anrufKommt: "ruft dich an …",
+    anrufVideoKommt: "Videoanruf …",
+    anrufUntertitelHinweis: "Mit Live-Untertiteln: Du liest in deiner Sprache, was gesagt wird.",
+    anrufFehler: "Der Anruf hat gerade nicht geklappt.",
+    anrufWartet: "Warte auf Antwort …",
+    anrufKlingelt: "klingelt …",
+    anrufVorbei: "Anruf beendet",
+    anrufAbgelehnt: "hat nicht angenommen",
     updTitel: "Neue Version verfügbar",
     updText: "Diralo wurde verbessert. Tippe auf „Aktualisieren“ – das dauert nur einen Moment.",
     updKnopf: "Aktualisieren",
@@ -184,6 +196,17 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    anrufen: "Ligar",
+    anrufSprache: "📞 Chamada de voz",
+    anrufVideo: "🎥 Videochamada",
+    anrufKommt: "está a ligar …",
+    anrufVideoKommt: "Videochamada …",
+    anrufUntertitelHinweis: "Com legendas ao vivo: lês na tua língua o que é dito.",
+    anrufFehler: "A chamada não funcionou agora.",
+    anrufWartet: "À espera de resposta …",
+    anrufKlingelt: "a chamar …",
+    anrufVorbei: "Chamada terminada",
+    anrufAbgelehnt: "não atendeu",
     updTitel: "Nova versão disponível",
     updText: "O Diralo foi melhorado. Toca em „Atualizar“ – demora só um momento.",
     updKnopf: "Atualizar",
@@ -301,6 +324,17 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    anrufen: "Call",
+    anrufSprache: "📞 Voice call",
+    anrufVideo: "🎥 Video call",
+    anrufKommt: "is calling …",
+    anrufVideoKommt: "Video call …",
+    anrufUntertitelHinweis: "With live subtitles: you read what is said in your language.",
+    anrufFehler: "The call didn't work just now.",
+    anrufWartet: "Waiting for answer …",
+    anrufKlingelt: "ringing …",
+    anrufVorbei: "Call ended",
+    anrufAbgelehnt: "didn't answer",
     updTitel: "New version available",
     updText: "Diralo has been improved. Tap “Update” – it only takes a moment.",
     updKnopf: "Update",
@@ -418,6 +452,17 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    anrufen: "Llamar",
+    anrufSprache: "📞 Llamada de voz",
+    anrufVideo: "🎥 Videollamada",
+    anrufKommt: "te está llamando …",
+    anrufVideoKommt: "Videollamada …",
+    anrufUntertitelHinweis: "Con subtítulos en directo: lees en tu idioma lo que se dice.",
+    anrufFehler: "La llamada no ha funcionado.",
+    anrufWartet: "Esperando respuesta …",
+    anrufKlingelt: "llamando …",
+    anrufVorbei: "Llamada finalizada",
+    anrufAbgelehnt: "no ha contestado",
     updTitel: "Nueva versión disponible",
     updText: "Diralo ha mejorado. Toca «Actualizar»: solo tarda un momento.",
     updKnopf: "Actualizar",
@@ -535,6 +580,17 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    anrufen: "Appeler",
+    anrufSprache: "📞 Appel vocal",
+    anrufVideo: "🎥 Appel vidéo",
+    anrufKommt: "t'appelle …",
+    anrufVideoKommt: "Appel vidéo …",
+    anrufUntertitelHinweis: "Avec sous-titres en direct : tu lis dans ta langue ce qui est dit.",
+    anrufFehler: "L'appel n'a pas fonctionné.",
+    anrufWartet: "En attente de réponse …",
+    anrufKlingelt: "ça sonne …",
+    anrufVorbei: "Appel terminé",
+    anrufAbgelehnt: "n'a pas répondu",
     updTitel: "Nouvelle version disponible",
     updText: "Diralo a été amélioré. Appuie sur « Mettre à jour » – cela ne prend qu'un instant.",
     updKnopf: "Mettre à jour",
@@ -652,6 +708,17 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    anrufen: "Chiama",
+    anrufSprache: "📞 Chiamata vocale",
+    anrufVideo: "🎥 Videochiamata",
+    anrufKommt: "ti sta chiamando …",
+    anrufVideoKommt: "Videochiamata …",
+    anrufUntertitelHinweis: "Con sottotitoli dal vivo: leggi nella tua lingua ciò che viene detto.",
+    anrufFehler: "La chiamata non è riuscita.",
+    anrufWartet: "In attesa di risposta …",
+    anrufKlingelt: "squilla …",
+    anrufVorbei: "Chiamata terminata",
+    anrufAbgelehnt: "non ha risposto",
     updTitel: "Nuova versione disponibile",
     updText: "Diralo è stato migliorato. Tocca «Aggiorna»: ci vuole solo un attimo.",
     updKnopf: "Aggiorna",
@@ -1810,6 +1877,36 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
   const [anwesend, setAnwesend] = useState([]);
+  /* Anrufe: offen = ich bin im Anruf; klingelt = jemand ruft mich an. */
+  const [anrufOffen, setAnrufOffen] = useState(false);
+  const [anrufVideo, setAnrufVideo] = useState(false);
+  const [klingelt, setKlingelt] = useState(null);   // { name, video }
+  const anrufStarten = (video) => {
+    if (!sockRef.current) return;
+    sockRef.current.emit("anrufStart", { video });
+    setAnrufVideo(video);
+    setAnrufOffen(true);
+  };
+  const anrufWaehlen = () => Alert.alert(t("anrufen"), t("anrufUntertitelHinweis"), [
+    { text: t("anrufSprache"), onPress: () => anrufStarten(false) },
+    { text: t("anrufVideo"), onPress: () => anrufStarten(true) },
+    { text: t("abbrechen"), style: "cancel" },
+  ]);
+  const anrufAnnehmen = () => {
+    const wer = klingelt;
+    setKlingelt(null);
+    sockRef.current?.emit("anrufAngenommen");
+    setAnrufVideo(Boolean(wer?.video));
+    setAnrufOffen(true);
+  };
+  const anrufAblehnen = () => {
+    setKlingelt(null);
+    sockRef.current?.emit("anrufEnde");
+  };
+  const anrufBeenden = () => {
+    setAnrufOffen(false);
+    sockRef.current?.emit("anrufEnde");
+  };
   /* Neue Nachrichten automatisch vorlesen (Einstellung bleibt gespeichert). */
   const [autoVorlesen, setAutoVorlesen] = useState(false);
   const autoRef = useRef(false);
@@ -1843,6 +1940,8 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
       socket.emit("join", { roomCode: raum, name, lang, device, build: BUILD, speech: false });
     });
     socket.on("disconnect", () => setVerbunden(false));
+    socket.on("anrufKommt", (wer) => setKlingelt(wer || null));
+    socket.on("anrufEnde", () => setKlingelt(null));
 
     /* Fuer jede fremde Nachricht ohne Uebersetzung in MEINE Sprache beim
        Server die Uebersetzung anfordern - genau wie die Web-App
@@ -2118,6 +2217,9 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
               : `${t("verbunden")} · ${t("du")}: ${name}`}
           </Text>
         </View>
+        <Pressable onPress={anrufWaehlen} style={s.plusKnopf} hitSlop={8}>
+          <Text style={s.plusKnopfTxt}>📞</Text>
+        </Pressable>
         <Pressable onPress={autoUmschalten} style={[s.plusKnopf, autoVorlesen && s.autoAn]} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>{autoVorlesen ? "🔊" : "🔈"}</Text>
         </Pressable>
@@ -2128,6 +2230,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
           <Text style={s.einladenTxt}>{t("einladen")}</Text>
         </Pressable>
       </View>
+
+      <Klingeln wer={klingelt} t={t} onAnnehmen={anrufAnnehmen} onAblehnen={anrufAblehnen} />
+      <Anruf
+        offen={anrufOffen} server={SERVER_URL} raum={raum} device={device} name={name} lang={lang}
+        video={anrufVideo} t={t} onEnde={anrufBeenden}
+      />
 
       {hinweis && (
         <Pressable onPress={() => setHinweis(null)} style={s.hinweis}>

@@ -25,6 +25,8 @@ function dienstkontoLesen() {
   }
 }
 const KONTO = dienstkontoLesen();
+/* Fuer die Spracherkennung im Anruf (anruf.js) - dasselbe Konto. */
+export const dienstkonto = () => KONTO;
 export const spracheAn = Boolean(KONTO) && process.env.STIMMEN_AUS !== "1";
 
 const b64url = (x) => Buffer.from(x).toString("base64url");

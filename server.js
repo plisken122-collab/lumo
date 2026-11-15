@@ -11,6 +11,7 @@ import * as stimme from "./sprache.js";
 import * as store from "./store.js";
 import * as geld from "./bezahlung.js";
 import * as play from "./playkasse.js";
+import * as anruf from "./anruf.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -1392,13 +1393,13 @@ const EXPO_TOKEN_RE = /^Expo(nent)?PushToken\[[A-Za-z0-9_-]{10,}\]$/;
 const expoLog = [];
 function expoMerken(e) { expoLog.unshift({ at: Date.now(), ...e }); expoLog.length = Math.min(expoLog.length, 30); }
 
-async function expoPush(sub, { title, body, room, id }) {
+async function expoPush(sub, { title, body, room, id, typ }) {
   const r = await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
       to: sub.data.expo, title, body: String(body || "").slice(0, 300),
-      data: { room, id }, sound: "default", channelId: "nachrichten", priority: "high",
+      data: { room, id, typ: typ || "nachricht" }, sound: "default", channelId: "nachrichten", priority: "high",
     }),
   });
   const j = await r.json().catch(() => ({}));
@@ -1469,6 +1470,55 @@ app.post("/api/admin/loeschen", async (req, res) => {
   const ok = await store.deleteForAll(id, msg.device);
   if (ok) io.to(room).emit("deleted", { id });
   res.json({ ok });
+});
+
+/* --------------------------- Anrufe ---------------------------
+   Laufende Anrufe je Chat - damit jemand, der den Chat erst nach dem
+   Klingeln oeffnet (z. B. ueber die Benachrichtigung), noch annehmen
+   kann. Nur im Arbeitsspeicher; ein Anruf ueberlebt keinen Neustart. */
+const anrufe = new Map();   // room -> { name, device, video, at }
+const ANRUF_KLINGELT_MS = 60 * 1000;
+
+const RUFT_AN = {
+  de: "ruft dich an", pt: "está a ligar-te", en: "is calling you", es: "te está llamando",
+  fr: "t'appelle", it: "ti sta chiamando", nl: "belt je", pl: "dzwoni do ciebie",
+};
+const ruftAn = (lang) => RUFT_AN[String(lang || "").split("-")[0]] || RUFT_AN.en;
+
+async function anrufKlingeln(room, wer) {
+  let subs = [];
+  try { subs = await store.getSubscriptions(room); } catch { return; }
+  for (const sub of subs) {
+    if (sub.device === wer.device || !sub.data?.expo) continue;
+    expoPush(sub, {
+      title: (wer.video ? "🎥 " : "📞 ") + wer.name,
+      body: wer.name + " " + ruftAn(sub.lang),
+      room, id: "anruf", typ: "anruf",
+    }).catch(() => {});
+  }
+}
+
+/* Zugang zum Anruf. Startet nebenbei den Untertitel-Helfer. */
+app.post("/api/anruf", async (req, res) => {
+  if (!anruf.anrufAn) return res.status(503).json({ error: "Anrufe sind noch nicht eingerichtet" });
+  const room = raumCode(req.body?.room);
+  const device = String(req.body?.device || "").slice(0, 60);
+  if (!room || !device) return res.status(400).json({ error: "room und device angeben" });
+  if (!take(`anruf:${device}`, 30, 60 * 60 * 1000)) return res.status(429).json({ error: "Zu viele Anrufe" });
+  try {
+    const zugang = await anruf.tokenFuer({
+      room, device, name: req.body?.name, lang: clean(req.body?.lang),
+    });
+    anruf.untertitelStarten(room, async (text, ziel) => {
+      const { result, usage } = await translate(text, ziel);
+      store.logUsage({ room, target: ziel, chars: text.length, inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+      return result.translation || null;
+    }).catch(() => {});
+    res.json(zugang);
+  } catch (err) {
+    console.error("Anruf-Zugang:", err.message);
+    res.status(500).json({ error: "Anruf gerade nicht moeglich" });
+  }
 });
 
 app.get("/api/admin/expo", (req, res) => {
@@ -1978,6 +2028,11 @@ io.on("connection", (socket) => {
     socket.to(room).emit("system", { type: "joined", name: me.name });
     socket.data.wer = { name: me.name, device: me.device };
     anwesendMelden(room);
+    /* Klingelt es in diesem Chat gerade? Dann auch dem Neuen zeigen. */
+    const laeuft = anrufe.get(room);
+    if (laeuft && laeuft.device !== me.device && Date.now() - laeuft.at < ANRUF_KLINGELT_MS) {
+      socket.emit("anrufKommt", { name: laeuft.name, video: laeuft.video });
+    }
   });
 
   /* Nur das Ergebnis der Mitschrift, nie ihr Inhalt: Fehlerkuerzel,
@@ -2090,6 +2145,27 @@ io.on("connection", (socket) => {
   /* "... schreibt gerade": winziges Live-Signal an die anderen im Raum.
      Der Client drosselt schon auf alle zwei Sekunden; die Bremse hier
      faengt nur einen Missbrauch ab. Nichts wird gespeichert. */
+  /* Anruf beginnen: den anderen im Chat klingeln lassen - live und
+     per Benachrichtigung, falls die App zu ist. */
+  socket.on("anrufStart", ({ video } = {}) => {
+    if (!room || !me.device) return;
+    if (!take(`anrufStart:${me.device}`, 20, 60 * 60 * 1000)) return;
+    const wer = { name: me.name, device: me.device, video: Boolean(video), at: Date.now() };
+    anrufe.set(room, wer);
+    socket.to(room).emit("anrufKommt", { name: wer.name, video: wer.video });
+    anrufKlingeln(room, wer);
+  });
+  socket.on("anrufAngenommen", () => {
+    if (!room) return;
+    anrufe.delete(room);
+    socket.to(room).emit("anrufAngenommen", { name: me.name });
+  });
+  socket.on("anrufEnde", () => {
+    if (!room) return;
+    anrufe.delete(room);
+    socket.to(room).emit("anrufEnde", { name: me.name });
+  });
+
   socket.on("tippt", () => {
     if (!room) return;
     if (!take(`tippt:${me.device}`, 40, 60 * 1000)) return;
