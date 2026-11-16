@@ -888,12 +888,17 @@ export async function raeumeVonAbo(aboId) {
 /* Gibt zurueck, ob der Chat dazugekommen ist. false heisst: gehoert
    schon zu einem anderen Abo. */
 export async function raumHinzufuegen(aboId, room) {
+  /* Ein Einlade-Bonus ("bonus_...") macht einem echten Abo Platz. */
+  const echt = !String(aboId).startsWith("bonus_");
   if (!usingDatabase) {
+    const vorher = mem.aboRaeume.get(room);
+    if (echt && vorher && String(vorher).startsWith("bonus_")) mem.aboRaeume.delete(room);
     const belegt = mem.aboRaeume.get(room);
     if (belegt && belegt !== aboId) return false;
     mem.aboRaeume.set(room, aboId);
     return true;
   }
+  if (echt) await pool.query(`DELETE FROM abo_raeume WHERE room = $1 AND abo_id LIKE 'bonus%'`, [room]);
   const { rowCount } = await pool.query(
     `INSERT INTO abo_raeume (abo_id, room, at) VALUES ($1,$2,$3)
      ON CONFLICT (room) DO NOTHING`,
@@ -1117,6 +1122,8 @@ export async function aboZaehlung() {
   );
   const z = { plus: 0, familie: 0 };
   for (const r of rows) z[r.plan] = Number(r.n);
+  const b = await pool.query(`SELECT COUNT(*)::int AS n FROM abos WHERE status = 'bonus' AND period_end > $1`, [Date.now()]);
+  z.bonus = b.rows[0]?.n || 0;
   return z;
 }
 
@@ -1183,4 +1190,14 @@ export async function ttsZeichenSeit(seit) {
   const { rows } = await pool.query(
     `SELECT COALESCE(SUM(chars),0)::bigint AS n FROM usage_log WHERE room = '__tts__' AND at >= $1`, [seit]);
   return Number(rows[0]?.n || 0);
+}
+
+/* Wie viele Einlade-Boni hat dieses Geraet seit einem Zeitpunkt bekommen? */
+export async function bonusAnzahl(geraet, seit) {
+  if (!usingDatabase) {
+    return [...mem.abos.values()].filter((a) => a.status === "bonus" && a.customer === geraet && a.at >= seit).length;
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM abos WHERE status = 'bonus' AND customer = $1 AND at >= $2`, [geraet, seit]);
+  return rows[0]?.n || 0;
 }

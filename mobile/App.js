@@ -68,6 +68,8 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    bonusHinweis: "🎁 Schreibt deine Person mit, bekommt ihr beide 1 Monat Diralo Plus gratis.",
+    bonusDa: "🎁 Geschafft! Ihr habt für diesen Chat 1 Monat Diralo Plus gratis bekommen.",
     anrufMinutenLeer: "Die Live-Untertitel-Minuten für diesen Monat sind aufgebraucht. Der Anruf läuft ohne Untertitel weiter – mit Diralo Plus gibt es mehr.",
     anrufMinutenRest: "Live-Untertitel: noch {n} Min. diesen Monat.",
     anrufen: "Anrufen",
@@ -198,6 +200,8 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    bonusHinweis: "🎁 Quando a tua pessoa também escrever, ganham os dois 1 mês de Diralo Plus grátis.",
+    bonusDa: "🎁 Conseguido! Ganharam 1 mês de Diralo Plus grátis para este chat.",
     anrufMinutenLeer: "Os minutos de legendas ao vivo deste mês esgotaram-se. A chamada continua sem legendas – com o Diralo Plus tem mais.",
     anrufMinutenRest: "Legendas ao vivo: ainda {n} min este mês.",
     anrufen: "Ligar",
@@ -328,6 +332,8 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    bonusHinweis: "🎁 Once your person writes too, you both get 1 month of Diralo Plus free.",
+    bonusDa: "🎁 Done! You both got 1 month of Diralo Plus free for this chat.",
     anrufMinutenLeer: "This month's live subtitle minutes are used up. The call continues without subtitles – Diralo Plus gives you more.",
     anrufMinutenRest: "Live subtitles: {n} min left this month.",
     anrufen: "Call",
@@ -458,6 +464,8 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    bonusHinweis: "🎁 Cuando tu persona también escriba, los dos recibís 1 mes de Diralo Plus gratis.",
+    bonusDa: "🎁 ¡Listo! Habéis recibido 1 mes de Diralo Plus gratis para este chat.",
     anrufMinutenLeer: "Se han agotado los minutos de subtítulos en directo de este mes. La llamada sigue sin subtítulos; con Diralo Plus tienes más.",
     anrufMinutenRest: "Subtítulos en directo: quedan {n} min este mes.",
     anrufen: "Llamar",
@@ -588,6 +596,8 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    bonusHinweis: "🎁 Dès que ta personne écrit aussi, vous recevez tous les deux 1 mois de Diralo Plus gratuit.",
+    bonusDa: "🎁 C'est fait ! Vous avez reçu 1 mois de Diralo Plus gratuit pour ce chat.",
     anrufMinutenLeer: "Les minutes de sous-titres en direct de ce mois sont épuisées. L'appel continue sans sous-titres – Diralo Plus t'en donne plus.",
     anrufMinutenRest: "Sous-titres en direct : encore {n} min ce mois-ci.",
     anrufen: "Appeler",
@@ -718,6 +728,8 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    bonusHinweis: "🎁 Quando anche la tua persona scrive, ricevete entrambi 1 mese di Diralo Plus gratis.",
+    bonusDa: "🎁 Fatto! Avete ricevuto 1 mese di Diralo Plus gratis per questa chat.",
     anrufMinutenLeer: "I minuti di sottotitoli dal vivo di questo mese sono esauriti. La chiamata continua senza sottotitoli: con Diralo Plus ne hai di più.",
     anrufMinutenRest: "Sottotitoli dal vivo: ancora {n} min questo mese.",
     anrufen: "Chiama",
@@ -1963,6 +1975,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
     });
     socket.on("disconnect", () => setVerbunden(false));
     socket.on("anrufKommt", (wer) => setKlingelt(wer || null));
+    socket.on("bonus", () => setHinweis(t("bonusDa")));
     socket.on("anrufEnde", () => setKlingelt(null));
 
     /* Fuer jede fremde Nachricht ohne Uebersetzung in MEINE Sprache beim
@@ -2133,6 +2146,8 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   };
 
   const einladen = () => {
+    /* Solange noch niemand anderes geschrieben hat: an den Bonus erinnern. */
+    if (!nachrichten.some((m) => m.device !== device)) setHinweis(t("bonusHinweis"));
     Share.share({
       message: `${t("einladung")} ${einladungsLink(raum)}`,
     }).catch(() => {});

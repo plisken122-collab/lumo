@@ -230,7 +230,61 @@ function eigeneHerkunft(req) {
 /* "gekuendigt" gehoert dazu: bezahlt ist bezahlt, der Tarif gilt bis
    zum Ende des Zeitraums. Erst "canceled" nimmt ihn weg. */
 const LAEUFT = ["active", "trialing", "past_due", "gekuendigt"];
-const laeuftNoch = (abo) => Boolean(abo && LAEUFT.includes(abo.status));
+const laeuftNoch = (abo) => Boolean(abo && (LAEUFT.includes(abo.status)
+  || (abo.status === "bonus" && Number(abo.period_end) > Date.now())));
+
+/* --------------------------- Einlade-Bonus ---------------------------
+   Wer jemanden einlaedt und die Person schreibt wirklich mit, bekommt
+   fuer diesen Chat einen Monat Diralo Plus - beide profitieren, denn
+   das Kontingent haengt am Chat. Bedingungen gegen Missbrauch:
+   - zwei verschiedene Geraete mit je mindestens 2 Nachrichten,
+   - der Chat hat noch nie ein Abo oder einen Bonus gehabt,
+   - je einladendem Geraet hoechstens ein Bonus in 30 Tagen,
+   - hoechstens BONUS_PRO_TAG Boni am Tag insgesamt. */
+const BONUS_TAGE = Number(process.env.BONUS_TAGE || 30);
+const bonusGeprueft = new Map();   // room -> zuletzt geprueft (ms) | "fertig"
+const bonusSpaeter = new Map();    // room -> Timer fuer die verschobene Pruefung
+async function einladeBonus(room) {
+  if (process.env.BONUS_AUS === "1") return;
+  const r = String(room || "").toLowerCase();
+  if (!r || r.startsWith("demo-") || OHNE_GRENZE.has(r)) return;
+  const stand = bonusGeprueft.get(r);
+  if (stand === "fertig") return;
+  /* Hoechstens alle 5 s pruefen - aber nichts verschlucken: Kam die
+     Nachricht zu frueh, wird spaeter noch einmal nachgesehen. */
+  if (stand && Date.now() - stand < 5000) {
+    if (!bonusSpaeter.has(r)) {
+      bonusSpaeter.set(r, setTimeout(() => { bonusSpaeter.delete(r); bonusGeprueft.delete(r); einladeBonus(r).catch(() => {}); }, 5000));
+    }
+    return;
+  }
+  bonusGeprueft.set(r, Date.now());
+  try {
+    if (await store.getAboByRoom(r)) { bonusGeprueft.set(r, "fertig"); return; }
+    const verlauf = await store.getHistory(r, 80);
+    const je = new Map();
+    for (const m of verlauf) {
+      if (!m.device || String(m.device).startsWith("test_") || m.deleted) continue;
+      je.set(m.device, (je.get(m.device) || 0) + 1);
+    }
+    const aktiv = [...je.entries()].filter(([, n]) => n >= 2).map(([d]) => d);
+    if (aktiv.length < 2) return;
+    /* Einladender = wer im Chat zuerst geschrieben hat. */
+    const einlader = verlauf.find((m) => aktiv.includes(m.device))?.device;
+    if (!einlader) return;
+    if (await store.bonusAnzahl(einlader, Date.now() - 30 * 24 * 60 * 60 * 1000) > 0) { bonusGeprueft.set(r, "fertig"); return; }
+    if (!take("bonus:tag", Number(process.env.BONUS_PRO_TAG || 30), 24 * 60 * 60 * 1000)) return;
+    const id = "bonus_" + r;
+    await store.saveAbo({ id, plan: "plus", status: "bonus", customer: einlader, period_end: Date.now() + BONUS_TAGE * 24 * 60 * 60 * 1000 });
+    if (!(await store.raumHinzufuegen(id, r))) { bonusGeprueft.set(r, "fertig"); return; }
+    bonusGeprueft.set(r, "fertig");
+    planZwischen.delete(r);
+    io.to(r).emit("bonus", { tage: BONUS_TAGE, plan: "plus" });
+    console.log("  Einlade-Bonus vergeben.");
+  } catch (err) {
+    console.error("Einlade-Bonus:", err.message);
+  }
+}
 
 async function kontingent(room) {
   let abo = await store.getAboByRoom(room);
@@ -2182,6 +2236,7 @@ io.on("connection", (socket) => {
       return;
     }
     io.to(room).emit("message", msg);
+    einladeBonus(room).catch(() => {});
     pushToRoom(room, msg).catch((e) => console.error("Push-Lauf:", e.message));
   });
 
@@ -2212,6 +2267,7 @@ io.on("connection", (socket) => {
       return;
     }
     io.to(room).emit("message", msg);
+    einladeBonus(room).catch(() => {});
     pushToRoom(room, msg).catch((e) => console.error("Push-Lauf:", e.message));
   });
 

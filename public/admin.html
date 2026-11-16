@@ -238,7 +238,7 @@ async function laden() {
       kachel(nf.format(g ? g.gespraeche : d.chats.aktiv7), "Gespräche",
         g ? "7 Tage, je Personenpaar/-gruppe einmal · " + nf.format(g.allein) + " allein ausprobiert" : "7 Tage") +
       kachel(nf.format(d.abos.plus + d.abos.familie), "Zahlende Abos",
-             d.abos.plus + "× Plus · " + d.abos.familie + "× Familie") +
+             d.abos.plus + "× Plus · " + d.abos.familie + "× Familie" + (d.abos.bonus ? " · " + d.abos.bonus + "× Einlade-Bonus" : "")) +
       kachel(d.umsatzMonatEur.toFixed(2) + " €", "Umsatz / Monat", "wiederkehrend", true) +
       kachel(nf.format(d.uebersetzungen.monat), "Übersetzungen", "diesen Monat") +
       kachel("$" + (d.kostenMonatUsd + (d.google ? d.google.usd : 0)).toFixed(2), "Kosten / Monat",

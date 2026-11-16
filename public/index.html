@@ -251,6 +251,7 @@
   }
   .leer.hide { display:none; }
   /* Startseite: zwei Wege wie in der App */
+  .system.bonus { background:#FBF3DC; color:#7A5A00; border-radius:12px; padding:8px 12px; font-weight:700; }
   .weg { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; margin-top:14px; }
   .weg.weg-aktiv { border-color:var(--gold); box-shadow:0 0 0 2px rgba(227,178,60,.25); }
   .weg-titel { margin:0; font-size:16.5px; font-weight:800; color:var(--ink); }
@@ -920,7 +921,7 @@ function applyLanguage(code) {
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
   $("leerZurueck").textContent = L.t("leerZurueck");
-  $("t-alleinText").textContent = L.t("alleinText");
+  $("t-alleinText").textContent = L.t("alleinText") + " " + L.t("bonusHinweis");
   $("alleinWa").textContent = L.t("alleinWa");
   $("alleinLink").textContent = L.t("alleinLink");
   $("leerDemo").textContent = L.t("demoBtn");
@@ -1109,6 +1110,14 @@ function start() {
   });
   /* Das Gegenueber tippt gerade - kurz "... schreibt" zeigen. */
   socket.on("tippt", ({ name }) => { zeigeTippt(name); });
+  /* Einlade-Bonus: die eingeladene Person schreibt mit - der Chat hat
+     jetzt einen Monat Diralo Plus. */
+  socket.on("bonus", () => {
+    const d = document.createElement("div");
+    d.className = "system bonus";
+    d.textContent = T("bonusDa");
+    $("log").appendChild(d); scrollDown();
+  });
   /* Reaktion von jemandem (auch von mir zurueck als Bestaetigung). */
   socket.on("reaktion", ({ id, device, emoji }) => {
     const m = msgs.get(id); if (!m) return;
