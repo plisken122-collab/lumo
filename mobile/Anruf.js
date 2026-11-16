@@ -14,10 +14,19 @@ import {
   useRemoteParticipants,
 } from "@livekit/react-native";
 import { Track } from "livekit-client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 registerGlobals();
 
 const F = { navy: "#14213D", gold: "#E3B23C", weiss: "#FFFFFF", rot: "#E5484D", gruen: "#2BB673" };
+
+/* Text -> UTF-8-Bytes ohne TextEncoder. */
+function bytes(text) {
+  const s = unescape(encodeURIComponent(text));
+  const b = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  return b;
+}
 
 /* UTF-8 ohne TextDecoder (fehlt in manchen Hermes-Versionen). */
 function utf8(bytes) {
@@ -137,6 +146,25 @@ function ImAnruf({ lang, video, t, onEnde }) {
   const [live, setLive] = useState({});         // von -> { text, uebersetzt }
   const [eigene, setEigene] = useState("");
   const [minutenLeer, setMinutenLeer] = useState(false);
+  /* Untertitel an/aus (Schalter "CC"). Aus heisst auch: Der Server hoert
+     fuer mich nicht mit - der Anruf kostet dann nichts. Bleibt gespeichert. */
+  const [untertitelAn, setUntertitelAn] = useState(true);
+  const { send: wunschSenden } = useDataChannel("untertitel-wunsch");
+  const alle = useRemoteParticipants();
+  const andereDa = alle.some((p) => p.identity !== BOT);
+  const helferDa = alle.some((p) => p.identity === BOT);
+  useEffect(() => {
+    AsyncStorage.getItem("diralo_untertitel").then((v) => { if (v === "aus") setUntertitelAn(false); }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    /* Auch nach dem Verbinden des Helfers erneut melden, sonst kennt er den Wunsch nicht. */
+    try { wunschSenden(bytes(JSON.stringify({ aus: !untertitelAn })), { reliable: true }); } catch {}
+  }, [untertitelAn, andereDa, helferDa]);
+  const untertitelUmschalten = () => {
+    const neu = !untertitelAn;
+    setUntertitelAn(neu);
+    AsyncStorage.setItem("diralo_untertitel", neu ? "an" : "aus").catch(() => {});
+  };
   const letzterFertig = useRef({});
   const zaehler = useRef(0);
   const uhren = useRef([]);
@@ -208,7 +236,7 @@ function ImAnruf({ lang, video, t, onEnde }) {
         <Text style={st.obenSub}>{andere.length ? dauer : t("anrufKlingelt")}</Text>
       </View>
 
-      <View style={st.untertitelBox} pointerEvents="none">
+      <View style={[st.untertitelBox, !untertitelAn && { display: "none" }]} pointerEvents="none">
         {minutenLeer ? (
           <View style={[st.untertitel, { backgroundColor: "rgba(227,178,60,0.92)" }]}>
             <Text style={{ color: "#14213D", fontSize: 15, fontWeight: "700" }}>{t("anrufMinutenLeer")}</Text>
@@ -241,6 +269,9 @@ function ImAnruf({ lang, video, t, onEnde }) {
           onPress={() => localParticipant?.setCameraEnabled(!isCameraEnabled)}
         >
           <Text style={st.knopfTxt}>{isCameraEnabled ? "🎥" : "📷"}</Text>
+        </Pressable>
+        <Pressable style={[st.knopf, !untertitelAn && st.knopfAus]} onPress={untertitelUmschalten}>
+          <Text style={[st.knopfTxt, { fontSize: 18, fontWeight: "800", textDecorationLine: untertitelAn ? "none" : "line-through" }]}>CC</Text>
         </Pressable>
         <Pressable style={[st.knopf, { backgroundColor: F.rot }]} onPress={onEnde}>
           <Text style={st.knopfTxt}>✕</Text>
@@ -275,7 +306,7 @@ const st = StyleSheet.create({
   utVorlaeufig: { color: "#C9D1E6", fontWeight: "500", fontStyle: "italic" },
   utOriginal: { color: "#AEB7CC", fontSize: 14, marginTop: 4, fontStyle: "italic" },
   utEigene: { color: "#DDE3F0", fontSize: 13, backgroundColor: "rgba(0,0,0,0.45)", borderRadius: 10, padding: 8, alignSelf: "flex-start" },
-  leiste: { position: "absolute", bottom: 40, left: 0, right: 0, flexDirection: "row", justifyContent: "center", gap: 26 },
+  leiste: { position: "absolute", bottom: 40, left: 0, right: 0, flexDirection: "row", justifyContent: "center", gap: 18 },
   knopf: { width: 64, height: 64, borderRadius: 32, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
   knopfAus: { backgroundColor: "rgba(255,255,255,0.42)" },
   knopfTxt: { color: F.weiss, fontSize: 26 },

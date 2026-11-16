@@ -105,6 +105,20 @@ export async function untertitelStarten(room, uebersetze, budget = null) {
       ?.publishData(new TextEncoder().encode(JSON.stringify(inhalt)), { reliable: true, topic: "untertitel" })
       .catch(() => {});
 
+    /* Wer Untertitel ausgeschaltet hat (Schalter "CC" in der App). Ein
+       Sprecher wird nur mitgeschrieben, wenn mindestens ein anderer
+       Teilnehmer Untertitel sehen will - sonst kostet es nichts. */
+    const ohneUntertitel = new Set();
+    raum.on(RoomEvent.DataReceived, (payload, person, _art, thema) => {
+      if (thema !== "untertitel-wunsch" || !person) return;
+      try {
+        const d = JSON.parse(Buffer.from(payload).toString());
+        if (d.aus) ohneUntertitel.add(person.identity); else ohneUntertitel.delete(person.identity);
+      } catch {}
+    });
+    const gebraucht = (sprecher) => [...raum.remoteParticipants.values()]
+      .some((p) => p.identity !== sprecher && p.identity !== BOT && !ohneUntertitel.has(p.identity));
+
     const spracheVon = (p) => { try { return JSON.parse(p.metadata || "{}").lang || "en"; } catch { return "en"; } };
     const andereSprachen = (ausser) => [...new Set([...raum.remoteParticipants.values()]
       .filter((p) => p.identity !== ausser && p.identity !== BOT)
@@ -134,7 +148,7 @@ export async function untertitelStarten(room, uebersetze, budget = null) {
         eintrag.leerGemeldet = true;
         senden({ typ: "kontingent" });
       };
-      const stop = mitschreiben(new AudioStream(track, 16000, 1), lang, konto, budget, leer, async (text, fertig) => {
+      const stop = mitschreiben(new AudioStream(track, 16000, 1), lang, konto, budget, leer, () => gebraucht(person.identity), async (text, fertig) => {
         if (!fertig) {
           senden({ von: person.identity, lang, text, fertig: false });
           const woerter = text.split(/\s+/).length;
@@ -189,7 +203,7 @@ function beenden(room) {
    fehlt; nach 1,2 s Stille endet der Strom - Google liefert dann sofort
    den fertigen Satz, und die Pause kostet nichts. Gibt eine Stopp-
    Funktion zurueck. */
-function mitschreiben(ton, lang, konto, budget, leer, melden) {
+function mitschreiben(ton, lang, konto, budget, leer, gebraucht, melden) {
   let aus = false;
   let strom = null;
   let seit = 0;
@@ -250,7 +264,7 @@ function mitschreiben(ton, lang, konto, budget, leer, melden) {
         const spricht = jetzt - zuletztSprache < 1200;
         const puffer = Buffer.from(d.buffer, d.byteOffset, d.byteLength);
 
-        if (!spricht) {
+        if (!spricht || !gebraucht()) {
           if (strom) schliessen();
           vorlauf.push(puffer);
           if (vorlauf.length > 30) vorlauf.shift();
