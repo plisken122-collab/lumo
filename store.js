@@ -37,6 +37,7 @@ const mem = {
   reactions: new Map(), // message_id -> { device: emoji }
   readState: new Map(), // "room|device" -> bis (bis wann gelesen)
   anrufSek: new Map(),  // "topf|monat" -> Sekunden
+  zaehler: new Map(),   // "monat|art" -> Menge
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -165,6 +166,15 @@ export async function init() {
 
     /* Untertitel-Sekunden im Anruf je Topf (Abo oder einzelner Chat) und
        Monat - fuer das Minuten-Kontingent der Live-Untertitel. */
+    /* Verbrauch der Google-Dienste je Monat (Zeichen, Sekunden) - fuer
+       die Kostenschaetzung in der Uebersicht. */
+    CREATE TABLE IF NOT EXISTS kosten_zaehler (
+      monat INTEGER NOT NULL,
+      art   TEXT NOT NULL,
+      menge BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY (monat, art)
+    );
+
     CREATE TABLE IF NOT EXISTS anruf_sekunden (
       topf     TEXT NOT NULL,
       monat    INTEGER NOT NULL,
@@ -542,7 +552,7 @@ export async function getUsage(days = 30) {
   const since = Date.now() - days * 24 * 60 * 60 * 1000;
 
   if (!usingDatabase) {
-    const rows = mem.usage.filter((r) => r.at >= since);
+    const rows = mem.usage.filter((r) => r.at >= since && r.room !== "__tts__");
     const total = rows.reduce(
       (a, r) => ({
         count: a.count + 1,
@@ -568,14 +578,14 @@ export async function getUsage(days = 30) {
             COALESCE(SUM(chars),0)::int AS chars,
             COALESCE(SUM(in_tokens),0)::bigint AS in_tokens,
             COALESCE(SUM(out_tokens),0)::bigint AS out_tokens
-       FROM usage_log WHERE at >= $1`, [since]);
+       FROM usage_log WHERE at >= $1 AND room IS DISTINCT FROM '__tts__'`, [since]);
 
   const d = await pool.query(
     `SELECT to_char(to_timestamp(at/1000), 'YYYY-MM-DD') AS day,
             COUNT(*)::int AS count,
             COALESCE(SUM(in_tokens),0)::bigint AS in_tokens,
             COALESCE(SUM(out_tokens),0)::bigint AS out_tokens
-       FROM usage_log WHERE at >= $1
+       FROM usage_log WHERE at >= $1 AND room IS DISTINCT FROM '__tts__'
       GROUP BY day ORDER BY day`, [since]);
 
   const r = t.rows[0];
@@ -1139,4 +1149,38 @@ export async function anrufSekundenDazu(topf, monat, sek) {
     `INSERT INTO anruf_sekunden (topf, monat, sekunden) VALUES ($1, $2, $3)
      ON CONFLICT (topf, monat) DO UPDATE SET sekunden = anruf_sekunden.sekunden + EXCLUDED.sekunden`,
     [topf, monat, n]);
+}
+
+/* ----------------------- Kosten-Zaehler (Google) ----------------------- */
+export async function zaehlerDazu(monat, art, menge) {
+  const n = Math.max(0, Math.round(menge));
+  if (!n) return;
+  if (!usingDatabase) {
+    const k = `${monat}|${art}`;
+    mem.zaehler.set(k, (mem.zaehler.get(k) || 0) + n);
+    return;
+  }
+  await pool.query(
+    `INSERT INTO kosten_zaehler (monat, art, menge) VALUES ($1, $2, $3)
+     ON CONFLICT (monat, art) DO UPDATE SET menge = kosten_zaehler.menge + EXCLUDED.menge`,
+    [monat, art, n]);
+}
+
+export async function zaehlerMonat(monat) {
+  const out = {};
+  if (!usingDatabase) {
+    for (const [k, v] of mem.zaehler) { const [m, art] = k.split("|"); if (Number(m) === monat) out[art] = v; }
+    return out;
+  }
+  const { rows } = await pool.query(`SELECT art, menge FROM kosten_zaehler WHERE monat = $1`, [monat]);
+  for (const r of rows) out[r.art] = Number(r.menge);
+  return out;
+}
+
+/* Vorlese-Zeichen aus der Zeit vor dem Zaehler (standen in usage_log). */
+export async function ttsZeichenSeit(seit) {
+  if (!usingDatabase) return mem.usage.filter((r) => r.at >= seit && r.room === "__tts__").reduce((a, r) => a + r.chars, 0);
+  const { rows } = await pool.query(
+    `SELECT COALESCE(SUM(chars),0)::bigint AS n FROM usage_log WHERE room = '__tts__' AND at >= $1`, [seit]);
+  return Number(rows[0]?.n || 0);
 }

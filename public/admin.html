@@ -241,7 +241,12 @@ async function laden() {
              d.abos.plus + "× Plus · " + d.abos.familie + "× Familie") +
       kachel(d.umsatzMonatEur.toFixed(2) + " €", "Umsatz / Monat", "wiederkehrend", true) +
       kachel(nf.format(d.uebersetzungen.monat), "Übersetzungen", "diesen Monat") +
-      kachel("$" + d.kostenMonatUsd.toFixed(2), "Kosten / Monat", "davon Demo $" + demo.kostenUsd.toFixed(2), true) +
+      kachel("$" + (d.kostenMonatUsd + (d.google ? d.google.usd : 0)).toFixed(2), "Kosten / Monat",
+        "KI-Übersetzung $" + d.kostenMonatUsd.toFixed(2) + (d.google ? " · Google $" + d.google.usd.toFixed(2) : "") +
+        " · davon Demo $" + demo.kostenUsd.toFixed(2), true) +
+      (d.google ? kachel("$" + d.google.usd.toFixed(2), "Google (geschätzt)",
+        nf.format(d.google.sttMinuten) + " Min. Untertitel · " + nf.format(d.google.ttsZeichen) + " Zeichen Vorlesen · " +
+        nf.format(d.google.uebersetzungZeichen) + " Zeichen Übersetzung · läuft übers Startguthaben", true) : "") +
       kachel(nf.format(demoStarts), "Demo gestartet", "letzte 14 Tage") +
       kachel(nf.format(d.push), "Benachrichtigungen", "Geräte");
 

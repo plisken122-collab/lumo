@@ -813,7 +813,7 @@ app.get("/api/trichter", async (req, res) => {
 app.get("/api/admin/daten", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   try {
-    const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt, demo, gespraeche7] = await Promise.all([
+    const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt, demo, gespraeche7, google] = await Promise.all([
       store.trichter(14),
       store.aktiveChats(7),
       store.aktiveChats(30),
@@ -823,12 +823,14 @@ app.get("/api/admin/daten", async (req, res) => {
       store.getUsage(365),
       store.getDemoUsage(30),
       store.personenGruppen(7).catch(() => null),
+      googleKosten().catch(() => null),
     ]);
     const kostenMonat = costOf(monat.total);
     const kostenDemo = costOf(demo);
     res.json({
       trichter,
       chats: { aktiv7, aktiv30, gruppen7: gespraeche7 },
+      google,
       abos,
       push,
       uebersetzungen: { monat: monat.total.count, jahr: gesamt.total.count },
@@ -1498,6 +1500,41 @@ async function anrufKlingeln(room, wer) {
   }
 }
 
+/* Verbrauch der Google-Dienste zaehlen - gesammelt im Speicher und alle
+   30 s in die Datenbank, damit nicht jede Sekunde ein Schreibzugriff ist. */
+const zaehlerOffen = new Map();
+function zaehlen(art, menge) {
+  zaehlerOffen.set(art, (zaehlerOffen.get(art) || 0) + Number(menge || 0));
+}
+setInterval(() => {
+  const monat = monatsKennung();
+  for (const [art, menge] of zaehlerOffen) {
+    if (menge < 1) continue;
+    zaehlerOffen.set(art, menge - Math.floor(menge));
+    store.zaehlerDazu(monat, art, Math.floor(menge)).catch(() => {});
+  }
+}, 30 * 1000).unref?.();
+anruf.setZaehler(zaehlen);
+
+/* Listenpreise in US-Dollar (anpassbar ueber die Umgebung). */
+const GOOGLE_PREIS = {
+  tts: Number(process.env.PREIS_TTS_PRO_MIO || 30),          // Chirp3-HD, je 1 Mio. Zeichen
+  stt: Number(process.env.PREIS_STT_PRO_MIN || 0.024),       // Speech-to-Text, je Minute
+  tr: Number(process.env.PREIS_UEBERSETZUNG_PRO_MIO || 20),  // Translation, je 1 Mio. Zeichen
+};
+
+async function googleKosten() {
+  const monat = monatsKennung();
+  const z = await store.zaehlerMonat(monat);
+  const d = new Date();
+  const monatsAnfang = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+  const tts = (z.tts_zeichen || 0) + (zaehlerOffen.get("tts_zeichen") || 0) + await store.ttsZeichenSeit(monatsAnfang);
+  const sttSek = (z.stt_sekunden || 0) + (zaehlerOffen.get("stt_sekunden") || 0);
+  const tr = (z.uebersetzung_zeichen || 0) + (zaehlerOffen.get("uebersetzung_zeichen") || 0);
+  const usd = tts / 1e6 * GOOGLE_PREIS.tts + sttSek / 60 * GOOGLE_PREIS.stt + tr / 1e6 * GOOGLE_PREIS.tr;
+  return { ttsZeichen: Math.round(tts), sttMinuten: Math.round(sttSek / 6) / 10, uebersetzungZeichen: Math.round(tr), usd: Number(usd.toFixed(2)) };
+}
+
 /* Untertitel-Minuten je Monat. Anrufe selbst sind frei - Geld kosten
    nur Spracherkennung und Uebersetzung der Untertitel. Gezaehlt wird je
    Abo (alle Chats eines Abos teilen sich die Minuten) oder je Chat. */
@@ -1662,7 +1699,7 @@ app.post("/api/sprechen", async (req, res) => {
   }
   try {
     const { id, neu } = await stimme.sprechen(text, lang, req.body?.langsam === true);
-    if (neu) store.logUsage({ room: "__tts__", target: lang, chars: text.length, inTokens: 0, outTokens: 0 }).catch(() => {});
+    if (neu) zaehlen("tts_zeichen", text.length);
     res.json({ id });
   } catch (err) {
     console.error("Sprechen fehlgeschlagen:", err.message);

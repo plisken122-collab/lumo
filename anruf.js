@@ -22,6 +22,10 @@ export const anrufAn = Boolean(URL && KEY && SECRET);
 
 const BOT = "diralo-untertitel";
 
+/* Verbrauch melden (Kostenschaetzung in der Uebersicht). Setzt der Server. */
+let zaehler = () => {};
+export const setZaehler = (fn) => { zaehler = fn; };
+
 /* Schnelle Uebersetzung fuer Untertitel: Google Translate antwortet in
    rund 0,2 s - die KI-Uebersetzung braucht 1-2 s, zu lang fuer Live-
    Untertitel. Faellt Google aus (API aus, Fehler), gibt es null. */
@@ -48,6 +52,7 @@ async function googleUebersetzen(text, ziel, quelle) {
     if (r.status === 403) { googleAus = true; console.error("Google Translate ist aus - Untertitel nutzen die KI-Uebersetzung."); return null; }
     if (!r.ok) return null;
     const j = await r.json();
+    zaehler("uebersetzung_zeichen", text.length);
     return j.data?.translations?.[0]?.translatedText || null;
   } catch {
     return null;
@@ -277,12 +282,12 @@ function mitschreiben(ton, lang, konto, budget, leer, gebraucht, melden) {
         }
         strom?.write(puffer);
         gesendetSek += puffer.length / 32000;   // 16 kHz * 2 Byte
-        if (gesendetSek >= 1) { budget?.verbrauche(gesendetSek); gesendetSek = 0; }
+        if (gesendetSek >= 1) { budget?.verbrauche(gesendetSek); zaehler("stt_sekunden", gesendetSek); gesendetSek = 0; }
       }
     } catch (err) {
       if (!aus) console.error("Mitschrift:", err.message?.slice(0, 160));
     } finally {
-      if (gesendetSek > 0) budget?.verbrauche(gesendetSek);
+      if (gesendetSek > 0) { budget?.verbrauche(gesendetSek); zaehler("stt_sekunden", gesendetSek); }
       schliessen();
     }
   })();
