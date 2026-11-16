@@ -780,6 +780,24 @@ function zaehleQuelle(tag, stufe) {
   store.zaehle(`q:${tag}:${stufe}`).catch(() => {});
 }
 
+/* Kurze Adressen zum Abtippen (TikTok/Instagram-Bio ist nicht klickbar):
+   diralo.app/tt -> /?von=tiktok usw. So erscheint die Quelle im Admin. */
+const KURZ = { tt: "tiktok", tiktok: "tiktok", ig: "instagram", insta: "instagram", fb: "facebook", yt: "youtube" };
+app.get(/^\/(tt|tiktok|ig|insta|fb|yt)\/?$/i, (req, res) => {
+  res.redirect(302, "/?von=" + KURZ[req.params[0].toLowerCase()]);
+});
+
+/* Ohne Tag, aber von einer Social-App verlinkt? Dann die Quelle aus dem
+   Referer ableiten, damit auch abgetippte/geteilte Links zaehlen. */
+function quelleAusReferer(req) {
+  const r = String(req.headers.referer || "").toLowerCase();
+  if (r.includes("tiktok.com")) return "tiktok";
+  if (r.includes("instagram.com")) return "instagram";
+  if (r.includes("facebook.com") || r.includes("fb.com")) return "facebook";
+  if (r.includes("youtube.com")) return "youtube";
+  return "";
+}
+
 /* Die Startseite selbst zaehlen. Muss vor express.static stehen, sonst
    liefert der die Datei aus, bevor wir sie bemerken. */
 app.get("/", (req, res) => {
@@ -791,8 +809,9 @@ app.get("/", (req, res) => {
   }
   /* Ueber einen getaggten Link gekommen (?von=reddit)? Quelle merken und
      ihren Besuch getrennt zaehlen. */
-  if (req.query.von !== undefined && !istIntern(req)) {
-    const tag = quelleTag(req.query.von);
+  const vonRef = req.query.von === undefined && !istQuelle(req) ? quelleAusReferer(req) : "";
+  if ((req.query.von !== undefined || vonRef) && !istIntern(req)) {
+    const tag = quelleTag(req.query.von !== undefined ? req.query.von : vonRef);
     if (tag) {
       const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
       vonSetzen(res, tag, secure);
