@@ -30,8 +30,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --canvas:#E4E5E9; --surface:#fff; --ink:#20222B; --muted:#6C6F7E;
-    --line:#D2D4DB; --mine:#384C9E; --danger:#9B2C25;
+    --canvas:#F4F6FB; --surface:#fff; --ink:#1B2535; --muted:#8A93A6;
+    --line:#E7EBF2; --mine:#122036; --danger:#9B2C25; --gold:#E3B23C; --navy:#122036;
   }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; }
@@ -164,6 +164,14 @@
     font-family:inherit; cursor:pointer; text-decoration:underline;
     text-decoration-color:var(--line); text-underline-offset:3px;
   }
+  /* Chat-Kopfzeile wie in der App: dunkelblauer Balken, Einladen in Gold. */
+  #chat .bar { background:var(--navy); border-radius:14px; padding:8px 10px; }
+  #chat .bar .zurueck, #chat .bar .room { color:#fff; }
+  #chat .bar button.room { text-decoration-color:rgba(255,255,255,.35); font-size:13px; font-weight:700; }
+  #chat .bar .bell, #chat .bar .langwrap { background:transparent; border-color:rgba(227,178,60,.7); color:var(--gold); }
+  #chat .bar #inviteBtn { background:var(--gold); border-color:var(--gold); color:#122036; font-weight:800; }
+  #chat .bar .count { color:#fff; }
+  #send:not(:disabled) { background:var(--gold); color:#122036; font-weight:800; }
   .meine-chats { margin:14px 0 0; }
   .quotabar {
     background:#FBF3E4; border:1px solid #E4D5B0; border-radius:12px;
@@ -242,6 +250,14 @@
     padding:24px; text-align:center; pointer-events:none;
   }
   .leer.hide { display:none; }
+  /* Startseite: zwei Wege wie in der App */
+  .weg { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; margin-top:14px; }
+  .weg.weg-aktiv { border-color:var(--gold); box-shadow:0 0 0 2px rgba(227,178,60,.25); }
+  .weg-titel { margin:0; font-size:16.5px; font-weight:800; color:var(--ink); }
+  .weg-text { margin:4px 0 12px; font-size:13.5px; color:var(--muted); line-height:1.45; }
+  .weg-reihe { display:flex; gap:10px; }
+  .weg-reihe input { flex:1; min-width:0; margin:0; }
+  .weg-knopf { background:var(--gold); color:#122036; border:none; border-radius:12px; padding:0 18px; font-weight:800; font-size:15px; cursor:pointer; }
   /* Allein im Chat geschrieben, aber noch niemand eingeladen: Leiste ueber
      dem Eingabefeld. Die meisten Besucher schreiben ein paar Saetze und
      gehen - ohne je zu sehen, wie das Gegenueber die Uebersetzung liest. */
@@ -500,8 +516,8 @@
      verdrahteten (helle Blasen, Kaesten) werden gezielt ueberschrieben. */
   @media (prefers-color-scheme: dark) {
     :root {
-      --canvas:#14161B; --surface:#1E212A; --ink:#EAEBEF; --muted:#9A9EAC;
-      --line:#2E323D; --mine:#5A67CE; --danger:#E06A62;
+      --canvas:#0E1726; --surface:#1B2F4D; --ink:#EEF1F7; --muted:#9AA6BC;
+      --line:#26395A; --mine:#2D4D7C; --danger:#E06A62; --gold:#E3B23C; --navy:#122036;
     }
     .theirs .bubble { background:#262A34; }
     .theirs .zitat { background:rgba(255,255,255,.07); }
@@ -567,18 +583,30 @@
       <label for="lang" id="t-langLabel"></label>
       <select id="lang"></select>
 
-      <label for="room" id="t-roomLabel"></label>
-      <input id="room" autocapitalize="none" autocorrect="off">
-      <p class="sub" id="t-roomHint" style="font-size:12.5px;margin-top:6px"></p>
-      <button id="newChat" class="secondary" type="button"></button>
-      <p class="invited hide" id="invitedNote"></p>
+      <!-- Zwei klar getrennte Wege wie in der App: Wer eine Einladung
+           bekommen hat, soll nicht aus Versehen einen neuen, leeren Chat
+           starten - und umgekehrt. -->
+      <div class="weg" id="wegEinladung">
+        <p class="weg-titel" id="t-einlTitel"></p>
+        <p class="weg-text" id="t-einlText"></p>
+        <p class="invited hide" id="invitedNote"></p>
+        <div class="weg-reihe">
+          <input id="room" autocapitalize="none" autocorrect="off" aria-labelledby="t-einlTitel">
+          <button id="joinBtn" class="weg-knopf" type="button"></button>
+        </div>
+      </div>
+      <div class="weg">
+        <p class="weg-titel" id="t-neuTitel"></p>
+        <p class="weg-text" id="t-neuText"></p>
+        <button id="newChat" class="primary" type="button" style="margin-top:0"></button>
+      </div>
 
       <!-- Die Chats, in denen man schon war. Ohne sie muesste man sich
            jeden Code merken - und Einladungscodes sind Zufallsfolgen. -->
       <div id="meineChats" class="meine-chats hide"></div>
       <p class="note" id="t-privacy"></p>
 
-      <button class="primary" id="enter"></button>
+      <button class="primary hide" id="enter" type="button"></button>
       <a id="playLink" class="playlink hide" href="https://play.google.com/store/apps/details?id=app.diralo.twa" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 2.5v19l10-9.5L4 2.5zm11.4 10.8 2.6 2.5-11 6.2 8.4-8.7zm0-2.6L7 2l11 6.2-2.6 2.5zM19.3 9l2.7 1.5c.8.5.8 1.6 0 2.1L19.3 15l-2.9-3 2.9-3z"/></svg>
         <span>Google Play</span>
@@ -782,11 +810,10 @@ if (eingeladen) {
   $("room").value = eingeladen;
   $("invitedNote").classList.remove("hide");
   melde("ueber_link");
-} else if (!chatsLaden().length && !$("room").value) {
-  /* Frischer Besucher ohne Link und ohne gemerkte Chats: schon einen Code
-     ins Feld, damit niemand am leeren Feld haengt und "Chat betreten"
-     sofort in einen eigenen Raum fuehrt, den man dann teilen kann. */
-  $("room").value = neuerCode();
+} else {
+  /* Ohne Einladungslink bleibt das Code-Feld leer: Neue Besucher nehmen
+     "Neuen Chat starten", wer einen Code hat, tippt ihn ein. */
+  $("room").value = "";
 }
 
 /* "Neuen Chat starten" nur zeigen, wenn das Feld leer ist. Steht schon ein
@@ -794,10 +821,15 @@ if (eingeladen) {
    nur verwirrend - dann fuehrt "Chat betreten" ohnehin hinein. Bei leerem
    Feld (z.B. Rueckkehrer mit Chatliste) ist er der Weg zum neuen Chat. */
 function neuChatKnopf() {
-  $("newChat").classList.toggle("hide", Boolean($("room").value.trim()));
+  /* Beide Wege bleiben immer sichtbar; mit Einladung wird der erste betont. */
+  $("wegEinladung").classList.toggle("weg-aktiv", Boolean(eingeladen));
 }
 neuChatKnopf();
-$("room").addEventListener("input", neuChatKnopf);
+$("joinBtn").onclick = () => {
+  if (!$("room").value.trim()) { $("room").focus(); return; }
+  $("enter").click();
+};
+$("room").addEventListener("keydown", (e) => { if (e.key === "Enter") $("joinBtn").click(); });
 
 /* Die gemerkten Chats auf der Startseite anbieten. Ein Tippen genuegt. */
 function zeigeStartListe() {
@@ -867,7 +899,7 @@ function applyLanguage(code) {
   document.documentElement.lang = code;
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
-  for (const key of ["tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "roomLabel", "roomHint", "privacy",
+  for (const key of ["tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText", "leerFalsch"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
@@ -882,6 +914,9 @@ function applyLanguage(code) {
   $("ortBtn").title = L.t("ortBtn");
   $("zurueckBtn").setAttribute("aria-label", L.t("back"));
   $("newChat").textContent = L.t("newChat");
+  $("joinBtn").textContent = L.t("beitreten");
+  for (const k of ["einlTitel", "einlText", "neuTitel", "neuText"]) $("t-" + k).textContent = L.t(k);
+  $("room").placeholder = L.t("roomLabel");
   $("inviteBtn").textContent = L.t("invite");
   $("leerEinladen").textContent = L.t("invite");
   $("leerZurueck").textContent = L.t("leerZurueck");

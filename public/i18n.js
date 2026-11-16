@@ -11,6 +11,8 @@
 window.LUMO_T = (function () {
   const S = {
     de: {
+      einlTitel: "Du hast eine Einladung bekommen?", einlText: "Gib den Chat-Code aus dem Link ein, dann landest du im selben Chat wie deine Person.",
+      neuTitel: "Du möchtest jemanden einladen?", neuText: "Das startet einen neuen, leeren Chat. Danach schickst du deiner Person den Link.", beitreten: "Beitreten",
       alleinText: "👋 Noch liest niemand mit. Schick den Link an die Person, mit der du schreiben willst – sie liest alles in ihrer Sprache.", alleinWa: "WhatsApp", alleinLink: "Link teilen",
       demoCap: "Einer schreibt — der andere liest in seiner eigenen Sprache",
       reply: "Antworten", replyGone: "Nachricht nicht mehr da",
@@ -96,6 +98,8 @@ window.LUMO_T = (function () {
       gateWrong: "Das Wort stimmt nicht.", gateOffline: "Keine Verbindung. Nochmal versuchen.",
     },
     en: {
+      einlTitel: "Did you get an invitation?", einlText: "Enter the chat code from the link and you'll join the same chat as your person.",
+      neuTitel: "Want to invite someone?", neuText: "This starts a new, empty chat. Then you send your person the link.", beitreten: "Join",
       alleinText: "👋 Nobody else is here yet. Send the link to the person you want to talk to – they'll read everything in their own language.", alleinWa: "WhatsApp", alleinLink: "Share link",
       demoCap: "One writes — the other reads in their own language",
       reply: "Reply", replyGone: "Message no longer available",
@@ -181,6 +185,8 @@ window.LUMO_T = (function () {
       gateWrong: "That word isn't right.", gateOffline: "No connection. Try again.",
     },
     "pt-PT": {
+      einlTitel: "Recebeste um convite?", einlText: "Escreve o código do chat que vem no link e entras no mesmo chat que a outra pessoa.",
+      neuTitel: "Queres convidar alguém?", neuText: "Isto cria um chat novo e vazio. Depois envias o link à outra pessoa.", beitreten: "Entrar",
       alleinText: "👋 Ainda ninguém está a ler. Envia a ligação à pessoa com quem queres falar – ela lê tudo na língua dela.", alleinWa: "WhatsApp", alleinLink: "Partilhar ligação",
       demoCap: "Um escreve — o outro lê na sua própria língua",
       reply: "Responder", replyGone: "Mensagem já não existe",
@@ -266,6 +272,8 @@ window.LUMO_T = (function () {
       gateWrong: "A palavra não está certa.", gateOffline: "Sem ligação. Tenta outra vez.",
     },
     "pt-BR": {
+      einlTitel: "Recebeu um convite?", einlText: "Digite o código do chat que veio no link e você entra no mesmo chat que a outra pessoa.",
+      neuTitel: "Quer convidar alguém?", neuText: "Isso cria um chat novo e vazio. Depois você manda o link para a outra pessoa.", beitreten: "Entrar",
       alleinText: "👋 Ainda ninguém está lendo. Mande o link para a pessoa com quem você quer conversar – ela lê tudo no idioma dela.", alleinWa: "WhatsApp", alleinLink: "Compartilhar link",
       demoCap: "Um escreve — o outro lê no seu próprio idioma",
       reply: "Responder", replyGone: "Mensagem não disponível",
@@ -351,6 +359,8 @@ window.LUMO_T = (function () {
       gateWrong: "A palavra não confere.", gateOffline: "Sem conexão. Tente de novo.",
     },
     es: {
+      einlTitel: "¿Has recibido una invitación?", einlText: "Escribe el código del chat que viene en el enlace y entrarás en el mismo chat que la otra persona.",
+      neuTitel: "¿Quieres invitar a alguien?", neuText: "Esto crea un chat nuevo y vacío. Después envías el enlace a tu persona.", beitreten: "Unirse",
       alleinText: "👋 Todavía no hay nadie más. Envía el enlace a la persona con la que quieres hablar: lo leerá todo en su idioma.", alleinWa: "WhatsApp", alleinLink: "Compartir enlace",
       tagline: "Cada uno escribe en su idioma. Cada uno lee en el suyo.",
       freeStart: "Empieza gratis", back: "Atrás",
@@ -423,6 +433,8 @@ window.LUMO_T = (function () {
       gateWrong: "La palabra no es correcta.", gateOffline: "Sin conexión. Inténtalo otra vez.",
     },
     fr: {
+      einlTitel: "Tu as reçu une invitation ?", einlText: "Saisis le code du chat qui figure dans le lien et tu rejoins le même chat que l'autre personne.",
+      neuTitel: "Tu veux inviter quelqu'un ?", neuText: "Cela crée un nouveau chat vide. Ensuite tu envoies le lien à ta personne.", beitreten: "Rejoindre",
       alleinText: "👋 Personne d'autre n'est encore là. Envoie le lien à la personne avec qui tu veux parler – elle lira tout dans sa langue.", alleinWa: "WhatsApp", alleinLink: "Partager le lien",
       tagline: "Chacun écrit dans sa langue. Chacun lit dans la sienne.",
       freeStart: "Commence gratuitement", back: "Retour",
@@ -495,6 +507,8 @@ window.LUMO_T = (function () {
       gateWrong: "Ce mot n'est pas le bon.", gateOffline: "Pas de connexion. Réessaie.",
     },
     it: {
+      einlTitel: "Hai ricevuto un invito?", einlText: "Inserisci il codice chat che trovi nel link ed entri nella stessa chat dell'altra persona.",
+      neuTitel: "Vuoi invitare qualcuno?", neuText: "Così si crea una chat nuova e vuota. Poi mandi il link alla tua persona.", beitreten: "Entra",
       alleinText: "👋 Non c'è ancora nessun altro. Invia il link alla persona con cui vuoi parlare: leggerà tutto nella sua lingua.", alleinWa: "WhatsApp", alleinLink: "Condividi link",
       tagline: "Ognuno scrive nella sua lingua. Ognuno legge nella propria.",
       freeStart: "Inizia gratis", back: "Indietro",
