@@ -136,12 +136,14 @@ function ImAnruf({ lang, video, t, onEnde }) {
   const [fertig, setFertig] = useState([]);     // [{ id, text, original }]
   const [live, setLive] = useState({});         // von -> { text, uebersetzt }
   const [eigene, setEigene] = useState("");
+  const [minutenLeer, setMinutenLeer] = useState(false);
   const letzterFertig = useRef({});
   const zaehler = useRef(0);
   const uhren = useRef([]);
   useDataChannel("untertitel", (msg) => {
     let d;
     try { d = JSON.parse(utf8(msg.payload)); } catch { return; }
+    if (d?.typ === "kontingent") { setMinutenLeer(true); return; }
     if (!d?.text) return;
     if (d.von === localParticipant?.identity) { setEigene(d.text); return; }
     const basis = String(lang).split("-")[0];
@@ -207,6 +209,11 @@ function ImAnruf({ lang, video, t, onEnde }) {
       </View>
 
       <View style={st.untertitelBox} pointerEvents="none">
+        {minutenLeer ? (
+          <View style={[st.untertitel, { backgroundColor: "rgba(227,178,60,0.92)" }]}>
+            <Text style={{ color: "#14213D", fontSize: 15, fontWeight: "700" }}>{t("anrufMinutenLeer")}</Text>
+          </View>
+        ) : null}
         {fertig.map((z) => (
           <View key={z.id} style={st.untertitel}>
             <Text style={st.utText}>{z.text}</Text>

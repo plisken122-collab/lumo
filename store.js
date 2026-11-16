@@ -36,6 +36,7 @@ const mem = {
   aboRaeume: new Map(), // room -> abo_id
   reactions: new Map(), // message_id -> { device: emoji }
   readState: new Map(), // "room|device" -> bis (bis wann gelesen)
+  anrufSek: new Map(),  // "topf|monat" -> Sekunden
 };
 
 /* ---------------------------- Schema ---------------------------- */
@@ -161,6 +162,15 @@ export async function init() {
       out_tokens INTEGER NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS usage_at ON usage_log (at);
+
+    /* Untertitel-Sekunden im Anruf je Topf (Abo oder einzelner Chat) und
+       Monat - fuer das Minuten-Kontingent der Live-Untertitel. */
+    CREATE TABLE IF NOT EXISTS anruf_sekunden (
+      topf     TEXT NOT NULL,
+      monat    INTEGER NOT NULL,
+      sekunden INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (topf, monat)
+    );
 
     /* Bezahlte Mitgliedschaften. Sie haengen am Chat, nicht am Geraet:
        Wer einlaedt, bezahlt, und alle im Chat schreiben mit. Das passt
@@ -1107,4 +1117,26 @@ export async function pushZaehlung() {
   }
   const { rows } = await pool.query(`SELECT COUNT(DISTINCT device)::int AS n FROM subscriptions`);
   return rows[0]?.n || 0;
+}
+
+/* ----------------------- Untertitel-Minuten ----------------------- */
+export async function anrufSekunden(topf, monat) {
+  if (!usingDatabase) return mem.anrufSek.get(`${topf}|${monat}`) || 0;
+  const { rows } = await pool.query(
+    `SELECT sekunden FROM anruf_sekunden WHERE topf = $1 AND monat = $2`, [topf, monat]);
+  return rows[0]?.sekunden || 0;
+}
+
+export async function anrufSekundenDazu(topf, monat, sek) {
+  const n = Math.max(0, Math.round(sek));
+  if (!n) return;
+  if (!usingDatabase) {
+    const k = `${topf}|${monat}`;
+    mem.anrufSek.set(k, (mem.anrufSek.get(k) || 0) + n);
+    return;
+  }
+  await pool.query(
+    `INSERT INTO anruf_sekunden (topf, monat, sekunden) VALUES ($1, $2, $3)
+     ON CONFLICT (topf, monat) DO UPDATE SET sekunden = anruf_sekunden.sekunden + EXCLUDED.sekunden`,
+    [topf, monat, n]);
 }

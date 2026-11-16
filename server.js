@@ -1498,6 +1498,56 @@ async function anrufKlingeln(room, wer) {
   }
 }
 
+/* Untertitel-Minuten je Monat. Anrufe selbst sind frei - Geld kosten
+   nur Spracherkennung und Uebersetzung der Untertitel. Gezaehlt wird je
+   Abo (alle Chats eines Abos teilen sich die Minuten) oder je Chat. */
+const UNTERTITEL_MIN = {
+  frei: Number(process.env.UNTERTITEL_MIN_FREI || 10),
+  plus: Number(process.env.UNTERTITEL_MIN_PLUS || 60),
+  familie: Number(process.env.UNTERTITEL_MIN_FAMILIE || 200),
+};
+
+async function untertitelStand(room) {
+  if (OHNE_GRENZE.has(String(room).toLowerCase())) return null;   // ohne Grenze
+  const k = await kontingent(room);
+  const topf = k.bezahlt ? "abo:" + k.raeume.slice().sort().join(",") : "raum:" + room;
+  const monat = monatsKennung();
+  const minuten = UNTERTITEL_MIN[k.plan] ?? UNTERTITEL_MIN.frei;
+  return { topf, monat, plan: k.plan, grenzeSek: minuten * 60, benutzt: await store.anrufSekunden(topf, monat) };
+}
+
+async function untertitelBudget(room) {
+  const st = await untertitelStand(room);
+  if (!st) return null;
+  let offen = 0;
+  const sichern = () => {
+    if (offen <= 0) return;
+    const n = offen;
+    offen = 0;
+    st.benutzt += n;
+    store.anrufSekundenDazu(st.topf, st.monat, n).catch((e) => console.error("Untertitel-Minuten:", e.message));
+  };
+  const uhr = setInterval(sichern, 15 * 1000);
+  return {
+    darf: () => st.benutzt + offen < st.grenzeSek,
+    verbrauche: (sek) => { offen += sek; },
+    ende: () => { clearInterval(uhr); sichern(); },
+  };
+}
+
+/* Wie viele Untertitel-Minuten sind noch da? Fuer die Anzeige in der App. */
+app.get("/api/anruf/minuten", async (req, res) => {
+  const room = raumCode(req.query.room);
+  if (!room) return res.status(400).json({ error: "room angeben" });
+  try {
+    const st = await untertitelStand(room);
+    if (!st) return res.json({ unbegrenzt: true });
+    res.json({ plan: st.plan, minuten: st.grenzeSek / 60, rest: Math.max(0, Math.floor((st.grenzeSek - st.benutzt) / 60)) });
+  } catch (err) {
+    res.status(500).json({ error: err.message.slice(0, 200) });
+  }
+});
+
 /* Zugang zum Anruf. Startet nebenbei den Untertitel-Helfer. */
 app.post("/api/anruf", async (req, res) => {
   if (!anruf.anrufAn) return res.status(503).json({ error: "Anrufe sind noch nicht eingerichtet" });
@@ -1513,7 +1563,7 @@ app.post("/api/anruf", async (req, res) => {
       const { result, usage } = await translate(text, ziel);
       store.logUsage({ room, target: ziel, chars: text.length, inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
       return result.translation || null;
-    }).catch(() => {});
+    }, await untertitelBudget(room).catch(() => null)).catch(() => {});
     res.json(zugang);
   } catch (err) {
     console.error("Anruf-Zugang:", err.message);

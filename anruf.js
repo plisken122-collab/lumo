@@ -83,12 +83,15 @@ export async function tokenFuer({ room, device, name, lang }) {
 const bots = new Map();   // room -> { raum, hoerer: Map(identity -> stop) }
 
 /* Startet den Bot fuer einen Raum, falls er nicht schon drin ist.
-   uebersetze(text, ziel) liefert die Uebersetzung (oder null). */
-export async function untertitelStarten(room, uebersetze) {
+   uebersetze(text, ziel) liefert die Uebersetzung (oder null).
+   budget (optional): { darf(), verbrauche(sek), ende() } - das Minuten-
+   Kontingent der Untertitel. Ist es leer, laeuft der Anruf ohne
+   Untertitel weiter, und alle bekommen einmal den Hinweis. */
+export async function untertitelStarten(room, uebersetze, budget = null) {
   if (!anrufAn || bots.has(room)) return;
   const konto = dienstkonto();
   if (!konto) return;
-  const eintrag = { raum: null, hoerer: new Map() };
+  const eintrag = { raum: null, hoerer: new Map(), budget };
   bots.set(room, eintrag);
   try {
     const { Room, RoomEvent, TrackKind, AudioStream } = await import("@livekit/rtc-node");
@@ -111,9 +114,9 @@ export async function untertitelStarten(room, uebersetze) {
       if (track.kind !== TrackKind.KIND_AUDIO || person.identity === BOT) return;
       eintrag.hoerer.get(person.identity)?.();
       const lang = spracheVon(person);
-      /* Waehrend des Sprechens: hoechstens alle 1,2 s und erst ab drei
+      /* Waehrend des Sprechens: hoechstens alle 2,5 s und erst ab fuenf
          neuen Woertern vorlaeufig uebersetzen (nur die schnelle Google-
-         Uebersetzung). Fertige Saetze: schnell, sonst KI als Rueckfall. */
+         Uebersetzung) - spart Zeichen. Fertige Saetze: schnell, sonst KI. */
       let zuletztZwischen = 0;
       let woerterZwischen = 0;
       const uebersetzeAlle = async (text, schnellNur) => {
@@ -126,11 +129,16 @@ export async function untertitelStarten(room, uebersetze) {
         }));
         return tr;
       };
-      const stop = mitschreiben(new AudioStream(track, 16000, 1), lang, konto, async (text, fertig) => {
+      const leer = () => {
+        if (eintrag.leerGemeldet) return;
+        eintrag.leerGemeldet = true;
+        senden({ typ: "kontingent" });
+      };
+      const stop = mitschreiben(new AudioStream(track, 16000, 1), lang, konto, budget, leer, async (text, fertig) => {
         if (!fertig) {
           senden({ von: person.identity, lang, text, fertig: false });
           const woerter = text.split(/\s+/).length;
-          if (Date.now() - zuletztZwischen > 1200 && woerter - woerterZwischen >= 3) {
+          if (Date.now() - zuletztZwischen > 2500 && woerter - woerterZwischen >= 5) {
             zuletztZwischen = Date.now();
             woerterZwischen = woerter;
             const tr = await uebersetzeAlle(text, true);
@@ -168,17 +176,28 @@ function beenden(room) {
   if (!e) return;
   bots.delete(room);
   for (const stop of e.hoerer.values()) { try { stop(); } catch {} }
+  try { e.budget?.ende?.(); } catch {}
   e.raum?.disconnect().catch(() => {});
 }
 
-/* Liest Tonbloecke (16 kHz, mono) und gibt sie an Google. Ein Strom
-   darf hoechstens etwa fuenf Minuten laufen - darum alle 4 Minuten
-   einen neuen anfangen. Gibt eine Stopp-Funktion zurueck. */
-function mitschreiben(ton, lang, konto, melden) {
+/* Liest Tonbloecke (16 kHz, mono) und gibt sie an Google - aber nur,
+   solange jemand spricht. Stille kostet bei Google genauso wie Sprache;
+   in einem Gespraech redet jeder nur etwa die Haelfte der Zeit.
+
+   Sprache erkennen wir an der Lautstaerke ueber dem Grundrauschen. Ein
+   kurzer Vorlauf (0,3 s) wird mitgeschickt, damit der Wortanfang nicht
+   fehlt; nach 1,2 s Stille endet der Strom - Google liefert dann sofort
+   den fertigen Satz, und die Pause kostet nichts. Gibt eine Stopp-
+   Funktion zurueck. */
+function mitschreiben(ton, lang, konto, budget, leer, melden) {
   let aus = false;
   let strom = null;
   let seit = 0;
   let klient = null;
+  let rauschen = 300;        // geschaetztes Grundrauschen (RMS)
+  let zuletztSprache = 0;
+  let gesendetSek = 0;       // seit der letzten Meldung ans Budget
+  const vorlauf = [];        // die letzten ~0,3 s
 
   const neuerStrom = async () => {
     if (!klient) {
@@ -208,30 +227,55 @@ function mitschreiben(ton, lang, konto, melden) {
         if (text) melden(text, Boolean(r.isFinal));
       })
       .on("error", (err) => {
-        if (!aus) console.error("Spracherkennung:", err.message?.slice(0, 160));
+        if (!aus && !/Audio Timeout|OUT_OF_RANGE/i.test(err.message || "")) {
+          console.error("Spracherkennung:", err.message?.slice(0, 160));
+        }
         strom = null;
       });
   };
+  const schliessen = () => { try { strom?.end(); } catch {} strom = null; };
 
   (async () => {
     try {
-      await neuerStrom();
       for await (const block of ton) {
         if (aus) break;
-        if (!strom || Date.now() - seit > 4 * 60 * 1000) await neuerStrom();
         const d = block.data;
-        strom.write(Buffer.from(d.buffer, d.byteOffset, d.byteLength));
+        let summe = 0;
+        for (let i = 0; i < d.length; i++) summe += d[i] * d[i];
+        const rms = Math.sqrt(summe / Math.max(1, d.length));
+        const laut = rms > Math.max(450, rauschen * 3);
+        if (!laut) rauschen = rauschen * 0.995 + rms * 0.005;
+        const jetzt = Date.now();
+        if (laut) zuletztSprache = jetzt;
+        const spricht = jetzt - zuletztSprache < 1200;
+        const puffer = Buffer.from(d.buffer, d.byteOffset, d.byteLength);
+
+        if (!spricht) {
+          if (strom) schliessen();
+          vorlauf.push(puffer);
+          if (vorlauf.length > 30) vorlauf.shift();
+          continue;
+        }
+        if (budget && !budget.darf()) { if (strom) schliessen(); leer(); continue; }
+        if (!strom || jetzt - seit > 4 * 60 * 1000) {
+          await neuerStrom();
+          for (const v of vorlauf.splice(0)) { strom?.write(v); gesendetSek += v.length / 32000; }
+        }
+        strom?.write(puffer);
+        gesendetSek += puffer.length / 32000;   // 16 kHz * 2 Byte
+        if (gesendetSek >= 1) { budget?.verbrauche(gesendetSek); gesendetSek = 0; }
       }
     } catch (err) {
       if (!aus) console.error("Mitschrift:", err.message?.slice(0, 160));
     } finally {
-      try { strom?.end(); } catch {}
+      if (gesendetSek > 0) budget?.verbrauche(gesendetSek);
+      schliessen();
     }
   })();
 
   return () => {
     aus = true;
-    try { strom?.end(); } catch {}
+    schliessen();
     try { ton.cancel?.(); } catch {}
   };
 }

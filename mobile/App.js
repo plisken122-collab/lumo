@@ -68,6 +68,8 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    anrufMinutenLeer: "Die Live-Untertitel-Minuten für diesen Monat sind aufgebraucht. Der Anruf läuft ohne Untertitel weiter – mit Diralo Plus gibt es mehr.",
+    anrufMinutenRest: "Live-Untertitel: noch {n} Min. diesen Monat.",
     anrufen: "Anrufen",
     anrufSprache: "📞 Sprachanruf",
     anrufVideo: "🎥 Videoanruf",
@@ -196,6 +198,8 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    anrufMinutenLeer: "Os minutos de legendas ao vivo deste mês esgotaram-se. A chamada continua sem legendas – com o Diralo Plus tem mais.",
+    anrufMinutenRest: "Legendas ao vivo: ainda {n} min este mês.",
     anrufen: "Ligar",
     anrufSprache: "📞 Chamada de voz",
     anrufVideo: "🎥 Videochamada",
@@ -324,6 +328,8 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    anrufMinutenLeer: "This month's live subtitle minutes are used up. The call continues without subtitles – Diralo Plus gives you more.",
+    anrufMinutenRest: "Live subtitles: {n} min left this month.",
     anrufen: "Call",
     anrufSprache: "📞 Voice call",
     anrufVideo: "🎥 Video call",
@@ -452,6 +458,8 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    anrufMinutenLeer: "Se han agotado los minutos de subtítulos en directo de este mes. La llamada sigue sin subtítulos; con Diralo Plus tienes más.",
+    anrufMinutenRest: "Subtítulos en directo: quedan {n} min este mes.",
     anrufen: "Llamar",
     anrufSprache: "📞 Llamada de voz",
     anrufVideo: "🎥 Videollamada",
@@ -580,6 +588,8 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    anrufMinutenLeer: "Les minutes de sous-titres en direct de ce mois sont épuisées. L'appel continue sans sous-titres – Diralo Plus t'en donne plus.",
+    anrufMinutenRest: "Sous-titres en direct : encore {n} min ce mois-ci.",
     anrufen: "Appeler",
     anrufSprache: "📞 Appel vocal",
     anrufVideo: "🎥 Appel vidéo",
@@ -708,6 +718,8 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    anrufMinutenLeer: "I minuti di sottotitoli dal vivo di questo mese sono esauriti. La chiamata continua senza sottotitoli: con Diralo Plus ne hai di più.",
+    anrufMinutenRest: "Sottotitoli dal vivo: ancora {n} min questo mese.",
     anrufen: "Chiama",
     anrufSprache: "📞 Chiamata vocale",
     anrufVideo: "🎥 Videochiamata",
@@ -1887,7 +1899,17 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
     setAnrufVideo(video);
     setAnrufOffen(true);
   };
-  const anrufWaehlen = () => Alert.alert(t("anrufen"), t("anrufUntertitelHinweis"), [
+  const anrufWaehlen = async () => {
+    /* Restliche Untertitel-Minuten mit anzeigen - Anrufe selbst sind frei. */
+    let rest = "";
+    try {
+      const r = await fetch(`${SERVER_URL}/api/anruf/minuten?room=${encodeURIComponent(raum)}`);
+      const j = await r.json();
+      if (!j.unbegrenzt && typeof j.rest === "number") rest = "\n\n" + t("anrufMinutenRest").replace("{n}", String(j.rest));
+    } catch {}
+    anrufFrage(rest);
+  };
+  const anrufFrage = (rest) => Alert.alert(t("anrufen"), t("anrufUntertitelHinweis") + rest, [
     { text: t("anrufSprache"), onPress: () => anrufStarten(false) },
     { text: t("anrufVideo"), onPress: () => anrufStarten(true) },
     { text: t("abbrechen"), style: "cancel" },
