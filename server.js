@@ -783,8 +783,24 @@ function zaehleQuelle(tag, stufe) {
 /* Kurze Adressen zum Abtippen (TikTok/Instagram-Bio ist nicht klickbar):
    diralo.app/tt -> /?von=tiktok usw. So erscheint die Quelle im Admin. */
 const KURZ = { tt: "tiktok", tiktok: "tiktok", ig: "instagram", insta: "instagram", fb: "facebook", yt: "youtube" };
+/* Android-Handys gehen direkt in den Play Store - dort ist "Installieren"
+   ein Tipp. Gezaehlt wird trotzdem: Besuch + Stufe "store" fuer die Quelle.
+   Vorschau-Bots (Facebook, WhatsApp ...) zaehlen nicht. */
+const PLAY_LINK = "https://play.google.com/store/apps/details?id=app.diralo.twa";
+const VORSCHAU_BOT = /bot|crawler|spider|facebookexternalhit|facebot|whatsapp|telegram|slack|discord|preview/i;
 app.get(/^\/(tt|tiktok|ig|insta|fb|yt)\/?$/i, (req, res) => {
-  res.redirect(302, "/?von=" + KURZ[req.params[0].toLowerCase()]);
+  const tag = KURZ[req.params[0].toLowerCase()];
+  const ua = String(req.headers["user-agent"] || "");
+  if (/android/i.test(ua) && !VORSCHAU_BOT.test(ua) && req.query.web === undefined) {
+    if (!istIntern(req)) {
+      zaehle("besuch");
+      zaehleQuelle(tag, "besuch");
+      zaehleQuelle(tag, "store");
+    }
+    const ref = encodeURIComponent(`utm_source=${tag}&utm_medium=kurzlink`);
+    return res.redirect(302, `${PLAY_LINK}&referrer=${ref}`);
+  }
+  res.redirect(302, "/?von=" + tag);
 });
 
 /* Ohne Tag, aber von einer Social-App verlinkt? Dann die Quelle aus dem
