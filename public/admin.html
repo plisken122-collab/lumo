@@ -215,7 +215,7 @@ function zeichneQuellen(summe) {
   $("quellenCard").classList.remove("hide");
   $("quellen").innerHTML = tags.map((tag) => {
     const s = q[tag];
-    const stufen = [["Besuche", s.besuch], ["Demo", s.demo], ["Eingetreten", s.eingetreten], ["Geschrieben", s.nachricht]];
+    const stufen = [["Besuche", s.besuch], ["Play Store", s.store], ["Demo", s.demo],["Eingetreten", s.eingetreten], ["Geschrieben", s.nachricht]];
     return `<div class="reihe" style="align-items:baseline">` +
       `<div class="name" style="font-weight:500">${tag}</div>` +
       `<div style="flex:1">` +
