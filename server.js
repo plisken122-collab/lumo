@@ -70,7 +70,7 @@ const io = new Server(http);
 const kleinesJson = express.json({ limit: "64kb" });
 const rohesJson = express.raw({ type: "*/*", limit: "1mb" });
 app.use((req, res, next) => {
-  if (req.path === "/api/voice" || req.path === "/api/bild" || req.path === "/api/foto-text") return next();
+  if (req.path === "/api/voice" || req.path === "/api/bild" || req.path === "/api/foto-text" || req.path === "/api/datei") return next();
   if (req.path === "/api/stripe") return rohesJson(req, res, next);
   return kleinesJson(req, res, next);
 });
@@ -1252,6 +1252,11 @@ async function kontextVor(room, msg) {
 }
 
 /* Sorgt dafuer, dass eine Uebersetzung existiert. Gibt den Text zurueck. */
+/* Vorschau in der Mitteilung fuer Datei-Nachrichten (ohne Uebersetzung). */
+function dateiSymbol(d) {
+  return (String(d.mime || "").startsWith("video/") ? "🎬 " : "📎 ") + (d.name || "");
+}
+
 async function ensure(room, msgId, target) {
   const msg = await store.getMessage(msgId);
   if (!msg) return null;
@@ -1452,14 +1457,14 @@ async function pushToRoom(room, msg) {
       if (istExpo) {
         await expoPush(sub, {
           title: msg.name,
-          body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : "🎤")),
+          body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : (msg.datei ? dateiSymbol(msg.datei) : "🎤"))),
           room, id: msg.id,
         });
         continue;
       }
       const payload = JSON.stringify({
         title: msg.name,
-        body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : "")),
+        body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : (msg.datei ? dateiSymbol(msg.datei) : ""))),
         room,
         id: msg.id,
       });
@@ -2036,22 +2041,112 @@ app.post("/api/bild", express.json({ limit: "5mb" }), async (req, res) => {
   res.json({ ok: true, id: msg.id });
 });
 
+/* --------------------------- Dateien und Videos ---------------------------
+   PDF, Word, Videos usw. - werden NICHT uebersetzt, nur weitergereicht.
+   Der Koerper ist die Datei selbst (keine Base64-Huelle), Name und Art
+   stehen in der Adresse. Gespeichert wird wie ein Bild in "media"; die
+   Loeschfrist raeumt es mit der Nachricht weg.
+------------------------------------------------------------------------ */
+const DATEI_MAX_BYTES = Number(process.env.DATEI_MAX_BYTES || 25_000_000);
+const dateiRoh = express.raw({ type: () => true, limit: DATEI_MAX_BYTES + 1000 });
+
+app.post("/api/datei", (req, res, next) => {
+  dateiRoh(req, res, (err) => {
+    if (err) return res.status(err.status === 413 ? 413 : 400).json({ error: err.status === 413 ? "Datei zu gross" : "Datei unlesbar" });
+    next();
+  });
+}, async (req, res) => {
+  const q = req.query || {};
+  const bytes = Buffer.isBuffer(req.body) ? req.body : null;
+  if (!q.room || !q.device || !bytes || !bytes.length) {
+    return res.status(400).json({ error: "Angaben unvollstaendig" });
+  }
+  if (bytes.length > DATEI_MAX_BYTES) return res.status(413).json({ error: "Datei zu gross" });
+
+  /* Der Typ entscheidet nur ueber die Anzeige (Video oder Datei). Was
+     ausgeliefert wird, ist nie als Seite ausfuehrbar - siehe /medien. */
+  let mime = String(q.mime || "").split(";")[0].trim().toLowerCase();
+  if (!/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/.test(mime)) mime = "application/octet-stream";
+  const dateiName = String(q.dateiname || "Datei").replace(/[\\/\r\n\t"]/g, "_").trim().slice(0, 120) || "Datei";
+
+  const raum = String(q.room).trim().toLowerCase().slice(0, 60);
+  const geraet = String(q.device).slice(0, 60);
+  if (!take(`msg:${geraet}`, MSG_PER_MIN, 60 * 1000)) {
+    return res.status(429).json({ error: "Zu schnell" });
+  }
+  if (!take(`msgtag:${req.ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) {
+    return res.status(429).json({ error: "Zu schnell" });
+  }
+
+  const msg = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    room: raum,
+    device: geraet,
+    name: String(q.name || "Gast").slice(0, 40),
+    text: "",                 // nichts zu uebersetzen
+    lang: clean(q.lang),
+    detected: false,
+    tr: {},
+    at: Date.now(),
+    datei: { name: dateiName, mime, groesse: bytes.length },
+  };
+
+  try {
+    await store.addMessage(msg);
+    await store.addMedia(msg.id, { mime, bytes });
+  } catch (err) {
+    console.error("Datei nicht speicherbar:", err.message);
+    return res.status(500).json({ error: "Nicht speicherbar" });
+  }
+
+  io.to(raum).emit("message", msg);
+  pushToRoom(raum, msg).catch((e) => console.error("Push-Lauf:", e.message));
+  res.json({ ok: true, id: msg.id });
+});
+
 /* Ausliefern. Liegt hinter dem Zugangswort wie alles andere - die
-   Aufnahmen sind damit nicht oeffentlich abrufbar. */
+   Aufnahmen sind damit nicht oeffentlich abrufbar.
+   Videos brauchen "Range", sonst laesst sich im Player nicht spulen.
+   Alles ausser Bild, Ton und Video kommt als Download - eine hochgeladene
+   HTML-Datei darf nie als Seite von diralo.app laufen. */
+const MEDIEN_ANZEIGEN = /^(image\/(jpeg|png|webp)|audio\/|video\/)/;
 app.get("/medien/:id", async (req, res) => {
+  const id = String(req.params.id);
   let m = null;
   try {
-    m = await store.getMedia(String(req.params.id));
+    m = await store.getMedia(id);
   } catch (err) {
     console.error("Aufnahme nicht lesbar:", err.message);
     return res.sendStatus(500);
   }
   if (!m) return res.sendStatus(404);
-  res.setHeader("Content-Type", m.mime);
-  res.setHeader("Content-Length", m.bytes.length);
+  const bytes = Buffer.from(m.bytes);
+  const zeigen = MEDIEN_ANZEIGEN.test(m.mime);
+  res.setHeader("Content-Type", zeigen ? m.mime : "application/octet-stream");
   res.setHeader("Cache-Control", "private, max-age=86400");
   res.setHeader("X-Content-Type-Options", "nosniff");
-  res.end(m.bytes);
+  res.setHeader("Accept-Ranges", "bytes");
+  if (!zeigen || req.query.laden !== undefined) {
+    let dateiName = "datei";
+    try { dateiName = (await store.getMessage(id))?.datei?.name || dateiName; } catch {}
+    res.setHeader("Content-Disposition",
+      `attachment; filename="${dateiName.replace(/[^\x20-\x7e]/g, "_")}"; filename*=UTF-8''${encodeURIComponent(dateiName)}`);
+  }
+  const range = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || ""));
+  if (range && (range[1] || range[2])) {
+    let start = range[1] ? Number(range[1]) : Math.max(0, bytes.length - Number(range[2]));
+    let ende = range[1] && range[2] ? Math.min(Number(range[2]), bytes.length - 1) : bytes.length - 1;
+    if (start >= bytes.length || start > ende) {
+      res.setHeader("Content-Range", `bytes */${bytes.length}`);
+      return res.sendStatus(416);
+    }
+    res.status(206);
+    res.setHeader("Content-Range", `bytes ${start}-${ende}/${bytes.length}`);
+    res.setHeader("Content-Length", ende - start + 1);
+    return res.end(bytes.subarray(start, ende + 1));
+  }
+  res.setHeader("Content-Length", bytes.length);
+  res.end(bytes);
 });
 
 app.get("/api/stats", async (req, res) => {

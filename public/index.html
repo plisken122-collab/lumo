@@ -1137,7 +1137,7 @@ function start() {
   socket.on("deleted", ({ id }) => {
     const m = msgs.get(id);
     if (!m) return;
-    m.deleted = true; m.text = ""; m.tr = {}; m.audioSeconds = null; m.open = false; m.reaktionen = {};
+    m.deleted = true; m.text = ""; m.tr = {}; m.audioSeconds = null; m.datei = null; m.open = false; m.reaktionen = {};
     render(m);
   });
   socket.on("system", (ev) => {
@@ -1330,6 +1330,33 @@ function ortEinsetzen(m, bubble) {
   bubble.appendChild(karte);
 }
 
+/* Datei oder Video (aus der App, unuebersetzt): Video direkt abspielbar,
+   alles andere als Download-Link mit Name und Groesse. */
+function dateiEinsetzen(m, bubble) {
+  const url = "/medien/" + encodeURIComponent(m.id);
+  const d = m.datei || {};
+  if (String(d.mime || "").startsWith("video/")) {
+    const v = document.createElement("video");
+    v.controls = true;
+    v.preload = "metadata";
+    v.src = url;
+    v.style.maxWidth = "100%";
+    v.style.borderRadius = "10px";
+    v.style.display = "block";
+    v.onclick = (e) => e.stopPropagation();
+    bubble.appendChild(v);
+  }
+  const a = document.createElement("a");
+  a.href = url + "?laden";
+  a.download = d.name || "datei";
+  a.onclick = (e) => e.stopPropagation();
+  a.style.display = "block";
+  a.style.color = "inherit";
+  const mb = d.groesse >= 1e6 ? (d.groesse / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round((d.groesse || 0) / 1000)) + " KB";
+  a.textContent = "📄 " + (d.name || "Datei") + " · " + mb + " ⬇";
+  bubble.appendChild(a);
+}
+
 /* Das Bild in eine Blase setzen. Tippen zeigt es gross im eigenen
    Overlay - nicht in einem neuen Tab, sonst kaeme man in der
    installierten App nicht mehr zurueck. */
@@ -1509,6 +1536,7 @@ function render(m) {
     if (m.replyTo) zitatEinsetzen(m, bubble);
     if (m.bild) bildEinsetzen(m, bubble);
     if (m.ort) ortEinsetzen(m, bubble);
+    if (m.datei) dateiEinsetzen(m, bubble);
     /* Sprachnachricht: Abspieler zuerst, die Mitschrift darunter. Ohne
        Mitschrift bleibt es beim Abspieler mit einem Hinweis. */
     if (m.audioSeconds != null) {
@@ -1537,7 +1565,7 @@ function render(m) {
     span.textContent = text;
     if (m.audioSeconds != null) span.className = "no-text";
     /* Beim reinen Standort gibt es keinen Text - dann keine leere Zeile. */
-    if (text || !m.ort) bubble.appendChild(span);
+    if (text || (!m.ort && !m.datei)) bubble.appendChild(span);
     if (m.open) {
       const o = document.createElement("div");
       o.className = "orig";
@@ -1673,6 +1701,7 @@ function zitatText(m) {
   if (m.deleted) return T("deletedNote");
   if (m.ort) return "📍 " + T("ortShared");
   const inhalt = m.tr[me.lang] || m.text || "";
+  if (m.datei) return (String(m.datei.mime || "").startsWith("video/") ? "🎬 " : "📎 ") + (m.datei.name || "");
   if (m.bild) return "📷" + (inhalt ? " " + inhalt : "");
   if (m.audioSeconds != null) return "🎤" + (inhalt ? " " + inhalt : "");
   return inhalt;

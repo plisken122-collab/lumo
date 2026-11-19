@@ -256,7 +256,10 @@ export async function init() {
                                ["has_image", "BOOLEAN NOT NULL DEFAULT FALSE"],
                                ["ort_lat", "DOUBLE PRECISION"],
                                ["ort_lng", "DOUBLE PRECISION"],
-                               ["reply_to", "TEXT"]]) {
+                               ["reply_to", "TEXT"],
+                               /* Datei oder Video: {name, mime, groesse} als JSON.
+                                  Die Bytes liegen wie bei Bildern in "media". */
+                               ["datei", "TEXT"]]) {
     try {
       await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS ${spalte} ${art}`);
     } catch (err) {
@@ -298,11 +301,12 @@ export async function addMessage(msg) {
     return msg;
   }
   await pool.query(
-    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image, ort_lat, ort_lng, reply_to)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image, ort_lat, ort_lng, reply_to, datei)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (id) DO NOTHING`,
     [msg.id, msg.room, msg.device, msg.name, msg.text, msg.lang, msg.detected, msg.at,
      msg.audioSeconds ?? null, Boolean(msg.bild),
-     msg.ort ? msg.ort.lat : null, msg.ort ? msg.ort.lng : null, msg.replyTo || null]
+     msg.ort ? msg.ort.lat : null, msg.ort ? msg.ort.lng : null, msg.replyTo || null,
+     msg.datei ? JSON.stringify(msg.datei) : null]
   );
   return msg;
 }
@@ -333,13 +337,13 @@ export async function deleteForAll(id, device) {
   if (!usingDatabase) {
     const m = mem.messages.get(id);
     if (!m || m.device !== device) return false;
-    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false; m.ort = null;
+    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false; m.ort = null; m.datei = null;
     mem.media.delete(id);
     mem.reactions.delete(id);
     return true;
   }
   const { rowCount } = await pool.query(
-    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL, has_image = FALSE, ort_lat = NULL, ort_lng = NULL
+    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL, has_image = FALSE, ort_lat = NULL, ort_lng = NULL, datei = NULL
      WHERE id = $1 AND device = $2 AND deleted = FALSE`,
     [id, device]
   );
@@ -514,6 +518,11 @@ export async function setDetectedLang(id, lang) {
   await pool.query(`UPDATE messages SET lang = $2, detected = TRUE WHERE id = $1`, [id, lang]);
 }
 
+function dateiLesen(wert) {
+  if (!wert) return null;
+  try { return JSON.parse(wert); } catch { return null; }
+}
+
 function rowToMsg(r, translations) {
   const tr = {};
   for (const t of translations) tr[t.lang] = t.body;
@@ -525,6 +534,7 @@ function rowToMsg(r, translations) {
     ort: (r.ort_lat != null && r.ort_lng != null)
       ? { lat: Number(r.ort_lat), lng: Number(r.ort_lng) } : null,
     replyTo: r.reply_to || null,
+    datei: dateiLesen(r.datei),
     deleted: Boolean(r.deleted),
   };
 }

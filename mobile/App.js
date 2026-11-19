@@ -18,6 +18,7 @@ import {
   KeyboardAvoidingView, Keyboard, StyleSheet, StatusBar, ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as Location from "expo-location";
 import { useAudioPlayer, useAudioPlayerStatus, createAudioPlayer } from "expo-audio";
@@ -106,6 +107,14 @@ const TEXTE = {
     fuerMich: "🙈 Für mich löschen",
     geteiltTitel: "Geteilt – übersetzt",
     geteiltLaedt: "Wird übersetzt …",
+    dateiTitel: "Datei teilen",
+    video: "Video",
+    datei: "Datei",
+    dateiGross: "Die Datei ist zu groß (max. 25 MB).",
+    dateiFehler: "Datei konnte nicht gesendet werden.",
+    dateiOeffnen: "Tippen zum Öffnen",
+    abbrechen2: "Abbrechen",
+    dateiKeinChat: "Du hast noch keinen Chat. Starte zuerst einen Chat und lade deine Person ein.",
     linkTitel: "Link teilen",
     linkWelcher: "In welchen Chat?",
     linkKeinChat: "Du hast noch keinen Chat. Starte zuerst einen Chat und lade deine Person ein.",
@@ -241,6 +250,14 @@ const TEXTE = {
     fuerMich: "🙈 Apagar para mim",
     geteiltTitel: "Partilhado – traduzido",
     geteiltLaedt: "A traduzir …",
+    dateiTitel: "Partilhar ficheiro",
+    video: "Vídeo",
+    datei: "Ficheiro",
+    dateiGross: "O ficheiro é demasiado grande (máx. 25 MB).",
+    dateiFehler: "Não foi possível enviar o ficheiro.",
+    dateiOeffnen: "Toque para abrir",
+    abbrechen2: "Cancelar",
+    dateiKeinChat: "Ainda não tens nenhuma conversa. Começa uma conversa e convida a tua pessoa.",
     linkTitel: "Partilhar link",
     linkWelcher: "Em que conversa?",
     linkKeinChat: "Ainda não tens nenhuma conversa. Começa primeiro uma conversa e convida a tua pessoa.",
@@ -376,6 +393,14 @@ const TEXTE = {
     fuerMich: "🙈 Delete for me",
     geteiltTitel: "Shared – translated",
     geteiltLaedt: "Translating …",
+    dateiTitel: "Share file",
+    video: "Video",
+    datei: "File",
+    dateiGross: "The file is too large (max. 25 MB).",
+    dateiFehler: "The file could not be sent.",
+    dateiOeffnen: "Tap to open",
+    abbrechen2: "Cancel",
+    dateiKeinChat: "You don't have a chat yet. Start a chat first and invite your person.",
     linkTitel: "Share link",
     linkWelcher: "Which chat?",
     linkKeinChat: "You don't have a chat yet. Start a chat first and invite your person.",
@@ -511,6 +536,14 @@ const TEXTE = {
     fuerMich: "🙈 Borrar para mí",
     geteiltTitel: "Compartido – traducido",
     geteiltLaedt: "Traduciendo …",
+    dateiTitel: "Compartir archivo",
+    video: "Vídeo",
+    datei: "Archivo",
+    dateiGross: "El archivo es demasiado grande (máx. 25 MB).",
+    dateiFehler: "No se pudo enviar el archivo.",
+    dateiOeffnen: "Toca para abrir",
+    abbrechen2: "Cancelar",
+    dateiKeinChat: "Aún no tienes ningún chat. Empieza un chat e invita a tu persona.",
     linkTitel: "Compartir enlace",
     linkWelcher: "¿En qué chat?",
     linkKeinChat: "Todavía no tienes ningún chat. Primero inicia un chat e invita a tu persona.",
@@ -646,6 +679,14 @@ const TEXTE = {
     fuerMich: "🙈 Supprimer pour moi",
     geteiltTitel: "Partagé – traduit",
     geteiltLaedt: "Traduction …",
+    dateiTitel: "Partager le fichier",
+    video: "Vidéo",
+    datei: "Fichier",
+    dateiGross: "Le fichier est trop volumineux (max. 25 Mo).",
+    dateiFehler: "Le fichier n'a pas pu être envoyé.",
+    dateiOeffnen: "Touchez pour ouvrir",
+    abbrechen2: "Annuler",
+    dateiKeinChat: "Tu n'as pas encore de discussion. Commence une discussion et invite ta personne.",
     linkTitel: "Partager le lien",
     linkWelcher: "Dans quel chat ?",
     linkKeinChat: "Tu n'as pas encore de chat. Commence d'abord un chat et invite ta personne.",
@@ -781,6 +822,14 @@ const TEXTE = {
     fuerMich: "🙈 Elimina per me",
     geteiltTitel: "Condiviso – tradotto",
     geteiltLaedt: "Traduzione …",
+    dateiTitel: "Condividi file",
+    video: "Video",
+    datei: "File",
+    dateiGross: "Il file è troppo grande (max. 25 MB).",
+    dateiFehler: "Impossibile inviare il file.",
+    dateiOeffnen: "Tocca per aprire",
+    abbrechen2: "Annulla",
+    dateiKeinChat: "Non hai ancora una chat. Inizia una chat e invita la tua persona.",
     linkTitel: "Condividi link",
     linkWelcher: "In quale chat?",
     linkKeinChat: "Non hai ancora nessuna chat. Inizia prima una chat e invita la tua persona.",
@@ -1014,6 +1063,31 @@ const erkennerSprache = (code) => REGION[code] || (code.includes("-") ? code : `
 
 const medienUrl = (id) => `${SERVER_URL}/medien/${encodeURIComponent(id)}`;
 
+/* Datei oder Video unveraendert in einen Chat schicken - ohne Uebersetzung.
+   Der Koerper ist die Datei selbst, Name und Art stehen in der Adresse. */
+const DATEI_MAX_BYTES = 25_000_000;
+async function dateiHochladen(datei, { raum, device, name, lang }) {
+  const blob = await (await fetch(datei.uri)).blob();
+  if (blob.size > DATEI_MAX_BYTES) throw Object.assign(new Error("gross"), { gross: true });
+  const q = {
+    room: raum, device, name, lang,
+    mime: datei.mime || blob.type || "application/octet-stream",
+    dateiname: datei.name || "Datei",
+  };
+  const adresse = `${SERVER_URL}/api/datei?` + Object.entries(q)
+    .map(([k, v]) => `${k}=${encodeURIComponent(String(v ?? ""))}`).join("&");
+  const r = await fetch(adresse, {
+    method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: blob,
+  });
+  if (r.status === 413) throw Object.assign(new Error("gross"), { gross: true });
+  if (!r.ok) throw new Error("fehler");
+}
+
+function groesseText(b) {
+  if (!b) return "";
+  return b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1000))} KB`;
+}
+
 /* Chat-Code wie auf der Web-Startseite: 10 Zeichen ohne i l o 0 1
    (die verwechselt man beim Vorlesen). */
 function neuerCode() {
@@ -1064,10 +1138,22 @@ function Haupt() {
   const [geteilt, setGeteilt] = useState(null);
   const [linkTeilen, setLinkTeilen] = useState(null);
   const [entwurf, setEntwurf] = useState("");
+  const [dateiEntwurf, setDateiEntwurf] = useState(null);
   useEffect(() => {
     if (!hasShareIntent) return;
     const bild = (shareIntent.files || []).find((f) => String(f.mimeType || "").startsWith("image/"));
     const text = shareIntent.text || shareIntent.webUrl || "";
+    /* Videos, PDFs usw.: unveraendert in einen Chat schicken. */
+    const andere = (shareIntent.files || []).find((f) => !String(f.mimeType || "").startsWith("image/"));
+    if (!bild && andere) {
+      setLinkTeilen({
+        datei: { uri: andere.path, name: andere.fileName || "Datei", mime: andere.mimeType || "", groesse: andere.size || 0 },
+        nr: Date.now(),
+      });
+      setAnsicht("link");
+      resetShareIntent();
+      return;
+    }
     /* Links (YouTube, Instagram, TikTok ...) nicht uebersetzen, sondern
        unveraendert in einen Chat schicken. */
     if (!bild && LINK_RE.test(text)) {
@@ -1159,7 +1245,8 @@ function Haupt() {
             daten={linkTeilen} unten={insets.bottom}
             onBack={() => { setAnsicht(null); setLinkTeilen(null); }}
             onWahl={(code) => {
-              setEntwurf(linkTeilen.text);
+              if (linkTeilen.datei) setDateiEntwurf(linkTeilen.datei);
+              else setEntwurf(linkTeilen.text);
               setAnsicht(null); setLinkTeilen(null);
               if (name.trim()) betreten(code);
             }}
@@ -1175,6 +1262,7 @@ function Haupt() {
             raum={raum} name={name.trim()} lang={lang} device={device}
             unten={insets.bottom} oben={insets.top}
             entwurf={entwurf} onEntwurfWeg={() => setEntwurf("")}
+            dateiEntwurf={dateiEntwurf} onDateiWeg={() => setDateiEntwurf(null)}
             onBack={verlassen}
           />
         ) : (
@@ -1570,11 +1658,15 @@ function LinkTeilen({ daten, unten, onBack, onWahl }) {
     <View style={[s.full, { backgroundColor: FARBE.hell }]}>
       <View style={s.chatHead}>
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
-        <Text style={[s.chatTitel, { flex: 1 }]}>{t("linkTitel")}</Text>
+        <Text style={[s.chatTitel, { flex: 1 }]}>{t(daten.datei ? "dateiTitel" : "linkTitel")}</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 + unten }}>
         <View style={s.fotoKarte}>
-          <Text style={s.fotoKarteTxt} numberOfLines={4}>🔗 {daten.text}</Text>
+          <Text style={s.fotoKarteTxt} numberOfLines={4}>
+            {daten.datei
+              ? `${String(daten.datei.mime).startsWith("video/") ? "🎬" : "📎"} ${daten.datei.name}  ${groesseText(daten.datei.groesse)}`
+              : `🔗 ${daten.text}`}
+          </Text>
         </View>
         {chats === null ? <ActivityIndicator color={FARBE.navy} style={{ marginTop: 20 }} /> : null}
         {chats && chats.length === 0 ? <Text style={s.leer}>{t("linkKeinChat")}</Text> : null}
@@ -1911,7 +2003,7 @@ function AboFenster({ offen, raum, onZu, onHinweis }) {
 }
 
 /* ------------------------------- Chat ----------------------------- */
-function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwurfWeg, onBack }) {
+function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwurfWeg, dateiEntwurf = null, onDateiWeg, onBack }) {
   /* Offene Tastatur deckt die Navigationsleiste ab - dann braucht die
      Eingabezeile unten keinen eigenen Abstand mehr. */
   const tastatur = useTastaturOffen();
@@ -2287,14 +2379,65 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     }
   };
 
+  /* Video oder Datei: geht unuebersetzt raus. */
+  const dateiSenden = async (datei) => {
+    setLaedt(true);
+    try {
+      await dateiHochladen(datei, { raum, device, name, lang });
+    } catch (e) {
+      setHinweis(e?.gross ? t("dateiGross") : t("dateiFehler"));
+    } finally {
+      setLaedt(false);
+    }
+  };
+
+  /* Aus dem Teilen-Menue einer anderen App: gleich beim Oeffnen senden. */
+  useEffect(() => {
+    if (!dateiEntwurf) return;
+    const d = dateiEntwurf;
+    onDateiWeg?.();
+    dateiSenden(d);
+  }, []);
+
+  const videoWaehlen = async () => {
+    try {
+      const recht = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!recht.granted) { setHinweis(t("ohneFotos")); return; }
+      const wahl = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"] });
+      if (wahl.canceled || !wahl.assets?.length) return;
+      const a = wahl.assets[0];
+      if (a.fileSize && a.fileSize > DATEI_MAX_BYTES) { setHinweis(t("dateiGross")); return; }
+      await dateiSenden({ uri: a.uri, name: a.fileName || "video.mp4", mime: a.mimeType || "video/mp4" });
+    } catch {
+      setHinweis(t("dateiFehler"));
+    }
+  };
+
+  const dateiWaehlen = async () => {
+    try {
+      const wahl = await DocumentPicker.getDocumentAsync({ type: "*/*", copyToCacheDirectory: true, multiple: false });
+      if (wahl.canceled || !wahl.assets?.length) return;
+      const a = wahl.assets[0];
+      if (a.size && a.size > DATEI_MAX_BYTES) { setHinweis(t("dateiGross")); return; }
+      await dateiSenden({ uri: a.uri, name: a.name || "Datei", mime: a.mimeType || "" });
+    } catch {
+      setHinweis(t("dateiFehler"));
+    }
+  };
+
+  /* Eigenes Auswahlfenster: Androids Dialog kann nur drei Knoepfe. */
+  const [menueAuf, setMenueAuf] = useState(false);
   const anhangMenue = () => {
     Keyboard.dismiss();
-    Alert.alert(t("senden"), null, [
-      { text: t("galerie"), onPress: () => fotoSenden("galerie") },
-      { text: t("kamera"), onPress: () => fotoSenden("kamera") },
-      { text: t("standort"), onPress: standortSenden },
-    ], { cancelable: true });
+    setMenueAuf(true);
   };
+  const anhangPunkte = [
+    ["🖼️", t("galerie"), () => fotoSenden("galerie")],
+    ["📷", t("kamera"), () => fotoSenden("kamera")],
+    ["🎬", t("video"), videoWaehlen],
+    ["📎", t("datei"), dateiWaehlen],
+    ["📍", t("standort"), standortSenden],
+  ];
 
   /* Gleiche Reaktion nochmal = zuruecknehmen (wie in der Web-App). */
   const reagieren = (emoji) => {
@@ -2530,6 +2673,20 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         )}
       </View>
       <AboFenster offen={aboOffen} raum={raum} onZu={() => setAboOffen(false)} onHinweis={setHinweis} />
+      <Modal visible={menueAuf} transparent animationType="slide" onRequestClose={() => setMenueAuf(false)}>
+        <Pressable style={s.modalHinten} onPress={() => setMenueAuf(false)} />
+        <View style={[s.modalBox, { paddingBottom: 16 + unten }]}>
+          <Text style={s.modalTitel}>{t("senden")}</Text>
+          {anhangPunkte.map(([symbol, label, los]) => (
+            <Pressable key={label} style={s.sprachZeile} onPress={() => { setMenueAuf(false); los(); }}>
+              <Text style={s.sprachZeileTxt}>{symbol}  {label}</Text>
+            </Pressable>
+          ))}
+          <Pressable style={s.sprachZeile} onPress={() => setMenueAuf(false)}>
+            <Text style={[s.sprachZeileTxt, { color: FARBE.grau }]}>{t("abbrechen2")}</Text>
+          </Pressable>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -2584,8 +2741,19 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStim
           </Pressable>
         ) : null}
         {msg.audioSeconds ? <Sprachnachricht id={msg.id} sekunden={msg.audioSeconds} meins={meins} /> : null}
+        {msg.datei ? (
+          <Pressable style={s.dateiKarte} onPress={() => Linking.openURL(medienUrl(msg.id))} onLongPress={onLangDruck}>
+            <Text style={s.dateiSymbol}>{String(msg.datei.mime || "").startsWith("video/") ? "🎬" : "📄"}</Text>
+            <View style={{ flexShrink: 1 }}>
+              <Text style={txtStil} numberOfLines={2}>{msg.datei.name}</Text>
+              <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>
+                {groesseText(msg.datei.groesse)} · {t("dateiOeffnen")}
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
         {anzeige ? (hatLink ? <LinkText text={anzeige} style={txtStil} onLongPress={onLangDruck} /> : <Text style={txtStil}>{anzeige}</Text>) : null}
-        {!anzeige && !msg.bild && !msg.audioSeconds ? <Text style={txtStil}>...</Text> : null}
+        {!anzeige && !msg.bild && !msg.audioSeconds && !msg.datei ? <Text style={txtStil}>...</Text> : null}
         {original ? <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>{msg.text}</Text> : null}
       </>
     );
@@ -2841,8 +3009,9 @@ function uhrzeit(at) {
 /* Eine Zeile fuer Zitate: Text in meiner Sprache, sonst was die Nachricht ist. */
 function kurzText(m, lang, device) {
   if (m.deleted) return t("geloescht");
-  const t = m.device !== device && m.tr?.[lang] ? m.tr[lang] : m.text;
-  if (t) return t;
+  const zeile = m.device !== device && m.tr?.[lang] ? m.tr[lang] : m.text;
+  if (zeile) return zeile;
+  if (m.datei) return (String(m.datei.mime || "").startsWith("video/") ? "🎬 " : "📎 ") + (m.datei.name || t("datei"));
   if (m.bild) return "📷 " + t("foto");
   if (m.audioSeconds) return "🎤 " + t("sprachnachricht");
   if (m.ort) return "📍 " + t("standort");
@@ -2869,6 +3038,7 @@ function normMsg(m) {
     tr: m.tr || {},
     ort: m.ort || null,
     bild: Boolean(m.bild),
+    datei: m.datei || null,
     audioSeconds: m.audioSeconds || null,
     reaktionen: m.reaktionen || {},
     deleted: Boolean(m.deleted),
@@ -2992,6 +3162,8 @@ const s = StyleSheet.create({
   bubbleOrigMeins: { color: "#aeb9cc" },
   geloescht: { fontStyle: "italic", opacity: 0.6 },
   foto: { width: 230, height: 230, borderRadius: 10, marginBottom: 6, backgroundColor: FARBE.grauHell },
+  dateiKarte: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4, maxWidth: 250 },
+  dateiSymbol: { fontSize: 30 },
   sprache: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4, marginBottom: 4 },
   spracheKnopf: { fontSize: 22, color: FARBE.navy, width: 24, textAlign: "center" },
   spracheZeit: { fontSize: 14, color: FARBE.text },
