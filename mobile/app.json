@@ -14,7 +14,7 @@
       "package": "app.diralo.twa",
       "versionCode": 9,
       "adaptiveIcon": {
-        "backgroundColor": "#122036",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
