@@ -106,6 +106,9 @@ const TEXTE = {
     fuerMich: "🙈 Für mich löschen",
     geteiltTitel: "Geteilt – übersetzt",
     geteiltLaedt: "Wird übersetzt …",
+    linkTitel: "Link teilen",
+    linkWelcher: "In welchen Chat?",
+    linkKeinChat: "Du hast noch keinen Chat. Starte zuerst einen Chat und lade deine Person ein.",
     dolmetscher: "🎙\nDolmetscher",
     fotoKnopf: "📷\nFoto übersetzen",
     dolmInfo: "Handy zwischen euch legen. Jeder tippt auf sein Mikrofon und spricht in seiner Sprache.",
@@ -238,6 +241,9 @@ const TEXTE = {
     fuerMich: "🙈 Apagar para mim",
     geteiltTitel: "Partilhado – traduzido",
     geteiltLaedt: "A traduzir …",
+    linkTitel: "Partilhar link",
+    linkWelcher: "Em que conversa?",
+    linkKeinChat: "Ainda não tens nenhuma conversa. Começa primeiro uma conversa e convida a tua pessoa.",
     dolmetscher: "🎙\nIntérprete",
     fotoKnopf: "📷\nTraduzir foto",
     dolmInfo: "Ponham o telemóvel entre vocês. Cada um toca no seu microfone e fala na sua língua.",
@@ -370,6 +376,9 @@ const TEXTE = {
     fuerMich: "🙈 Delete for me",
     geteiltTitel: "Shared – translated",
     geteiltLaedt: "Translating …",
+    linkTitel: "Share link",
+    linkWelcher: "Which chat?",
+    linkKeinChat: "You don't have a chat yet. Start a chat first and invite your person.",
     dolmetscher: "🎙\nInterpreter",
     fotoKnopf: "📷\nTranslate photo",
     dolmInfo: "Put the phone between you. Each person taps their microphone and speaks in their own language.",
@@ -502,6 +511,9 @@ const TEXTE = {
     fuerMich: "🙈 Borrar para mí",
     geteiltTitel: "Compartido – traducido",
     geteiltLaedt: "Traduciendo …",
+    linkTitel: "Compartir enlace",
+    linkWelcher: "¿En qué chat?",
+    linkKeinChat: "Todavía no tienes ningún chat. Primero inicia un chat e invita a tu persona.",
     dolmetscher: "🎙\nIntérprete",
     fotoKnopf: "📷\nTraducir foto",
     dolmInfo: "Poned el móvil entre vosotros. Cada uno toca su micrófono y habla en su idioma.",
@@ -634,6 +646,9 @@ const TEXTE = {
     fuerMich: "🙈 Supprimer pour moi",
     geteiltTitel: "Partagé – traduit",
     geteiltLaedt: "Traduction …",
+    linkTitel: "Partager le lien",
+    linkWelcher: "Dans quel chat ?",
+    linkKeinChat: "Tu n'as pas encore de chat. Commence d'abord un chat et invite ta personne.",
     dolmetscher: "🎙\nInterprète",
     fotoKnopf: "📷\nTraduire une photo",
     dolmInfo: "Posez le téléphone entre vous. Chacun touche son micro et parle dans sa langue.",
@@ -766,6 +781,9 @@ const TEXTE = {
     fuerMich: "🙈 Elimina per me",
     geteiltTitel: "Condiviso – tradotto",
     geteiltLaedt: "Traduzione …",
+    linkTitel: "Condividi link",
+    linkWelcher: "In quale chat?",
+    linkKeinChat: "Non hai ancora nessuna chat. Inizia prima una chat e invita la tua persona.",
     dolmetscher: "🎙\nInterprete",
     fotoKnopf: "📷\nTraduci foto",
     dolmInfo: "Mettete il telefono tra voi. Ognuno tocca il suo microfono e parla nella sua lingua.",
@@ -887,6 +905,8 @@ function geraeteSprache() {
    Server ab, wie viel Neues gekommen ist (/api/neues, nur Zahlen). */
 const CHATS_KEY = "diralo_chats";
 const GELESEN_KEY = "diralo_gelesen";
+
+const LINK_RE = /https?:\/\/\S+/i;
 
 async function jsonLaden(key, leer) {
   try { return JSON.parse((await AsyncStorage.getItem(key)) || "null") ?? leer; } catch { return leer; }
@@ -1042,10 +1062,20 @@ function Haupt() {
   /* Teilen-Menue von Android: Text oder Bild aus einer anderen App. */
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent({ resetOnBackground: true });
   const [geteilt, setGeteilt] = useState(null);
+  const [linkTeilen, setLinkTeilen] = useState(null);
+  const [entwurf, setEntwurf] = useState("");
   useEffect(() => {
     if (!hasShareIntent) return;
     const bild = (shareIntent.files || []).find((f) => String(f.mimeType || "").startsWith("image/"));
     const text = shareIntent.text || shareIntent.webUrl || "";
+    /* Links (YouTube, Instagram, TikTok ...) nicht uebersetzen, sondern
+       unveraendert in einen Chat schicken. */
+    if (!bild && LINK_RE.test(text)) {
+      setLinkTeilen({ text: text.trim(), nr: Date.now() });
+      setAnsicht("link");
+      resetShareIntent();
+      return;
+    }
     if (bild || text.trim()) {
       setGeteilt({ text: text.trim(), bild: bild?.path || null, nr: Date.now() });
       setAnsicht("geteilt");
@@ -1124,7 +1154,17 @@ function Haupt() {
     <View style={[s.full, { paddingTop: insets.top, backgroundColor: FARBE.navy }]}>
       <StatusBar barStyle="light-content" backgroundColor={FARBE.navy} />
       <View style={s.full}>
-        {ansicht === "geteilt" && geteilt ? (
+        {ansicht === "link" && linkTeilen ? (
+          <LinkTeilen
+            daten={linkTeilen} unten={insets.bottom}
+            onBack={() => { setAnsicht(null); setLinkTeilen(null); }}
+            onWahl={(code) => {
+              setEntwurf(linkTeilen.text);
+              setAnsicht(null); setLinkTeilen(null);
+              if (name.trim()) betreten(code);
+            }}
+          />
+        ) : ansicht === "geteilt" && geteilt ? (
           <Geteilt daten={geteilt} lang={lang} device={device} unten={insets.bottom} onBack={() => { setAnsicht(null); setGeteilt(null); }} />
         ) : ansicht === "dolmetsch" ? (
           <Dolmetscher lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
@@ -1134,6 +1174,7 @@ function Haupt() {
           <Chat
             raum={raum} name={name.trim()} lang={lang} device={device}
             unten={insets.bottom} oben={insets.top}
+            entwurf={entwurf} onEntwurfWeg={() => setEntwurf("")}
             onBack={verlassen}
           />
         ) : (
@@ -1521,6 +1562,36 @@ function Dolmetscher({ lang, device, unten, onBack }) {
 /* ----------------------------- Geteilt -----------------------------
    Was ueber "Teilen -> Diralo" aus einer anderen App kommt: Text wird
    uebersetzt und kurz erklaert, ein Bild wie bei "Foto uebersetzen" gelesen. */
+/* Geteilter Link: Chat auswaehlen, der Link landet dort im Eingabefeld. */
+function LinkTeilen({ daten, unten, onBack, onWahl }) {
+  const [chats, setChats] = useState(null);
+  useEffect(() => { chatsLaden().then(setChats); }, [daten.nr]);
+  return (
+    <View style={[s.full, { backgroundColor: FARBE.hell }]}>
+      <View style={s.chatHead}>
+        <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
+        <Text style={[s.chatTitel, { flex: 1 }]}>{t("linkTitel")}</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 + unten }}>
+        <View style={s.fotoKarte}>
+          <Text style={s.fotoKarteTxt} numberOfLines={4}>🔗 {daten.text}</Text>
+        </View>
+        {chats === null ? <ActivityIndicator color={FARBE.navy} style={{ marginTop: 20 }} /> : null}
+        {chats && chats.length === 0 ? <Text style={s.leer}>{t("linkKeinChat")}</Text> : null}
+        {chats && chats.length > 0 ? <Text style={[s.label, { marginTop: 18 }]}>{t("linkWelcher")}</Text> : null}
+        {(chats || []).map((c) => (
+          <Pressable key={c.code} style={[s.input, s.chatOffen, { marginTop: 8 }]} onPress={() => onWahl(c.code)}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.chatOffenTxt} numberOfLines={1}>{c.name || "#" + c.code}</Text>
+              {c.name ? <Text style={s.chatCodeKlein} numberOfLines={1}>#{c.code}</Text> : null}
+            </View>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 function Geteilt({ daten, lang, device, unten, onBack }) {
   const [laedt, setLaedt] = useState(true);
   const [ergebnis, setErgebnis] = useState(null);
@@ -1840,12 +1911,13 @@ function AboFenster({ offen, raum, onZu, onHinweis }) {
 }
 
 /* ------------------------------- Chat ----------------------------- */
-function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
+function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwurfWeg, onBack }) {
   /* Offene Tastatur deckt die Navigationsleiste ab - dann braucht die
      Eingabezeile unten keinen eigenen Abstand mehr. */
   const tastatur = useTastaturOffen();
   const [nachrichten, setNachrichten] = useState([]);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(entwurf || "");
+  useEffect(() => { if (entwurf) onEntwurfWeg?.(); }, []);
   const [verbunden, setVerbunden] = useState(false);
   const [hinweis, setHinweis] = useState(null);
   const [laedt, setLaedt] = useState(false);          // Foto wird hochgeladen
@@ -2462,11 +2534,24 @@ function Chat({ raum, name, lang, device, unten, oben = 0, onBack }) {
   );
 }
 
+/* Text mit antippbaren Links (YouTube, Instagram, TikTok ...). */
+function LinkText({ text, style, onLongPress }) {
+  const teile = String(text).split(/(https?:\/\/[^\s]+)/gi);
+  return (
+    <Text style={style} onLongPress={onLongPress}>
+      {teile.map((teil, i) => /^https?:\/\//i.test(teil) ? (
+        <Text key={i} style={s.link} onPress={() => Linking.openURL(teil).catch(() => {})}>{teil}</Text>
+      ) : teil)}
+    </Text>
+  );
+}
+
 /* Eine Sprechblase. Zeigt die Nachricht in MEINER Sprache (sonst Original).
    Langes Druecken oeffnet die Emoji-Leiste. */
 function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStimme }) {
   const meins = msg.device === device;
-  const uebersetzt = !meins && msg.tr && msg.tr[lang];
+  const hatLink = LINK_RE.test(msg.text || "");
+  const uebersetzt = !meins && !hatLink && msg.tr && msg.tr[lang];
   const anzeige = meins ? msg.text : (uebersetzt || msg.text);
   const original = !meins && uebersetzt && msg.text && msg.text !== uebersetzt;
   const txtStil = [s.bubbleTxt, meins && s.bubbleTxtMeins];
@@ -2499,7 +2584,7 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStim
           </Pressable>
         ) : null}
         {msg.audioSeconds ? <Sprachnachricht id={msg.id} sekunden={msg.audioSeconds} meins={meins} /> : null}
-        {anzeige ? <Text style={txtStil}>{anzeige}</Text> : null}
+        {anzeige ? (hatLink ? <LinkText text={anzeige} style={txtStil} onLongPress={onLangDruck} /> : <Text style={txtStil}>{anzeige}</Text>) : null}
         {!anzeige && !msg.bild && !msg.audioSeconds ? <Text style={txtStil}>...</Text> : null}
         {original ? <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>{msg.text}</Text> : null}
       </>
@@ -2958,6 +3043,7 @@ const s = StyleSheet.create({
   bubbleName: { color: FARBE.gold, fontWeight: "700", fontSize: 12, marginBottom: 3 },
   bubbleTxt: { color: FARBE.text, fontSize: 16, lineHeight: 22 },
   bubbleTxtMeins: { color: FARBE.weiss },
+  link: { textDecorationLine: "underline" },
   bubbleOrig: { color: FARBE.grau, fontSize: 12, marginTop: 5, fontStyle: "italic" },
 
   eingabe: { flexDirection: "row", alignItems: "flex-end", gap: 6, padding: 10, backgroundColor: FARBE.weiss, borderTopWidth: 1, borderTopColor: FARBE.grauHell },
