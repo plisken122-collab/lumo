@@ -1046,7 +1046,7 @@ const LANG_NAMES = {
   fr: "Franzoesisch", it: "Italienisch", nl: "Niederlaendisch", pl: "Polnisch",
   ru: "Russisch", uk: "Ukrainisch", tr: "Tuerkisch", ar: "Arabisch",
   zh: "Chinesisch (vereinfacht)", "zh-TW": "Chinesisch (traditionell)",
-  ja: "Japanisch", ko: "Koreanisch", hi: "Hindi",
+  ja: "Japanisch", ko: "Koreanisch", hi: "Hindi", ur: "Urdu", bn: "Bengalisch", pa: "Punjabi (Gurmukhi)", ne: "Nepali",
   sv: "Schwedisch", ro: "Rumaenisch", da: "Daenisch", no: "Norwegisch",
   fi: "Finnisch", cs: "Tschechisch", hu: "Ungarisch", el: "Griechisch",
   he: "Hebraeisch", th: "Thai", vi: "Vietnamesisch", id: "Indonesisch",

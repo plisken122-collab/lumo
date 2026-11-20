@@ -80,7 +80,7 @@ async function tts(pfad, rumpf) {
 const REGION = {
   de: "de-DE", "de-CH": "de-DE", en: "en-GB", "en-US": "en-US", es: "es-ES", "es-419": "es-US",
   fr: "fr-FR", it: "it-IT", nl: "nl-NL", pl: "pl-PL", ru: "ru-RU", uk: "uk-UA", tr: "tr-TR",
-  ar: "ar-XA", zh: "cmn-CN", "zh-TW": "cmn-TW", ja: "ja-JP", ko: "ko-KR", hi: "hi-IN",
+  ar: "ar-XA", zh: "cmn-CN", "zh-TW": "cmn-TW", ja: "ja-JP", ko: "ko-KR", hi: "hi-IN", ur: "ur-IN", bn: "bn-IN", pa: "pa-IN", ne: "ne-NP",
   sv: "sv-SE", ro: "ro-RO", da: "da-DK", no: "nb-NO", fi: "fi-FI", hu: "hu-HU", th: "th-TH",
   vi: "vi-VN", id: "id-ID", "pt-PT": "pt-PT", "pt-BR": "pt-BR", pt: "pt-BR", el: "el-GR",
   cs: "cs-CZ", he: "he-IL",
