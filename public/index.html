@@ -1137,7 +1137,7 @@ function start() {
   socket.on("deleted", ({ id }) => {
     const m = msgs.get(id);
     if (!m) return;
-    m.deleted = true; m.text = ""; m.tr = {}; m.audioSeconds = null; m.datei = null; m.open = false; m.reaktionen = {};
+    m.deleted = true; m.text = ""; m.tr = {}; m.audioSeconds = null; m.datei = null; m.gif = null; m.open = false; m.reaktionen = {};
     render(m);
   });
   socket.on("system", (ev) => {
@@ -1537,6 +1537,15 @@ function render(m) {
     if (m.bild) bildEinsetzen(m, bubble);
     if (m.ort) ortEinsetzen(m, bubble);
     if (m.datei) dateiEinsetzen(m, bubble);
+    if (m.gif) {
+      const g = document.createElement("img");
+      g.className = "foto";
+      g.alt = "GIF";
+      g.loading = "lazy";
+      g.referrerPolicy = "no-referrer";
+      g.src = m.gif.url;
+      bubble.appendChild(g);
+    }
     /* Sprachnachricht: Abspieler zuerst, die Mitschrift darunter. Ohne
        Mitschrift bleibt es beim Abspieler mit einem Hinweis. */
     if (m.audioSeconds != null) {
@@ -1565,7 +1574,7 @@ function render(m) {
     span.textContent = text;
     if (m.audioSeconds != null) span.className = "no-text";
     /* Beim reinen Standort gibt es keinen Text - dann keine leere Zeile. */
-    if (text || (!m.ort && !m.datei)) bubble.appendChild(span);
+    if (text || (!m.ort && !m.datei && !m.gif)) bubble.appendChild(span);
     if (m.open) {
       const o = document.createElement("div");
       o.className = "orig";
@@ -1701,6 +1710,7 @@ function zitatText(m) {
   if (m.deleted) return T("deletedNote");
   if (m.ort) return "📍 " + T("ortShared");
   const inhalt = m.tr[me.lang] || m.text || "";
+  if (m.gif) return "GIF";
   if (m.datei) return (String(m.datei.mime || "").startsWith("video/") ? "🎬 " : "📎 ") + (m.datei.name || "");
   if (m.bild) return "📷" + (inhalt ? " " + inhalt : "");
   if (m.audioSeconds != null) return "🎤" + (inhalt ? " " + inhalt : "");

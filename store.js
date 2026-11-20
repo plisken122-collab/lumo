@@ -259,7 +259,9 @@ export async function init() {
                                ["reply_to", "TEXT"],
                                /* Datei oder Video: {name, mime, groesse} als JSON.
                                   Die Bytes liegen wie bei Bildern in "media". */
-                               ["datei", "TEXT"]]) {
+                               ["datei", "TEXT"],
+                               /* GIF aus der Suche: {url, b, h} als JSON */
+                               ["gif", "TEXT"]]) {
     try {
       await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS ${spalte} ${art}`);
     } catch (err) {
@@ -301,12 +303,13 @@ export async function addMessage(msg) {
     return msg;
   }
   await pool.query(
-    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image, ort_lat, ort_lng, reply_to, datei)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO messages (id, room, device, name, body, lang, detected, at, audio_seconds, has_image, ort_lat, ort_lng, reply_to, datei, gif)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT (id) DO NOTHING`,
     [msg.id, msg.room, msg.device, msg.name, msg.text, msg.lang, msg.detected, msg.at,
      msg.audioSeconds ?? null, Boolean(msg.bild),
      msg.ort ? msg.ort.lat : null, msg.ort ? msg.ort.lng : null, msg.replyTo || null,
-     msg.datei ? JSON.stringify(msg.datei) : null]
+     msg.datei ? JSON.stringify(msg.datei) : null,
+     msg.gif ? JSON.stringify(msg.gif) : null]
   );
   return msg;
 }
@@ -337,13 +340,13 @@ export async function deleteForAll(id, device) {
   if (!usingDatabase) {
     const m = mem.messages.get(id);
     if (!m || m.device !== device) return false;
-    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false; m.ort = null; m.datei = null;
+    m.text = ""; m.tr = {}; m.deleted = true; m.audioSeconds = null; m.bild = false; m.ort = null; m.datei = null; m.gif = null;
     mem.media.delete(id);
     mem.reactions.delete(id);
     return true;
   }
   const { rowCount } = await pool.query(
-    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL, has_image = FALSE, ort_lat = NULL, ort_lng = NULL, datei = NULL
+    `UPDATE messages SET body = '', deleted = TRUE, audio_seconds = NULL, has_image = FALSE, ort_lat = NULL, ort_lng = NULL, datei = NULL, gif = NULL
      WHERE id = $1 AND device = $2 AND deleted = FALSE`,
     [id, device]
   );
@@ -535,6 +538,7 @@ function rowToMsg(r, translations) {
       ? { lat: Number(r.ort_lat), lng: Number(r.ort_lng) } : null,
     replyTo: r.reply_to || null,
     datei: dateiLesen(r.datei),
+    gif: dateiLesen(r.gif),
     deleted: Boolean(r.deleted),
   };
 }

@@ -38,7 +38,7 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src https://fonts.gstatic.com",
-    "img-src 'self' data: blob:",
+    "img-src 'self' data: blob: https://*.klipy.com https://media.tenor.com https://*.giphy.com",
     "media-src 'self'",
     "connect-src 'self'",
     "frame-ancestors 'none'",
@@ -1457,14 +1457,14 @@ async function pushToRoom(room, msg) {
       if (istExpo) {
         await expoPush(sub, {
           title: msg.name,
-          body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : (msg.datei ? dateiSymbol(msg.datei) : "🎤"))),
+          body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : (msg.gif ? "GIF" : msg.datei ? dateiSymbol(msg.datei) : "🎤"))),
           room, id: msg.id,
         });
         continue;
       }
       const payload = JSON.stringify({
         title: msg.name,
-        body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : (msg.datei ? dateiSymbol(msg.datei) : ""))),
+        body: body || msg.text || (msg.ort ? "📍" : (msg.bild ? "📷" : (msg.gif ? "GIF" : msg.datei ? dateiSymbol(msg.datei) : ""))),
         room,
         id: msg.id,
       });
@@ -2036,6 +2036,105 @@ app.post("/api/bild", express.json({ limit: "5mb" }), async (req, res) => {
     return res.status(500).json({ error: "Nicht speicherbar" });
   }
 
+  io.to(raum).emit("message", msg);
+  pushToRoom(raum, msg).catch((e) => console.error("Push-Lauf:", e.message));
+  res.json({ ok: true, id: msg.id });
+});
+
+/* ------------------------------- GIFs -------------------------------
+   Suche ueber KLIPY (Tenor wurde von Google im Juni 2026 abgeschaltet).
+   Der Schluessel bleibt auf dem Server (KLIPY_KEY); die App fragt nur
+   hier. Ein GIF ist eine gewoehnliche Nachricht mit leerem Text und
+   msg.gif = {url, b, h} - nichts zu uebersetzen.
+------------------------------------------------------------------------ */
+const KLIPY_KEY = process.env.KLIPY_KEY || "";
+const GIF_HOSTS = /(^|\.)(klipy\.com|klipy\.co|tenor\.com|giphy\.com)$/i;
+const gifCache = new Map(); // "q|lang" -> {at, liste}
+
+function gifGroesse(f) {
+  if (!f || typeof f !== "object") return null;
+  const g = f.gif || f.webp || f;
+  if (g && typeof g.url === "string") return { url: g.url, b: Number(g.width) || 0, h: Number(g.height) || 0 };
+  return null;
+}
+
+/* KLIPY-Antwort tolerant lesen: data.data[] oder data[] oder results[]. */
+function gifListe(json) {
+  const roh = json?.data?.data || json?.data || json?.results || [];
+  const aus = [];
+  for (const it of Array.isArray(roh) ? roh : []) {
+    const f = it.file || it.files || it.media_formats || it.images || {};
+    const klein = gifGroesse(f.sm) || gifGroesse(f.xs) || gifGroesse(f.tinygif) || gifGroesse(f.fixed_width_small) || gifGroesse(f.md);
+    const gross = gifGroesse(f.md) || gifGroesse(f.hd) || gifGroesse(f.gif) || gifGroesse(f.downsized) || klein;
+    if (!klein || !gross) continue;
+    aus.push({ id: String(it.id ?? it.slug ?? aus.length), klein, gross });
+  }
+  return aus;
+}
+
+app.get("/api/gif/suche", async (req, res) => {
+  if (!KLIPY_KEY) return res.status(503).json({ error: "GIFs nicht eingerichtet" });
+  const q = String(req.query.q || "").trim().slice(0, 60);
+  const lang = clean(req.query.lang) || "en";
+  const schluessel = q.toLowerCase() + "|" + lang;
+  const alt = gifCache.get(schluessel);
+  if (alt && Date.now() - alt.at < 30 * 60 * 1000) return res.json({ gifs: alt.liste });
+  if (!take(`gif:${req.ip}`, 60, 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+
+  const art = q ? "search" : "trending";
+  const params = new URLSearchParams({ per_page: "30", page: "1", customer_id: "diralo", locale: lang.split("-")[0] });
+  if (q) params.set("q", q);
+  try {
+    const r = await fetch(`https://api.klipy.com/api/v1/${encodeURIComponent(KLIPY_KEY)}/gifs/${art}?${params}`,
+      { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) {
+      console.error("KLIPY:", r.status, (await r.text()).slice(0, 200));
+      return res.status(502).json({ error: "GIF-Dienst antwortet nicht" });
+    }
+    const liste = gifListe(await r.json());
+    gifCache.set(schluessel, { at: Date.now(), liste });
+    if (gifCache.size > 500) gifCache.delete(gifCache.keys().next().value);
+    res.json({ gifs: liste });
+  } catch (err) {
+    console.error("KLIPY:", err.message);
+    res.status(502).json({ error: "GIF-Dienst antwortet nicht" });
+  }
+});
+
+app.post("/api/gif", async (req, res) => {
+  const { room, device, name, lang, gif, replyTo } = req.body || {};
+  if (!room || !device || !gif || typeof gif.url !== "string") {
+    return res.status(400).json({ error: "Angaben unvollstaendig" });
+  }
+  let url;
+  try { url = new URL(gif.url); } catch { return res.status(400).json({ error: "Adresse unlesbar" }); }
+  if (url.protocol !== "https:" || !GIF_HOSTS.test(url.hostname)) {
+    return res.status(400).json({ error: "Nur GIFs aus der Suche" });
+  }
+  const raum = String(room).trim().toLowerCase().slice(0, 60);
+  const geraet = String(device).slice(0, 60);
+  if (!take(`msg:${geraet}`, MSG_PER_MIN, 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!take(`msgtag:${req.ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+
+  const msg = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    room: raum,
+    device: geraet,
+    name: String(name || "Gast").slice(0, 40),
+    text: "",
+    lang: clean(lang),
+    detected: false,
+    tr: {},
+    at: Date.now(),
+    replyTo: replyTo ? String(replyTo).slice(0, 40) : null,
+    gif: { url: url.href.slice(0, 500), b: Math.min(2000, Number(gif.b) || 0), h: Math.min(2000, Number(gif.h) || 0) },
+  };
+  try {
+    await store.addMessage(msg);
+  } catch (err) {
+    console.error("GIF nicht speicherbar:", err.message);
+    return res.status(500).json({ error: "Nicht speicherbar" });
+  }
   io.to(raum).emit("message", msg);
   pushToRoom(raum, msg).catch((e) => console.error("Push-Lauf:", e.message));
   res.json({ ok: true, id: msg.id });

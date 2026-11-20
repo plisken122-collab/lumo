@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
+import { Image as GifBild } from "expo-image";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as Location from "expo-location";
 import { useAudioPlayer, useAudioPlayerStatus, createAudioPlayer } from "expo-audio";
@@ -115,6 +116,9 @@ const TEXTE = {
     dateiOeffnen: "Tippen zum Öffnen",
     abbrechen2: "Abbrechen",
     dateiKeinChat: "Du hast noch keinen Chat. Starte zuerst einen Chat und lade deine Person ein.",
+    gifSuchen: "GIFs suchen",
+    gifAus: "GIFs sind gerade nicht verfügbar.",
+    gifFehler: "GIF konnte nicht gesendet werden.",
     linkTitel: "Link teilen",
     linkWelcher: "In welchen Chat?",
     linkKeinChat: "Du hast noch keinen Chat. Starte zuerst einen Chat und lade deine Person ein.",
@@ -258,6 +262,9 @@ const TEXTE = {
     dateiOeffnen: "Toque para abrir",
     abbrechen2: "Cancelar",
     dateiKeinChat: "Ainda não tens nenhuma conversa. Começa uma conversa e convida a tua pessoa.",
+    gifSuchen: "Pesquisar GIFs",
+    gifAus: "Os GIFs não estão disponíveis de momento.",
+    gifFehler: "Não foi possível enviar o GIF.",
     linkTitel: "Partilhar link",
     linkWelcher: "Em que conversa?",
     linkKeinChat: "Ainda não tens nenhuma conversa. Começa primeiro uma conversa e convida a tua pessoa.",
@@ -401,6 +408,9 @@ const TEXTE = {
     dateiOeffnen: "Tap to open",
     abbrechen2: "Cancel",
     dateiKeinChat: "You don't have a chat yet. Start a chat first and invite your person.",
+    gifSuchen: "Search GIFs",
+    gifAus: "GIFs are not available right now.",
+    gifFehler: "The GIF could not be sent.",
     linkTitel: "Share link",
     linkWelcher: "Which chat?",
     linkKeinChat: "You don't have a chat yet. Start a chat first and invite your person.",
@@ -544,6 +554,9 @@ const TEXTE = {
     dateiOeffnen: "Toca para abrir",
     abbrechen2: "Cancelar",
     dateiKeinChat: "Aún no tienes ningún chat. Empieza un chat e invita a tu persona.",
+    gifSuchen: "Buscar GIFs",
+    gifAus: "Los GIFs no están disponibles ahora mismo.",
+    gifFehler: "No se pudo enviar el GIF.",
     linkTitel: "Compartir enlace",
     linkWelcher: "¿En qué chat?",
     linkKeinChat: "Todavía no tienes ningún chat. Primero inicia un chat e invita a tu persona.",
@@ -687,6 +700,9 @@ const TEXTE = {
     dateiOeffnen: "Touchez pour ouvrir",
     abbrechen2: "Annuler",
     dateiKeinChat: "Tu n'as pas encore de discussion. Commence une discussion et invite ta personne.",
+    gifSuchen: "Rechercher des GIF",
+    gifAus: "Les GIF ne sont pas disponibles pour le moment.",
+    gifFehler: "Le GIF n'a pas pu être envoyé.",
     linkTitel: "Partager le lien",
     linkWelcher: "Dans quel chat ?",
     linkKeinChat: "Tu n'as pas encore de chat. Commence d'abord un chat et invite ta personne.",
@@ -830,6 +846,9 @@ const TEXTE = {
     dateiOeffnen: "Tocca per aprire",
     abbrechen2: "Annulla",
     dateiKeinChat: "Non hai ancora una chat. Inizia una chat e invita la tua persona.",
+    gifSuchen: "Cerca GIF",
+    gifAus: "Le GIF non sono disponibili al momento.",
+    gifFehler: "Impossibile inviare la GIF.",
     linkTitel: "Condividi link",
     linkWelcher: "In quale chat?",
     linkKeinChat: "Non hai ancora nessuna chat. Inizia prima una chat e invita la tua persona.",
@@ -1517,9 +1536,52 @@ const EMOJI = [
 ];
 const EMOJI_KEY = "diralo_emoji";
 
-function EmojiAuswahl({ zuletzt, onWahl }) {
+/* GIF-Suche (ueber unseren Server, der KLIPY fragt). Leeres Feld = Beliebte. */
+function GifSuche({ lang, onGif }) {
+  const [q, setQ] = useState("");
+  const [gifs, setGifs] = useState(null);
+  const [aus, setAus] = useState(false);
+  useEffect(() => {
+    let weg = false;
+    const timer = setTimeout(async () => {
+      try {
+        const r = await fetch(`${SERVER_URL}/api/gif/suche?q=${encodeURIComponent(q.trim())}&lang=${encodeURIComponent(lang)}`);
+        if (!r.ok) throw new Error();
+        const j = await r.json();
+        if (!weg) { setGifs(j.gifs || []); setAus(false); }
+      } catch {
+        if (!weg) { setGifs([]); setAus(true); }
+      }
+    }, q ? 400 : 0);
+    return () => { weg = true; clearTimeout(timer); };
+  }, [q]);
+  return (
+    <View style={{ flex: 1 }}>
+      <TextInput
+        style={s.gifSuche} value={q} onChangeText={setQ}
+        placeholder={t("gifSuchen")} placeholderTextColor={FARBE.grau}
+      />
+      {gifs === null ? <ActivityIndicator color={FARBE.navy} style={{ marginTop: 16 }} /> : null}
+      {aus ? <Text style={s.leer}>{t("gifAus")}</Text> : null}
+      <FlatList
+        data={gifs || []} numColumns={3} keyExtractor={(g) => g.id}
+        keyboardShouldPersistTaps="always"
+        contentContainerStyle={{ padding: 4 }}
+        renderItem={({ item }) => (
+          <Pressable style={s.gifZelle} onPress={() => onGif(item.gross)}>
+            <GifBild source={{ uri: item.klein.url }} style={{ flex: 1, borderRadius: 6 }} contentFit="cover" autoplay />
+          </Pressable>
+        )}
+        ListFooterComponent={gifs && gifs.length ? <Text style={s.gifQuelle}>Powered by KLIPY</Text> : null}
+      />
+    </View>
+  );
+}
+
+function EmojiAuswahl({ zuletzt, onWahl, lang, onGif }) {
   const [gruppe, setGruppe] = useState(zuletzt.length ? 0 : 1);
-  const zeichen = gruppe === 0 ? zuletzt : EMOJI[gruppe][1].split(" ");
+  const istGif = gruppe === "gif";
+  const zeichen = istGif ? [] : gruppe === 0 ? zuletzt : EMOJI[gruppe][1].split(" ");
   return (
     <View style={s.emojiPanel}>
       <View style={s.emojiTabs}>
@@ -1528,15 +1590,20 @@ function EmojiAuswahl({ zuletzt, onWahl }) {
             <Text style={s.emojiTabTxt}>{icon}</Text>
           </Pressable>
         ))}
+        {onGif ? (
+          <Pressable onPress={() => setGruppe("gif")} style={[s.emojiTab, istGif && s.emojiTabAn]}>
+            <Text style={s.gifTabTxt}>GIF</Text>
+          </Pressable>
+        ) : null}
       </View>
-      <ScrollView contentContainerStyle={s.emojiGrid} keyboardShouldPersistTaps="always">
+      {istGif ? <GifSuche lang={lang} onGif={onGif} /> : <ScrollView contentContainerStyle={s.emojiGrid} keyboardShouldPersistTaps="always">
         {zeichen.length === 0 && <Text style={s.leer}>{t("nochKeine")}</Text>}
         {zeichen.map((ch, i) => (
           <Pressable key={ch + i} onPress={() => onWahl(ch)} style={s.emojiZelle}>
             <Text style={s.emojiZeichen}>{ch}</Text>
           </Pressable>
         ))}
-      </ScrollView>
+      </ScrollView>}
     </View>
   );
 }
@@ -2276,6 +2343,21 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     return () => clearTimeout(tm);
   }, [text, partnerSprache, lang, vorschauAus]);
 
+  /* GIF: geht unuebersetzt raus, wie bei WhatsApp. */
+  const gifSenden = async (gif) => {
+    setEmojiAuf(false);
+    try {
+      const r = await fetch(`${SERVER_URL}/api/gif`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ room: raum, device, name, lang, gif, replyTo: antwortAuf?.id || null }),
+      });
+      if (!r.ok) throw new Error();
+      setAntwortAuf(null);
+    } catch {
+      setHinweis(t("gifFehler"));
+    }
+  };
+
   const senden = () => {
     const t = text.trim();
     if (!t || !sockRef.current) return;
@@ -2632,7 +2714,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         </View>
       ) : null}
 
-      {emojiAuf && <EmojiAuswahl zuletzt={zuletztEmoji} onWahl={emojiEinfuegen} />}
+      {emojiAuf && <EmojiAuswahl zuletzt={zuletztEmoji} onWahl={emojiEinfuegen} lang={lang} onGif={gifSenden} />}
 
       <View style={[s.eingabe, { paddingBottom: 10 + (tastatur ? 0 : unten) }]}>
         <Pressable style={s.anhang} onPress={anhangMenue} disabled={laedt} hitSlop={6}>
@@ -2741,6 +2823,14 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStim
           </Pressable>
         ) : null}
         {msg.audioSeconds ? <Sprachnachricht id={msg.id} sekunden={msg.audioSeconds} meins={meins} /> : null}
+        {msg.gif ? (
+          <Pressable onLongPress={onLangDruck}>
+            <GifBild
+              source={{ uri: msg.gif.url }} autoplay contentFit="cover"
+              style={[s.gifBlase, msg.gif.b && msg.gif.h ? { height: Math.min(300, Math.round(220 * msg.gif.h / msg.gif.b)) } : null]}
+            />
+          </Pressable>
+        ) : null}
         {msg.datei ? (
           <Pressable style={s.dateiKarte} onPress={() => Linking.openURL(medienUrl(msg.id))} onLongPress={onLangDruck}>
             <Text style={s.dateiSymbol}>{String(msg.datei.mime || "").startsWith("video/") ? "🎬" : "📄"}</Text>
@@ -2753,7 +2843,7 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStim
           </Pressable>
         ) : null}
         {anzeige ? (hatLink ? <LinkText text={anzeige} style={txtStil} onLongPress={onLangDruck} /> : <Text style={txtStil}>{anzeige}</Text>) : null}
-        {!anzeige && !msg.bild && !msg.audioSeconds && !msg.datei ? <Text style={txtStil}>...</Text> : null}
+        {!anzeige && !msg.bild && !msg.audioSeconds && !msg.datei && !msg.gif ? <Text style={txtStil}>...</Text> : null}
         {original ? <Text style={[s.bubbleOrig, meins && s.bubbleOrigMeins]}>{msg.text}</Text> : null}
       </>
     );
@@ -3011,6 +3101,7 @@ function kurzText(m, lang, device) {
   if (m.deleted) return t("geloescht");
   const zeile = m.device !== device && m.tr?.[lang] ? m.tr[lang] : m.text;
   if (zeile) return zeile;
+  if (m.gif) return "GIF";
   if (m.datei) return (String(m.datei.mime || "").startsWith("video/") ? "🎬 " : "📎 ") + (m.datei.name || t("datei"));
   if (m.bild) return "📷 " + t("foto");
   if (m.audioSeconds) return "🎤 " + t("sprachnachricht");
@@ -3039,6 +3130,7 @@ function normMsg(m) {
     ort: m.ort || null,
     bild: Boolean(m.bild),
     datei: m.datei || null,
+    gif: m.gif || null,
     audioSeconds: m.audioSeconds || null,
     reaktionen: m.reaktionen || {},
     deleted: Boolean(m.deleted),
@@ -3164,6 +3256,11 @@ const s = StyleSheet.create({
   foto: { width: 230, height: 230, borderRadius: 10, marginBottom: 6, backgroundColor: FARBE.grauHell },
   dateiKarte: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4, maxWidth: 250 },
   dateiSymbol: { fontSize: 30 },
+  gifBlase: { width: 220, height: 180, borderRadius: 10, marginBottom: 4, backgroundColor: FARBE.grauHell },
+  gifSuche: { margin: 6, marginBottom: 2, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 18, backgroundColor: FARBE.hell, color: FARBE.navy, fontSize: 15 },
+  gifZelle: { flex: 1 / 3, aspectRatio: 1, padding: 2 },
+  gifTabTxt: { fontSize: 13, fontWeight: "800", color: FARBE.navy, paddingVertical: 4 },
+  gifQuelle: { textAlign: "center", color: FARBE.grau, fontSize: 11, paddingVertical: 6 },
   sprache: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4, marginBottom: 4 },
   spracheKnopf: { fontSize: 22, color: FARBE.navy, width: 24, textAlign: "center" },
   spracheZeit: { fontSize: 14, color: FARBE.text },
