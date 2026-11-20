@@ -20,6 +20,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Image as GifBild } from "expo-image";
+import { Video as VideoKompressor } from "react-native-compressor";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as Location from "expo-location";
 import { useAudioPlayer, useAudioPlayerStatus, createAudioPlayer } from "expo-audio";
@@ -70,6 +71,8 @@ const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
    Portugiesisch, sonst Englisch. */
 const TEXTE = {
   de: {
+    videoAufnehmen: "Video aufnehmen",
+    videoVorbereiten: "Video wird vorbereitet …",
     bonusHinweis: "🎁 Schreibt deine Person mit, bekommt ihr beide 1 Monat Diralo Plus gratis.",
     bonusDa: "🎁 Geschafft! Ihr habt für diesen Chat 1 Monat Diralo Plus gratis bekommen.",
     anrufMinutenLeer: "Die Live-Untertitel-Minuten für diesen Monat sind aufgebraucht. Der Anruf läuft ohne Untertitel weiter – mit Diralo Plus gibt es mehr.",
@@ -218,6 +221,8 @@ const TEXTE = {
     ausblenden: "tippen zum Ausblenden",
   },
   pt: {
+    videoAufnehmen: "Gravar vídeo",
+    videoVorbereiten: "A preparar o vídeo …",
     bonusHinweis: "🎁 Quando a tua pessoa também escrever, ganham os dois 1 mês de Diralo Plus grátis.",
     bonusDa: "🎁 Conseguido! Ganharam 1 mês de Diralo Plus grátis para este chat.",
     anrufMinutenLeer: "Os minutos de legendas ao vivo deste mês esgotaram-se. A chamada continua sem legendas – com o Diralo Plus tem mais.",
@@ -366,6 +371,8 @@ const TEXTE = {
     ausblenden: "toca para fechar",
   },
   en: {
+    videoAufnehmen: "Record video",
+    videoVorbereiten: "Preparing video …",
     bonusHinweis: "🎁 Once your person writes too, you both get 1 month of Diralo Plus free.",
     bonusDa: "🎁 Done! You both got 1 month of Diralo Plus free for this chat.",
     anrufMinutenLeer: "This month's live subtitle minutes are used up. The call continues without subtitles – Diralo Plus gives you more.",
@@ -514,6 +521,8 @@ const TEXTE = {
     ausblenden: "tap to dismiss",
   },
   es: {
+    videoAufnehmen: "Grabar vídeo",
+    videoVorbereiten: "Preparando el vídeo …",
     bonusHinweis: "🎁 Cuando tu persona también escriba, los dos recibís 1 mes de Diralo Plus gratis.",
     bonusDa: "🎁 ¡Listo! Habéis recibido 1 mes de Diralo Plus gratis para este chat.",
     anrufMinutenLeer: "Se han agotado los minutos de subtítulos en directo de este mes. La llamada sigue sin subtítulos; con Diralo Plus tienes más.",
@@ -662,6 +671,8 @@ const TEXTE = {
     ausblenden: "toca para cerrar",
   },
   fr: {
+    videoAufnehmen: "Filmer une vidéo",
+    videoVorbereiten: "Préparation de la vidéo …",
     bonusHinweis: "🎁 Dès que ta personne écrit aussi, vous recevez tous les deux 1 mois de Diralo Plus gratuit.",
     bonusDa: "🎁 C'est fait ! Vous avez reçu 1 mois de Diralo Plus gratuit pour ce chat.",
     anrufMinutenLeer: "Les minutes de sous-titres en direct de ce mois sont épuisées. L'appel continue sans sous-titres – Diralo Plus t'en donne plus.",
@@ -810,6 +821,8 @@ const TEXTE = {
     ausblenden: "touche pour fermer",
   },
   it: {
+    videoAufnehmen: "Registra video",
+    videoVorbereiten: "Preparazione del video …",
     bonusHinweis: "🎁 Quando anche la tua persona scrive, ricevete entrambi 1 mese di Diralo Plus gratis.",
     bonusDa: "🎁 Fatto! Avete ricevuto 1 mese di Diralo Plus gratis per questa chat.",
     anrufMinutenLeer: "I minuti di sottotitoli dal vivo di questo mese sono esauriti. La chiamata continua senza sottotitoli: con Diralo Plus ne hai di più.",
@@ -958,6 +971,8 @@ const TEXTE = {
     ausblenden: "tocca per chiudere",
   },
   ja: {
+    videoAufnehmen: "動画を撮影",
+    videoVorbereiten: "動画を準備中…",
     bonusHinweis: "🎁 相手からもメッセージが届くと、2人ともDiralo Plusが1か月無料になります。",
     bonusDa: "🎁 完了！このチャットで2人ともDiralo Plusが1か月無料になりました。",
     anrufMinutenLeer: "今月のライブ字幕の時間を使い切りました。通話は字幕なしで続きます。Diralo Plusならもっと使えます。",
@@ -1106,6 +1121,8 @@ const TEXTE = {
     ausblenden: "タップして閉じる",
   },
   hi: {
+    videoAufnehmen: "वीडियो रिकॉर्ड करें",
+    videoVorbereiten: "वीडियो तैयार हो रहा है …",
     bonusHinweis: "🎁 जैसे ही आपका साथी भी लिखेगा, आप दोनों को 1 महीने का Diralo Plus मुफ़्त मिलेगा।",
     bonusDa: "🎁 हो गया! इस चैट के लिए आप दोनों को 1 महीने का Diralo Plus मुफ़्त मिला।",
     anrufMinutenLeer: "इस महीने के लाइव सबटाइटल मिनट खत्म हो गए। कॉल बिना सबटाइटल के जारी रहेगी – Diralo Plus में ज़्यादा मिनट मिलते हैं।",
@@ -1254,6 +1271,8 @@ const TEXTE = {
     ausblenden: "हटाने के लिए टैप करें",
   },
   ur: {
+    videoAufnehmen: "ویڈیو ریکارڈ کریں",
+    videoVorbereiten: "ویڈیو تیار ہو رہی ہے …",
     bonusHinweis: "🎁 جیسے ہی آپ کا ساتھی بھی لکھے گا، آپ دونوں کو 1 مہینہ Diralo Plus مفت ملے گا۔",
     bonusDa: "🎁 ہو گیا! اس چیٹ کے لیے آپ دونوں کو 1 مہینہ Diralo Plus مفت مل گیا۔",
     anrufMinutenLeer: "اس مہینے کے لائیو سب ٹائٹل منٹ ختم ہو گئے ہیں۔ کال سب ٹائٹل کے بغیر جاری رہے گی – Diralo Plus میں زیادہ منٹ ملتے ہیں۔",
@@ -1402,6 +1421,8 @@ const TEXTE = {
     ausblenden: "ہٹانے کے لیے ٹیپ کریں",
   },
   bn: {
+    videoAufnehmen: "ভিডিও রেকর্ড করুন",
+    videoVorbereiten: "ভিডিও তৈরি হচ্ছে …",
     bonusHinweis: "🎁 আপনার মানুষটিও লিখলেই আপনারা দুজনেই ১ মাস Diralo Plus ফ্রি পাবেন।",
     bonusDa: "🎁 হয়ে গেছে! এই চ্যাটের জন্য আপনারা দুজনেই ১ মাস Diralo Plus ফ্রি পেয়েছেন।",
     anrufMinutenLeer: "এই মাসের লাইভ সাবটাইটেল মিনিট শেষ। কলটি সাবটাইটেল ছাড়াই চলবে – Diralo Plus-এ আরও বেশি পাবেন।",
@@ -1550,6 +1571,8 @@ const TEXTE = {
     ausblenden: "সরাতে ট্যাপ করুন",
   },
   pa: {
+    videoAufnehmen: "ਵੀਡੀਓ ਰਿਕਾਰਡ ਕਰੋ",
+    videoVorbereiten: "ਵੀਡੀਓ ਤਿਆਰ ਹੋ ਰਹੀ ਹੈ …",
     bonusHinweis: "🎁 ਜਦੋਂ ਤੁਹਾਡਾ ਸਾਥੀ ਵੀ ਲਿਖੇਗਾ, ਤੁਹਾਨੂੰ ਦੋਵਾਂ ਨੂੰ 1 ਮਹੀਨੇ ਲਈ Diralo Plus ਮੁਫ਼ਤ ਮਿਲੇਗਾ।",
     bonusDa: "🎁 ਹੋ ਗਿਆ! ਤੁਹਾਨੂੰ ਦੋਵਾਂ ਨੂੰ ਇਸ ਚੈਟ ਲਈ 1 ਮਹੀਨੇ ਦਾ Diralo Plus ਮੁਫ਼ਤ ਮਿਲ ਗਿਆ।",
     anrufMinutenLeer: "ਇਸ ਮਹੀਨੇ ਦੇ ਲਾਈਵ ਸਬਟਾਈਟਲ ਮਿੰਟ ਖ਼ਤਮ ਹੋ ਗਏ ਹਨ। ਕਾਲ ਸਬਟਾਈਟਲ ਤੋਂ ਬਿਨਾਂ ਜਾਰੀ ਰਹੇਗੀ – Diralo Plus ਨਾਲ ਤੁਹਾਨੂੰ ਹੋਰ ਮਿਲਦੇ ਹਨ।",
@@ -1698,6 +1721,8 @@ const TEXTE = {
     ausblenden: "ਹਟਾਉਣ ਲਈ ਟੈਪ ਕਰੋ",
   },
   ne: {
+    videoAufnehmen: "भिडियो रेकर्ड गर्नुहोस्",
+    videoVorbereiten: "भिडियो तयार हुँदैछ …",
     bonusHinweis: "🎁 तपाईंको व्यक्तिले पनि लेखेपछि, तपाईं दुवैले १ महिना Diralo Plus निःशुल्क पाउनुहुन्छ।",
     bonusDa: "🎁 भयो! यो च्याटका लागि तपाईं दुवैले १ महिना Diralo Plus निःशुल्क पाउनुभयो।",
     anrufMinutenLeer: "यस महिनाको लाइभ सबटाइटल मिनेट सकियो। कल सबटाइटलबिना जारी रहन्छ – Diralo Plus ले तपाईंलाई थप दिन्छ।",
@@ -2000,6 +2025,18 @@ async function dateiHochladen(datei, { raum, device, name, lang }) {
   });
   if (r.status === 413) throw Object.assign(new Error("gross"), { gross: true });
   if (!r.ok) throw new Error("fehler");
+}
+
+/* Videos vor dem Senden verkleinern, wie WhatsApp: Handyvideos sind
+   sonst nach wenigen Sekunden groesser als die 25 MB, die der Server
+   annimmt. Klappt das Verkleinern nicht, geht das Original. */
+async function videoKlein(uri) {
+  try {
+    const neu = await VideoKompressor.compress(uri, { compressionMethod: "auto" });
+    return neu || uri;
+  } catch {
+    return uri;
+  }
 }
 
 function groesseText(b) {
@@ -3394,12 +3431,32 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       if (!recht.granted) { setHinweis(t("ohneFotos")); return; }
       const wahl = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"] });
       if (wahl.canceled || !wahl.assets?.length) return;
-      const a = wahl.assets[0];
-      if (a.fileSize && a.fileSize > DATEI_MAX_BYTES) { setHinweis(t("dateiGross")); return; }
-      await dateiSenden({ uri: a.uri, name: a.fileName || "video.mp4", mime: a.mimeType || "video/mp4" });
+      await videoVerschicken(wahl.assets[0]);
     } catch {
       setHinweis(t("dateiFehler"));
     }
+  };
+
+  /* Video direkt mit der Handykamera aufnehmen (hoechstens 3 Minuten). */
+  const videoAufnehmen = async () => {
+    try {
+      const recht = await ImagePicker.requestCameraPermissionsAsync();
+      if (!recht.granted) { setHinweis(t("ohneKamera")); return; }
+      const wahl = await ImagePicker.launchCameraAsync({ mediaTypes: ["videos"], videoMaxDuration: 180 });
+      if (wahl.canceled || !wahl.assets?.length) return;
+      await videoVerschicken(wahl.assets[0]);
+    } catch {
+      setHinweis(t("dateiFehler"));
+    }
+  };
+
+  const videoVerschicken = async (a) => {
+    setLaedt(true);
+    setHinweis(t("videoVorbereiten"));
+    let uri = a.uri;
+    try { uri = await videoKlein(a.uri); } finally { setLaedt(false); }
+    const name = (a.fileName || "video.mp4").replace(/\.[^.]+$/, "") + ".mp4";
+    await dateiSenden({ uri, name, mime: "video/mp4" });
   };
 
   const dateiWaehlen = async () => {
@@ -3423,6 +3480,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   const anhangPunkte = [
     ["🖼️", t("galerie"), () => fotoSenden("galerie")],
     ["📷", t("kamera"), () => fotoSenden("kamera")],
+    ["🎥", t("videoAufnehmen"), videoAufnehmen],
     ["🎬", t("video"), videoWaehlen],
     ["📎", t("datei"), dateiWaehlen],
     ["📍", t("standort"), standortSenden],
