@@ -1195,6 +1195,10 @@ const OHNE_GRENZE = new Set(
     .split(",").map((r) => r.trim().toLowerCase()).filter(Boolean)
 );
 
+/* Welcher Tarif und welche Grenze zuletzt fuer einen Chat galten - damit
+   die Meldung "aufgebraucht" dem Nutzer das Richtige sagt. */
+const planVonRaum = new Map();
+
 async function imKontingent(room) {
   if (OHNE_GRENZE.has(String(room || "").toLowerCase())) return true;
   const monat = monatsKennung();
@@ -1209,6 +1213,7 @@ async function imKontingent(room) {
   } else {
     try {
       const k = await kontingent(room);
+      planVonRaum.set(room, { plan: k.plan, grenze: k.grenze });
       grenze = k.grenze;
       raeume = k.raeume;
       topf = k.bezahlt ? "abo:" + k.raeume.slice().sort().join(",") : "raum:" + room;
@@ -1284,7 +1289,7 @@ async function ensure(room, msgId, target) {
      Die Nachricht kommt trotzdem an - sie wird nur im Original gezeigt.
      Zustellung darf nie am Geld haengen. */
   if (!(await imKontingent(room))) {
-    io.to(room).emit("quotaReached", { id: msgId, grund: "monat" });
+    io.to(room).emit("quotaReached", { id: msgId, grund: "monat", ...(planVonRaum.get(room) || {}) });
     return null;
   }
 
@@ -1349,7 +1354,7 @@ async function uebersetzeBildText(room, msgId, target) {
   if (bildTextInFlight.has(key)) return bildTextInFlight.get(key);
 
   if (!(await imKontingent(room))) {
-    io.to(room).emit("quotaReached", { id: msgId, grund: "monat" });
+    io.to(room).emit("quotaReached", { id: msgId, grund: "monat", ...(planVonRaum.get(room) || {}) });
     return null;
   }
   if (!take("tr:day", TRANSLATIONS_PER_DAY, 24 * 60 * 60 * 1000)) {
@@ -1398,7 +1403,7 @@ async function ausspracheHelfen(room, msgId, target) {
   if (ausspracheInFlight.has(key)) return ausspracheInFlight.get(key);
 
   if (!(await imKontingent(room))) {
-    io.to(room).emit("quotaReached", { id: msgId, grund: "monat" });
+    io.to(room).emit("quotaReached", { id: msgId, grund: "monat", ...(planVonRaum.get(room) || {}) });
     io.to(room).emit("ausspracheFehler", { id: msgId, lang: target });
     return null;
   }

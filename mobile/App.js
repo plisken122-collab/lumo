@@ -156,7 +156,9 @@ const TEXTE = {
     abbrechen: "Abbrechen",
     entfernen: "Entfernen",
     nochKeine: "Noch keine benutzt.",
-    kontingent: "Das kostenlose Übersetzungs-Kontingent ist erreicht. Mit Diralo Plus geht es unbegrenzt weiter.",
+    kontingent: "Die {n} kostenlosen Übersetzungen für diesen Monat sind aufgebraucht. Nachrichten kommen weiter an, im Original. Mit Diralo Plus hast du 1.500 im Monat.",
+    kontingentPlus: "Die {n} Übersetzungen von Diralo Plus sind für diesen Monat aufgebraucht. Nachrichten kommen weiter an, im Original. Ab dem 1. geht es weiter – oder wechsle zu Diralo Family.",
+    kontingentFamilie: "Die {n} Übersetzungen von Diralo Family sind für diesen Monat aufgebraucht. Nachrichten kommen weiter an, im Original. Ab dem 1. geht es weiter.",
     uebersFehler: "Übersetzung gerade nicht möglich. Nachricht wird im Original gezeigt.",
     zuVieleJoins: "Zu viele Beitritts-Versuche. Bitte kurz warten.",
     langsamer: "Etwas langsamer - zu viele Nachrichten in kurzer Zeit.",
@@ -302,7 +304,9 @@ const TEXTE = {
     abbrechen: "Cancelar",
     entfernen: "Remover",
     nochKeine: "Ainda nenhum usado.",
-    kontingent: "Atingiste o limite gratuito de traduções. Com o Diralo Plus continua sem limites.",
+    kontingent: "As {n} traduções gratuitas deste mês esgotaram-se. As mensagens continuam a chegar, no original. Com o Diralo Plus tens 1.500 por mês.",
+    kontingentPlus: "As {n} traduções do Diralo Plus deste mês esgotaram-se. As mensagens continuam a chegar, no original. Recomeça no dia 1 – ou muda para o Diralo Family.",
+    kontingentFamilie: "As {n} traduções do Diralo Family deste mês esgotaram-se. As mensagens continuam a chegar, no original. Recomeça no dia 1.",
     uebersFehler: "Tradução não disponível de momento. A mensagem aparece no original.",
     zuVieleJoins: "Demasiadas tentativas de entrada. Espera um pouco.",
     langsamer: "Mais devagar - demasiadas mensagens em pouco tempo.",
@@ -448,7 +452,9 @@ const TEXTE = {
     abbrechen: "Cancel",
     entfernen: "Remove",
     nochKeine: "None used yet.",
-    kontingent: "The free translation quota is used up. Diralo Plus continues without limits.",
+    kontingent: "Your {n} free translations for this month are used up. Messages still arrive, in the original. Diralo Plus gives you 1,500 a month.",
+    kontingentPlus: "Your {n} Diralo Plus translations for this month are used up. Messages still arrive, in the original. It resets on the 1st – or switch to Diralo Family.",
+    kontingentFamilie: "Your {n} Diralo Family translations for this month are used up. Messages still arrive, in the original. It resets on the 1st.",
     uebersFehler: "Translation not possible right now. The message is shown in the original.",
     zuVieleJoins: "Too many join attempts. Please wait a moment.",
     langsamer: "Slow down - too many messages in a short time.",
@@ -594,7 +600,9 @@ const TEXTE = {
     abbrechen: "Cancelar",
     entfernen: "Quitar",
     nochKeine: "Ninguno usado aún.",
-    kontingent: "Se ha agotado el cupo gratuito de traducciones. Con Diralo Plus sigues sin límites.",
+    kontingent: "Se han agotado las {n} traducciones gratuitas de este mes. Los mensajes siguen llegando, en el original. Con Diralo Plus tienes 1.500 al mes.",
+    kontingentPlus: "Se han agotado las {n} traducciones de Diralo Plus de este mes. Los mensajes siguen llegando, en el original. Se renuevan el día 1, o cambia a Diralo Family.",
+    kontingentFamilie: "Se han agotado las {n} traducciones de Diralo Family de este mes. Los mensajes siguen llegando, en el original. Se renuevan el día 1.",
     uebersFehler: "Traducción no disponible ahora. El mensaje se muestra en el original.",
     zuVieleJoins: "Demasiados intentos de unirse. Espera un momento.",
     langsamer: "Más despacio - demasiados mensajes en poco tiempo.",
@@ -740,7 +748,9 @@ const TEXTE = {
     abbrechen: "Annuler",
     entfernen: "Retirer",
     nochKeine: "Aucun utilisé pour l'instant.",
-    kontingent: "Le quota gratuit de traductions est épuisé. Avec Diralo Plus, c'est illimité.",
+    kontingent: "Vos {n} traductions gratuites de ce mois sont épuisées. Les messages arrivent toujours, dans la langue d'origine. Avec Diralo Plus, vous en avez 1 500 par mois.",
+    kontingentPlus: "Vos {n} traductions Diralo Plus de ce mois sont épuisées. Les messages arrivent toujours, dans la langue d'origine. Elles reviennent le 1er – ou passez à Diralo Family.",
+    kontingentFamilie: "Vos {n} traductions Diralo Family de ce mois sont épuisées. Les messages arrivent toujours, dans la langue d'origine. Elles reviennent le 1er.",
     uebersFehler: "Traduction impossible pour le moment. Le message s'affiche en original.",
     zuVieleJoins: "Trop de tentatives. Patiente un instant.",
     langsamer: "Plus doucement - trop de messages en peu de temps.",
@@ -886,7 +896,9 @@ const TEXTE = {
     abbrechen: "Annulla",
     entfernen: "Rimuovi",
     nochKeine: "Nessuno usato finora.",
-    kontingent: "La quota gratuita di traduzioni è esaurita. Con Diralo Plus continui senza limiti.",
+    kontingent: "Le {n} traduzioni gratuite di questo mese sono esaurite. I messaggi arrivano ancora, in originale. Con Diralo Plus ne hai 1.500 al mese.",
+    kontingentPlus: "Le {n} traduzioni di Diralo Plus di questo mese sono esaurite. I messaggi arrivano ancora, in originale. Si rinnovano il giorno 1, oppure passa a Diralo Family.",
+    kontingentFamilie: "Le {n} traduzioni di Diralo Family di questo mese sono esaurite. I messaggi arrivano ancora, in originale. Si rinnovano il giorno 1.",
     uebersFehler: "Traduzione non disponibile ora. Il messaggio è mostrato in originale.",
     zuVieleJoins: "Troppi tentativi di accesso. Attendi un momento.",
     langsamer: "Più piano - troppi messaggi in poco tempo.",
@@ -2276,9 +2288,16 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       setNachrichten((alt) => alt.map((m) =>
         m.id === id ? { ...m, detected: dl } : m));
     });
-    socket.on("quotaReached", () => {
-      setHinweis(t("kontingent"));
-      setAboOffen(true);
+    socket.on("quotaReached", (ev) => {
+      /* Der Server sagt, welcher Tarif aufgebraucht ist und wie gross er war. */
+      const plan = ev?.plan || "frei";
+      const schluessel = plan === "plus" ? "kontingentPlus" : plan === "familie" ? "kontingentFamilie" : "kontingent";
+      const n = Number(ev?.grenze) || (plan === "plus" ? 1500 : plan === "familie" ? 5000 : 200);
+      let zahl = String(n);
+      try { zahl = n.toLocaleString(lang); } catch {}
+      setHinweis(t(schluessel).replace("{n}", zahl));
+      /* Family ist der groesste Tarif - da gibt es nichts mehr anzubieten. */
+      if (plan !== "familie" && plan !== "firma") setAboOffen(true);
     });
     socket.on("translationError", () => {
       setHinweis(t("uebersFehler"));

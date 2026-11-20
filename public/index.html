@@ -1202,12 +1202,12 @@ function start() {
       composerButtons();
     }
   });
-  socket.on("quotaReached", ({ id, grund }) => {
+  socket.on("quotaReached", ({ id, grund, plan }) => {
     /* Zwei verschiedene Grenzen, zwei verschiedene Antworten. Die
        Tagesgrenze geht morgen vorbei - da reicht ein Hinweis. Die
        Monatsgrenze geht nicht vorbei, und sie ist der Moment, in dem
        jemand entscheidet, ob er bezahlt. */
-    if (grund === "monat") zeigeQuotaLeiste();
+    if (grund === "monat") zeigeQuotaLeiste(plan);
     else showErr(T("errQuota"));
     const m = msgs.get(id); if (m) { m.failed = true; m.bildLaeuft = false; render(m); }
   });
@@ -2813,9 +2813,11 @@ function codeAusLink() {
 
 function scrollDown() { $("log").scrollTop = $("log").scrollHeight; }
 /* Die Monatsgrenze bleibt sichtbar, bis der Chat gewechselt wird. */
-function zeigeQuotaLeiste() {
+function zeigeQuotaLeiste(plan) {
   $("quotaText").textContent = T("errQuotaMonat");
   $("quotaLink").textContent = T("quotaLink");
+  /* Family ist der groesste Tarif - dann gibt es keinen Tarif mehr anzubieten. */
+  $("quotaLink").classList.toggle("hide", plan === "familie" || plan === "firma");
   $("quotaBar").classList.remove("hide");
 }
 function versteckeQuotaLeiste() {
