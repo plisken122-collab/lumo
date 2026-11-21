@@ -1255,7 +1255,7 @@ const costOf = (u) => (u.inTokens / 1e6) * PRICE_IN + (u.outTokens / 1e6) * PRIC
 /* Chats ohne Monatsgrenze, z. B. der eigene des Betreibers. Kommagetrennt
    in RAEUME_OHNE_GRENZE; ohne Angabe gilt "algarve". */
 const OHNE_GRENZE = new Set(
-  String(process.env.RAEUME_OHNE_GRENZE ?? "")
+  String(process.env.RAEUME_OHNE_GRENZE ?? "algarve")
     .split(",").map((r) => r.trim().toLowerCase()).filter(Boolean)
 );
 
