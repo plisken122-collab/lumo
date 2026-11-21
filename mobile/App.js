@@ -65,6 +65,11 @@ const sprachName = (code) => SPRACHEN.find((x) => x.code === code)?.label || cod
 /* Einladung wie in der Web-App: Link mit dem Code hinter #c=. */
 const WEB_URL = "https://diralo.app";
 const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
+/* Umgekehrt: Code aus einem Einladungs-Link (diralo.app/#c=...) lesen. */
+const codeAusLink = (url) => {
+  const m = /[#&?]c=([^&#]+)/.exec(String(url || ""));
+  try { return m ? decodeURIComponent(m[1]).trim().toLowerCase().slice(0, 60) : null; } catch { return null; }
+};
 
 /* ------------------------------ Texte ------------------------------
    Die Oberflaeche folgt der in der App gewaehlten Sprache: Deutsch,
@@ -2431,6 +2436,16 @@ function Haupt() {
     })();
   }, []);
 
+  /* Einladungs-Link angetippt (diralo.app/#c=...): Android oeffnet die App
+     statt des Browsers. Mit Namen geht es direkt in den Chat, sonst steht
+     der Code auf der Startseite schon im Feld. */
+  const [linkCode, setLinkCode] = useState(null);
+  useEffect(() => {
+    Linking.getInitialURL().then((u) => { const c = codeAusLink(u); if (c) setLinkCode(c); }).catch(() => {});
+    const sub = Linking.addEventListener("url", ({ url }) => { const c = codeAusLink(url); if (c) setLinkCode(c); });
+    return () => sub.remove();
+  }, []);
+
   const betreten = useCallback(async (code) => {
     const c = String(code || "").trim().toLowerCase();
     if (!c || !name.trim()) return;
@@ -2442,6 +2457,11 @@ function Haupt() {
     setRaum(c);
     pushAnmelden({ device, name: name.trim(), lang });
   }, [name, lang, device]);
+
+  useEffect(() => {
+    if (!bereit || !linkCode || !device) return;
+    if (name.trim()) { setAnsicht(null); betreten(linkCode); setLinkCode(null); }
+  }, [bereit, linkCode, device, name, betreten]);
 
   /* Offener Chat: dort keine Meldung zeigen. */
   useEffect(() => { offenerRaum = raum; }, [raum]);
@@ -2522,6 +2542,7 @@ function Haupt() {
             unten={insets.bottom}
             onStart={() => betreten(neuerCode())}
             onJoin={betreten}
+            vorCode={linkCode}
             onHilfe={setAnsicht}
           />
         )}
@@ -2580,8 +2601,10 @@ function UpdateHinweis() {
   );
 }
 
-function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, onHilfe }) {
+function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, onHilfe, vorCode = null }) {
   const [code, setCode] = useState("");
+  /* Code aus einem Einladungs-Link schon eintragen (Name fehlt noch). */
+  useEffect(() => { if (vorCode) setCode(vorCode); }, [vorCode]);
   const [chats, setChats] = useState([]);
   const [neues, setNeues] = useState({});
   const [sprachWahl, setSprachWahl] = useState(false);

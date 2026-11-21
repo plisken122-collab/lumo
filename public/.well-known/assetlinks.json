@@ -1,10 +1,13 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "app.diralo.twa",
       "sha256_cert_fingerprints": [
+        "E4:F8:05:46:EA:1F:62:DF:04:EA:04:D1:3D:D8:6E:D1:5D:14:51:67:9D:C2:AE:D9:BA:74:03:91:3F:EC:9A:C5",
         "73:99:FC:C5:83:0A:BA:FD:00:F2:0D:F1:D3:04:FE:1A:57:E4:E1:F6:CB:10:AF:34:CE:54:0B:56:11:99:AA:DF",
         "FC:D4:49:A1:E9:7A:EB:18:7A:99:36:7A:22:6B:D2:ED:2B:D3:0D:B1:4A:89:07:E9:0B:14:7A:16:24:F1:8F:46"
       ]
