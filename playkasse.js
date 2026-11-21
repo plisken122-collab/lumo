@@ -182,3 +182,115 @@ export async function quittieren(produkt, token) {
     "POST", {}
   );
 }
+
+/* ---------------------------------------------------------------------
+   Statistik aus der Play Console (fuer die Admin-Seite)
+
+   Google legt jeden Tag CSV-Berichte in einen Cloud-Storage-Ordner des
+   Entwicklerkontos: Installationen je Tag und Store-Besuche je Quelle
+   (auch nach utm_source). Das Dienstkonto braucht dafuer in der Play
+   Console das Recht "App-Informationen ansehen und Berichte
+   herunterladen". Gelesen wird mit eigenem Token (nur Lesen, Storage).
+--------------------------------------------------------------------- */
+const BERICHTE = process.env.PLAY_BERICHTE_BUCKET || "pubsite_prod_8313497320678553532";
+let speicherZugang = { token: null, bis: 0 };
+
+async function speicherToken() {
+  if (!KONTO) throw new Error("Google Play ist nicht eingerichtet");
+  if (speicherZugang.token && Date.now() < speicherZugang.bis - 60 * 1000) return speicherZugang.token;
+  const jetzt = Math.floor(Date.now() / 1000);
+  const kopf = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+  const inhalt = b64url(JSON.stringify({
+    iss: KONTO.client_email,
+    scope: "https://www.googleapis.com/auth/devstorage.read_only",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: jetzt, exp: jetzt + 3600,
+  }));
+  const unterschrift = crypto.createSign("RSA-SHA256")
+    .update(`${kopf}.${inhalt}`).sign(KONTO.private_key).toString("base64url");
+  const antwort = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${kopf}.${inhalt}.${unterschrift}` }).toString(),
+  });
+  const d = await antwort.json().catch(() => ({}));
+  if (!antwort.ok || !d.access_token) throw new Error("Google-Anmeldung (Berichte): " + (d.error_description || d.error || antwort.status));
+  speicherZugang = { token: d.access_token, bis: Date.now() + Number(d.expires_in || 3600) * 1000 };
+  return speicherZugang.token;
+}
+
+/* Play-Berichte sind UTF-16 mit BOM; manche UTF-8. */
+function csvLesen(buf) {
+  let text = buf[0] === 0xff && buf[1] === 0xfe ? buf.slice(2).toString("utf16le")
+    : buf[0] === 0xfe && buf[1] === 0xff ? Buffer.from(buf.slice(2)).swap16().toString("utf16le")
+    : buf.toString("utf8").replace(/^\uFEFF/, "");
+  const zeilen = [];
+  for (const z of text.split(/\r?\n/)) {
+    if (!z.trim()) continue;
+    const felder = []; let f = "", q = false;
+    for (let i = 0; i < z.length; i++) {
+      const c = z[i];
+      if (q) { if (c === '"' && z[i + 1] === '"') { f += '"'; i++; } else if (c === '"') q = false; else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ",") { felder.push(f); f = ""; }
+      else f += c;
+    }
+    felder.push(f);
+    zeilen.push(felder);
+  }
+  const kopf = (zeilen.shift() || []).map((h) => h.trim().toLowerCase());
+  return zeilen.map((z) => Object.fromEntries(kopf.map((h, i) => [h, (z[i] || "").trim()])));
+}
+
+async function bericht(pfad) {
+  const token = await speicherToken();
+  const a = await fetch(`https://storage.googleapis.com/storage/v1/b/${BERICHTE}/o/${encodeURIComponent(pfad)}?alt=media`,
+    { headers: { Authorization: `Bearer ${token}` } });
+  if (a.status === 404) return [];
+  if (!a.ok) throw new Error(`Bericht ${pfad.split("/").pop()}: HTTP ${a.status}` + (a.status === 403 ? " (Recht \"Berichte herunterladen\" fehlt?)" : ""));
+  return csvLesen(Buffer.from(await a.arrayBuffer()));
+}
+
+const zahl = (x) => Number(String(x || "0").replace(/[^0-9.-]/g, "")) || 0;
+const spalte = (z, ...namen) => { for (const n of namen) if (z[n] !== undefined) return z[n]; return ""; };
+
+/* Letzte 28 Tage: Installationen, aktive Geraete, Store-Besucher und
+   Installationen je Quelle (utm_source). */
+let statistikZwischen = { wert: null, bis: 0 };
+export async function statistik() {
+  if (statistikZwischen.wert && Date.now() < statistikZwischen.bis) return statistikZwischen.wert;
+  const jetzt = new Date();
+  const monate = [0, 1].map((m) => {
+    const d = new Date(Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth() - m, 1));
+    return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  });
+  const seit = new Date(Date.now() - 28 * 86400000).toISOString().slice(0, 10);
+  const inst = [], quelle = [];
+  for (const m of monate) {
+    inst.push(...await bericht(`stats/installs/installs_${PAKET}_${m}_overview.csv`));
+    quelle.push(...await bericht(`stats/store_performance/store_performance_${PAKET}_${m}_traffic_source.csv`));
+  }
+  const imZeitraum = (z) => String(spalte(z, "date")).slice(0, 10) >= seit;
+  const tage = inst.filter(imZeitraum).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const installationen = tage.reduce((s, z) => s + zahl(spalte(z, "daily device installs", "daily user installs")), 0);
+  const deinstalliert = tage.reduce((s, z) => s + zahl(spalte(z, "daily device uninstalls", "daily user uninstalls")), 0);
+  const letzte = tage[tage.length - 1] || {};
+  const aktiv = zahl(spalte(letzte, "active device installs", "total user installs"));
+  const jeQuelle = {};
+  let besucher = 0, gewonnen = 0;
+  for (const z of quelle.filter(imZeitraum)) {
+    const v = zahl(spalte(z, "store listing visitors")), g = zahl(spalte(z, "store listing acquisitions"));
+    besucher += v; gewonnen += g;
+    const k = spalte(z, "utm source") || spalte(z, "traffic source") || "?";
+    jeQuelle[k] ||= { besucher: 0, installationen: 0 };
+    jeQuelle[k].besucher += v; jeQuelle[k].installationen += g;
+  }
+  const wert = {
+    seit, bis: String(letzte.date || "").slice(0, 10) || null,
+    installationen, deinstalliert, aktiv, besucher, gewonnen,
+    quote: besucher ? Math.round((gewonnen / besucher) * 1000) / 10 : null,
+    jeQuelle, tage: tage.map((z) => ({ tag: String(z.date).slice(0, 10), n: zahl(spalte(z, "daily device installs", "daily user installs")) })),
+  };
+  statistikZwischen = { wert, bis: Date.now() + 60 * 60 * 1000 };
+  return wert;
+}

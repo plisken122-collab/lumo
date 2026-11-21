@@ -963,6 +963,17 @@ app.get("/api/trichter", async (req, res) => {
 
 /* Alle Zahlen fuer die Uebersicht in einem Rutsch. Nur Aggregate -
    keine Chat-Codes, keine Nachrichteninhalte. */
+/* Zahlen aus der Play Console (Installationen, Store-Besucher, Quellen).
+   Google aktualisiert die Berichte einmal am Tag, mit 1-2 Tagen Verzug. */
+app.get("/api/admin/play-statistik", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
+  try {
+    res.json(await play.statistik());
+  } catch (err) {
+    res.status(502).json({ error: err.message.slice(0, 200) });
+  }
+});
+
 app.get("/api/admin/daten", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   try {

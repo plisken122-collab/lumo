@@ -89,6 +89,13 @@
       <div class="tage" id="tage"></div>
     </div>
 
+    <div class="card" id="playCard">
+      <h2>Google Play (letzte 28 Tage)</h2>
+      <div id="play" class="small">Lädt …</div>
+      <p class="small" style="margin-top:10px">Aus den Berichten der Play Console – Google aktualisiert sie
+      einmal am Tag, mit 1–2 Tagen Verzug. „Quelle“ ist die Kennung im Play-Link (utm_source), z.&nbsp;B. facebook.</p>
+    </div>
+
     <div class="card hide" id="quellenCard">
       <h2>Quellen (getaggte Links)</h2>
       <div id="quellen"></div>
@@ -224,7 +231,27 @@ function zeichneQuellen(summe) {
   }).join("");
 }
 
+async function playLaden() {
+  try {
+    const a = await fetch("/api/admin/play-statistik");
+    const d = await a.json();
+    if (!a.ok) { $("play").textContent = "Noch nicht verfügbar: " + (d.error || a.status); return; }
+    const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const quellen = Object.entries(d.jeQuelle || {}).sort((x, y) => y[1].besucher - x[1].besucher);
+    $("play").innerHTML =
+      `<div class="reihe"><div class="name">Installationen</div><div><b>${nf.format(d.installationen)}</b> · deinstalliert ${nf.format(d.deinstalliert)} · aktiv installiert ${nf.format(d.aktiv)}</div></div>` +
+      `<div class="reihe"><div class="name">Store-Besucher</div><div><b>${nf.format(d.besucher)}</b> → ${nf.format(d.gewonnen)} installiert` +
+      (d.quote !== null ? ` (${String(d.quote).replace(".", ",")} %)` : "") + `</div></div>` +
+      quellen.map(([k, v]) => `<div class="reihe"><div class="name" style="font-weight:500">${esc(k)}</div>` +
+        `<div class="small">Besucher <b style="color:var(--ink)">${nf.format(v.besucher)}</b> · installiert <b style="color:var(--ink)">${nf.format(v.installationen)}</b></div></div>`).join("") +
+      `<div class="small" style="margin-top:6px">Zeitraum ${esc(d.seit)} bis ${esc(d.bis || "–")}</div>`;
+  } catch {
+    $("play").textContent = "Die Play-Zahlen ließen sich nicht laden.";
+  }
+}
+
 async function laden() {
+  playLaden();
   try {
     const a = await fetch("/api/admin/daten");
     if (a.status === 401) { location.reload(); return; }
