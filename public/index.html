@@ -401,6 +401,9 @@
   .meta .zeit { opacity:.7; }
   /* Lese-Haken (gelesen) - in der Akzentfarbe, wie das Blau bei WhatsApp. */
   .gelesen-haken { color:var(--mine); font-weight:600; letter-spacing:-2px; }
+  .durchsage { background:#FFF6DD; border-bottom:1px solid #E3B23C; padding:8px 14px; cursor:pointer; }
+  .durchsage .k { font-size:12px; font-weight:800; color:#8A6A12; }
+  .durchsage .t { font-size:14px; color:#14213D; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .gelesen-zahl { cursor:pointer; color:var(--muted, #8C96AD); font-weight:600; }
   .gelesen-zahl.alle { color:var(--mine); }
   .sheet-inner button.primary { background:#14213D; color:#fff; text-align:center; font-weight:700; border-radius:12px; }
@@ -663,6 +666,7 @@
       <button id="bell" class="bell" type="button"></button>
       <span class="langwrap" id="langwrap">🌐<select id="langSwitch" aria-label=""></select></span>
     </div>
+    <div id="durchsage" class="durchsage hide"></div>
     <div id="logWrap">
       <div id="log"></div>
       <!-- Was ein allein Angekommener sonst nicht sieht: dass jetzt jemand
@@ -901,7 +905,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v88";
+const BUILD = "v89";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1139,7 +1143,8 @@ function start() {
      empfangen und Verbindungen liegenlassen. Nur Verlauf leeren und in
      den (evtl. neuen) Raum beitreten. */
   if (socket) {
-    gruppe = { name: "", admin: "", mitglieder: [] };
+    gruppe = { name: "", admin: "", mitglieder: [], angeheftet: null };
+    zeigeDurchsage();
     $("log").textContent = "";
     msgs.clear();
     asked.clear();
@@ -1210,7 +1215,9 @@ function start() {
   /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
   socket.on("gruppe", (g) => {
     if (!g || typeof g !== "object") return;
-    gruppe = { name: g.name || "", admin: g.admin || "", mitglieder: Array.isArray(g.mitglieder) ? g.mitglieder : [] };
+    gruppe = { name: g.name || "", admin: g.admin || "", mitglieder: Array.isArray(g.mitglieder) ? g.mitglieder : [],
+               angeheftet: g.angeheftet && g.angeheftet.id ? g.angeheftet : null };
+    zeigeDurchsage();
     if (gruppe.name) {
       const liste = chatsLaden();
       const c = liste.find((x) => x.code === me.room);
@@ -1224,7 +1231,7 @@ function start() {
     msgs.forEach((m) => { if (m.device === deviceId) render(m); });
     if (sheet && sheet.dataset.art === "gruppe") zeigeGruppe();
   });
-  socket.on("gruppeFehler", () => showErr(T("gruppeNurChef")));
+  socket.on("gruppeFehler", (e) => showErr(T(e && e.grund === "nurTeamPlus" ? "nurTeamPlus" : "gruppeNurChef")));
   socket.on("deleteFailed", () => { showErr(T("delFailed")); });
   socket.on("deleted", ({ id }) => {
     const m = msgs.get(id);
@@ -1268,6 +1275,7 @@ function start() {
   socket.on("translated", ({ id, lang, text }) => {
     const m = msgs.get(id); if (!m) return;
     m.tr[lang] = text; render(m);
+    if (gruppe.angeheftet && gruppe.angeheftet.id === id) zeigeDurchsage();
   });
   socket.on("translationError", ({ id }) => {
     showErr(T("errTranslate"));
@@ -2787,7 +2795,29 @@ function zeigeRaumLabel() {
 /* ------------------------------ Gruppe ------------------------------
    Ein Chat wird zur Gruppe, sobald jemand ihm einen Namen gibt; wer das
    zuerst tut, verwaltet sie (umbenennen, Leute entfernen). */
-let gruppe = { name: "", admin: "", mitglieder: [] };
+let gruppe = { name: "", admin: "", mitglieder: [], angeheftet: null };
+/* Durchsage oben im Chat: vom Chef angeheftet, in der eigenen Sprache. */
+function zeigeDurchsage() {
+  const el = $("durchsage");
+  if (!el) return;
+  const a0 = gruppe.angeheftet;
+  if (!a0) { el.classList.add("hide"); el.textContent = ""; return; }
+  const a = msgs.get(a0.id) || a0;
+  const text = (a.device !== deviceId && a.tr && a.tr[me.lang]) || a.text || "";
+  const st = istGruppe() ? lesestand(a) : null;
+  el.textContent = "";
+  const k = document.createElement("div");
+  k.className = "k";
+  k.textContent = T("durchsage") + (st ? `  ·  ✓✓ ${st.ja.length}/${st.ja.length + st.nein.length}` : "");
+  const t = document.createElement("div");
+  t.className = "t";
+  t.textContent = (a.name ? a.name + ": " : "") + text;
+  el.appendChild(k); el.appendChild(t);
+  el.onclick = () => {
+    if (gruppe.admin === deviceId && confirm(T("losloesen") + "?")) socket.emit("gruppeAnheften", { id: null });
+  };
+  el.classList.remove("hide");
+}
 const andereMitglieder = () => gruppe.mitglieder.filter((x) => x.device !== deviceId);
 const istGruppe = () => Boolean(gruppe.name) || andereMitglieder().length >= 2;
 function lesestand(m) {
@@ -2930,6 +2960,15 @@ function zeigeMenue(m) {
     a.textContent = T("delForAll");
     a.onclick = () => { socket.emit("deleteForAll", { id: m.id }); schliesseSheet(); };
     box.appendChild(a);
+  }
+
+  /* Chef einer Gruppe: als Durchsage oben anheften (Team Plus). */
+  if (istGruppe() && gruppe.admin === deviceId && !m.deleted) {
+    const pin = document.createElement("button");
+    pin.type = "button";
+    pin.textContent = T("anheften");
+    pin.onclick = () => { socket.emit("gruppeAnheften", { id: m.id }); schliesseSheet(); };
+    box.appendChild(pin);
   }
 
   const b = document.createElement("button");

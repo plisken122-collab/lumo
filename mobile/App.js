@@ -113,6 +113,10 @@ const TEXTE = {
     codeEingeben: "Zurück und Code eingeben",
     umbenennen: "Name für diesen Chat",
     chatNameBsp: "z. B. Maria 💕",
+    anheften: "📌 Für alle anheften",
+    losloesen: "Nicht mehr anheften",
+    durchsage: "📌 Durchsage",
+    nurTeamPlus: "Durchsagen gibt es mit Diralo Team Plus.",
     teamName: "Diralo Team",
     teamText: "Für Betriebe: bis 20 Personen, 3 Gruppen, 5.000 Übersetzungen im Monat",
     teamplusName: "Diralo Team Plus",
@@ -285,6 +289,10 @@ const TEXTE = {
     codeEingeben: "Voltar e escrever o código",
     umbenennen: "Nome para este chat",
     chatNameBsp: "p. ex. Carsten 💕",
+    anheften: "📌 Fixar para todos",
+    losloesen: "Desafixar",
+    durchsage: "📌 Aviso",
+    nurTeamPlus: "Os avisos fixados fazem parte do Diralo Team Plus.",
     teamName: "Diralo Team",
     teamText: "Para empresas: até 20 pessoas, 3 grupos, 5.000 traduções por mês",
     teamplusName: "Diralo Team Plus",
@@ -457,6 +465,10 @@ const TEXTE = {
     codeEingeben: "Go back and enter the code",
     umbenennen: "Name for this chat",
     chatNameBsp: "e.g. Maria 💕",
+    anheften: "📌 Pin for everyone",
+    losloesen: "Unpin",
+    durchsage: "📌 Announcement",
+    nurTeamPlus: "Pinned announcements come with Diralo Team Plus.",
     teamName: "Diralo Team",
     teamText: "For businesses: up to 20 people, 3 groups, 5,000 translations a month",
     teamplusName: "Diralo Team Plus",
@@ -629,6 +641,10 @@ const TEXTE = {
     codeEingeben: "Volver y escribir el código",
     umbenennen: "Nombre para este chat",
     chatNameBsp: "p. ej. María 💕",
+    anheften: "📌 Fijar para todos",
+    losloesen: "Dejar de fijar",
+    durchsage: "📌 Aviso",
+    nurTeamPlus: "Los avisos fijados vienen con Diralo Team Plus.",
     teamName: "Diralo Team",
     teamText: "Para empresas: hasta 20 personas, 3 grupos, 5.000 traducciones al mes",
     teamplusName: "Diralo Team Plus",
@@ -801,6 +817,10 @@ const TEXTE = {
     codeEingeben: "Revenir et saisir le code",
     umbenennen: "Nom de ce chat",
     chatNameBsp: "p. ex. Marie 💕",
+    anheften: "📌 Épingler pour tous",
+    losloesen: "Désépingler",
+    durchsage: "📌 Annonce",
+    nurTeamPlus: "Les annonces épinglées sont incluses dans Diralo Team Plus.",
     teamName: "Diralo Team",
     teamText: "Pour les entreprises : jusqu’à 20 personnes, 3 groupes, 5 000 traductions par mois",
     teamplusName: "Diralo Team Plus",
@@ -973,6 +993,10 @@ const TEXTE = {
     codeEingeben: "Torna indietro e inserisci il codice",
     umbenennen: "Nome di questa chat",
     chatNameBsp: "es. Maria 💕",
+    anheften: "📌 Fissa per tutti",
+    losloesen: "Non fissare più",
+    durchsage: "📌 Avviso",
+    nurTeamPlus: "Gli avvisi fissati sono inclusi in Diralo Team Plus.",
     teamName: "Diralo Team",
     teamText: "Per aziende: fino a 20 persone, 3 gruppi, 5.000 traduzioni al mese",
     teamplusName: "Diralo Team Plus",
@@ -1145,6 +1169,10 @@ const TEXTE = {
     codeEingeben: "戻ってコードを入力",
     umbenennen: "チャット名",
     chatNameBsp: "例：マリア 💕",
+    anheften: "📌 全員に固定",
+    losloesen: "固定を解除",
+    durchsage: "📌 お知らせ",
+    nurTeamPlus: "固定のお知らせは Diralo Team Plus で使えます。",
     teamName: "Diralo Team",
     teamText: "事業者向け：最大20人、3グループ、月5,000回の翻訳",
     teamplusName: "Diralo Team Plus",
@@ -1317,6 +1345,10 @@ const TEXTE = {
     codeEingeben: "वापस जाएँ और कोड डालें",
     umbenennen: "इस चैट का नाम",
     chatNameBsp: "जैसे मारिया 💕",
+    anheften: "📌 सबके लिए पिन करें",
+    losloesen: "पिन हटाएँ",
+    durchsage: "📌 घोषणा",
+    nurTeamPlus: "पिन की गई घोषणाएँ Diralo Team Plus में मिलती हैं।",
     teamName: "Diralo Team",
     teamText: "व्यवसायों के लिए: 20 लोग तक, 3 समूह, हर महीने 5,000 अनुवाद",
     teamplusName: "Diralo Team Plus",
@@ -1489,6 +1521,10 @@ const TEXTE = {
     codeEingeben: "واپس جائیں اور کوڈ درج کریں",
     umbenennen: "اس چیٹ کا نام",
     chatNameBsp: "مثلاً ماریہ 💕",
+    anheften: "📌 سب کے لیے پن کریں",
+    losloesen: "پن ہٹائیں",
+    durchsage: "📌 اعلان",
+    nurTeamPlus: "پن کیے گئے اعلانات Diralo Team Plus میں ملتے ہیں۔",
     teamName: "Diralo Team",
     teamText: "کاروبار کے لیے: 20 افراد تک، 3 گروپ، ہر ماہ 5,000 ترجمے",
     teamplusName: "Diralo Team Plus",
@@ -1661,6 +1697,10 @@ const TEXTE = {
     codeEingeben: "ফিরে গিয়ে কোডটি দিন",
     umbenennen: "এই চ্যাটের নাম",
     chatNameBsp: "যেমন মারিয়া 💕",
+    anheften: "📌 সবার জন্য পিন করুন",
+    losloesen: "পিন সরান",
+    durchsage: "📌 ঘোষণা",
+    nurTeamPlus: "পিন করা ঘোষণা Diralo Team Plus-এ পাওয়া যায়।",
     teamName: "Diralo Team",
     teamText: "ব্যবসার জন্য: ২০ জন পর্যন্ত, ৩টি গ্রুপ, মাসে ৫,০০০ অনুবাদ",
     teamplusName: "Diralo Team Plus",
@@ -1833,6 +1873,10 @@ const TEXTE = {
     codeEingeben: "ਵਾਪਸ ਜਾਓ ਅਤੇ ਕੋਡ ਦਰਜ ਕਰੋ",
     umbenennen: "ਇਸ ਚੈਟ ਦਾ ਨਾਮ",
     chatNameBsp: "ਜਿਵੇਂ Maria 💕",
+    anheften: "📌 ਸਭ ਲਈ ਪਿੰਨ ਕਰੋ",
+    losloesen: "ਪਿੰਨ ਹਟਾਓ",
+    durchsage: "📌 ਘੋਸ਼ਣਾ",
+    nurTeamPlus: "ਪਿੰਨ ਕੀਤੀਆਂ ਘੋਸ਼ਣਾਵਾਂ Diralo Team Plus ਵਿੱਚ ਮਿਲਦੀਆਂ ਹਨ।",
     teamName: "Diralo Team",
     teamText: "ਕਾਰੋਬਾਰਾਂ ਲਈ: 20 ਲੋਕਾਂ ਤੱਕ, 3 ਗਰੁੱਪ, ਹਰ ਮਹੀਨੇ 5,000 ਅਨੁਵਾਦ",
     teamplusName: "Diralo Team Plus",
@@ -2005,6 +2049,10 @@ const TEXTE = {
     codeEingeben: "फर्केर कोड हाल्नुहोस्",
     umbenennen: "यो च्याटको नाम",
     chatNameBsp: "जस्तै: मारिया 💕",
+    anheften: "📌 सबैका लागि पिन गर्नुहोस्",
+    losloesen: "पिन हटाउनुहोस्",
+    durchsage: "📌 सूचना",
+    nurTeamPlus: "पिन गरिएका सूचनाहरू Diralo Team Plus मा पाइन्छ।",
     teamName: "Diralo Team",
     teamText: "व्यवसायका लागि: २० जनासम्म, ३ समूह, महिनामा ५,००० अनुवाद",
     teamplusName: "Diralo Team Plus",
@@ -3413,7 +3461,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   const [aboArt, setAboArt] = useState("privat");
   const [anwesend, setAnwesend] = useState([]);
   /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
-  const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [] });
+  const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [], angeheftet: null });
   const [gruppeOffen, setGruppeOffen] = useState(false);
   const [gruppeEntwurf, setGruppeEntwurf] = useState("");
   /* Anrufe: offen = ich bin im Anruf; klingelt = jemand ruft mich an. */
@@ -3535,10 +3583,14 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     });
     socket.on("gruppe", (g) => {
       if (!g || typeof g !== "object") return;
-      setGruppe({ name: g.name || "", admin: g.admin || "", mitglieder: Array.isArray(g.mitglieder) ? g.mitglieder : [] });
+      setGruppe({ name: g.name || "", admin: g.admin || "", mitglieder: Array.isArray(g.mitglieder) ? g.mitglieder : [],
+                  angeheftet: g.angeheftet && g.angeheftet.id ? g.angeheftet : null });
       if (g.name) chatGruppeMerken(raum, g.name).catch(() => {});
     });
-    socket.on("gruppeFehler", () => setHinweis(t("gruppeNurChef")));
+    socket.on("gruppeFehler", (e) => {
+      if (e?.grund === "nurTeamPlus") { setHinweis(t("nurTeamPlus")); setAboArt("team"); setAboOffen(true); }
+      else setHinweis(t("gruppeNurChef"));
+    });
     /* Zurueck in die App, waehrend der Chat offen ist: jetzt gelesen. */
     socket.on("anwesend", (liste) => {
       setAnwesend((Array.isArray(liste) ? liste : []).filter((w) => w.device !== device).map((w) => w.name));
@@ -3911,6 +3963,27 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         </Pressable>
       </View>
 
+      {/* Durchsage: vom Chef oben angeheftet, jeder liest sie in seiner Sprache */}
+      {gruppe.angeheftet && (() => {
+        const a = nachrichten.find((m) => m.id === gruppe.angeheftet.id) || gruppe.angeheftet;
+        const text = (a.device !== device && a.tr && a.tr[lang]) || a.text || "";
+        const st = istGruppe ? lesestand(a) : null;
+        return (
+          <Pressable
+            style={s.durchsage}
+            onPress={() => Alert.alert(t("durchsage"),
+              `${a.name}: ${text}` + (st ? `\n\n✓✓ ${st.ja.length}/${st.ja.length + st.nein.length}` : ""),
+              gruppe.admin === device
+                ? [{ text: t("losloesen"), style: "destructive", onPress: () => sockRef.current?.emit("gruppeAnheften", { id: null }) },
+                   { text: "OK" }]
+                : [{ text: "OK" }])}
+          >
+            <Text style={s.durchsageTitel}>{t("durchsage")}{st ? `  ·  ✓✓ ${st.ja.length}/${st.ja.length + st.nein.length}` : ""}</Text>
+            <Text style={s.durchsageText} numberOfLines={2}>{text}</Text>
+          </Pressable>
+        );
+      })()}
+
       <Klingeln wer={klingelt} t={t} onAnnehmen={anrufAnnehmen} onAblehnen={anrufAblehnen} />
 
       {/* Gruppe: Name (nur der Chef), Mitglieder, Entfernen */}
@@ -4081,6 +4154,14 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
           >
             <Text style={s.aktionTxt}>{t("fuerMich")}</Text>
           </Pressable>
+          {istGruppe && gruppe.admin === device && !reagierenAuf.deleted && (
+            <Pressable
+              style={s.aktion}
+              onPress={() => { const m = reagierenAuf; setReagierenAuf(null); sockRef.current?.emit("gruppeAnheften", { id: m.id }); }}
+            >
+              <Text style={s.aktionTxt}>{t("anheften")}</Text>
+            </Pressable>
+          )}
           {reagierenAuf.device === device && !reagierenAuf.deleted && (
             <Pressable
               style={s.aktion}
@@ -4666,6 +4747,9 @@ const s = StyleSheet.create({
   wegTitel: { fontSize: 16.5, fontWeight: "800", color: FARBE.navy },
   wegText: { fontSize: 13.5, color: FARBE.grau, marginTop: 4, marginBottom: 12, lineHeight: 19 },
   chatCodeKlein: { fontSize: 12, color: FARBE.grau, marginTop: 1 },
+  durchsage: { backgroundColor: "#FFF6DD", borderBottomWidth: 1, borderBottomColor: "#E3B23C", paddingHorizontal: 14, paddingVertical: 8 },
+  durchsageTitel: { fontSize: 12, fontWeight: "800", color: "#8A6A12" },
+  durchsageText: { fontSize: 14, color: "#14213D", marginTop: 2 },
   gruppeHinweis: { fontSize: 13, color: FARBE.grau, marginTop: 10, lineHeight: 18 },
   gruppeNameGross: { fontSize: 20, fontWeight: "800", color: FARBE.navy, marginTop: 4 },
   mitglied: { flexDirection: "row", alignItems: "center", paddingVertical: 9, borderTopWidth: 1, borderTopColor: "#E7EAF2" },

@@ -57,9 +57,21 @@ export async function info(io, room) {
   try {
     for (const s of await io.in(room).fetchSockets()) if (s.data?.wer?.device) online.add(s.data.wer.device);
   } catch {}
+  /* Angeheftete Durchsage mitschicken - samt vorhandener Uebersetzungen,
+     damit jeder sie gleich in seiner Sprache sieht. */
+  let angeheftet = null;
+  if (gruppe?.angeheftet) {
+    try {
+      const m = await store.getMessage(gruppe.angeheftet);
+      if (m && m.room === room && !m.deleted) {
+        angeheftet = { id: m.id, name: m.name, device: m.device, text: m.text, lang: m.lang, at: m.at, tr: m.tr || {} };
+      }
+    } catch {}
+  }
   return {
     name: gruppe?.name || "",
     admin: gruppe?.admin || "",
+    angeheftet,
     mitglieder: mitglieder.map((m) => ({ ...m, online: online.has(m.device) })),
   };
 }
@@ -113,7 +125,7 @@ export async function spracheNeu(io, room, me) {
 
 /* Die Socket-Ereignisse. raum() und ich() liefern den aktuellen Stand
    aus server.js (der Raum wechselt, wenn jemand einen anderen Chat oeffnet). */
-export function handler(io, socket, raum, ich, rauswerfen) {
+export function handler(io, socket, raum, ich, rauswerfen, planVon = async () => "frei") {
   /* Damit ein Chef dieses Geraet hinauswerfen kann, ohne die Verbindung
      zu kappen (sonst haengt die Web-App danach fest). */
   socket.data.rauswerfen = rauswerfen;
@@ -141,6 +153,29 @@ export function handler(io, socket, raum, ich, rauswerfen) {
       await anAlle(io, room);
     } catch (err) {
       console.error("Gruppenname:", err.message);
+    }
+  });
+
+  /* Durchsage: Der Chef heftet eine Nachricht oben fuer alle an (id) oder
+     loest sie (id leer). Nur mit Diralo Team Plus. */
+  socket.on("gruppeAnheften", async ({ id } = {}) => {
+    const room = raum();
+    const me = ich();
+    if (zaehltNicht(room) || !me?.device) return;
+    if (!verifiziert(socket)) { socket.emit("gruppeFehler", { grund: "geraet" }); return; }
+    try {
+      const g = await store.getGruppe(room);
+      if (!g || g.admin !== me.device) { socket.emit("gruppeFehler", { grund: "nurChef" }); return; }
+      if ((await planVon(room)) !== "teamplus") { socket.emit("gruppeFehler", { grund: "nurTeamPlus" }); return; }
+      const nr = id ? String(id).slice(0, 60) : null;
+      if (nr) {
+        const m = await store.getMessage(nr);
+        if (!m || m.room !== room || m.deleted) return;
+      }
+      await store.setAngeheftet(room, nr);
+      await anAlle(io, room);
+    } catch (err) {
+      console.error("Anheften:", err.message);
     }
   });
 

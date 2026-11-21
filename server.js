@@ -1663,6 +1663,16 @@ app.post("/api/admin/loeschen", async (req, res) => {
    Klingeln oeffnet (z. B. ueber die Benachrichtigung), noch annehmen
    kann. Nur im Arbeitsspeicher; ein Anruf ueberlebt keinen Neustart. */
 const anrufe = new Map();   // room -> { name, device, video, at }
+
+/* Zwischenspeicher, die je beruehrtem Chat wachsen, nie unbegrenzt
+   werden lassen: stuendlich Altes weg, notfalls alles (es sind nur
+   Merker - fehlt einer, wird er beim naechsten Mal neu ermittelt). */
+setInterval(() => {
+  const jetzt = Date.now();
+  for (const [r, a] of anrufe) if (jetzt - (a?.at || 0) > 60 * 60 * 1000) anrufe.delete(r);
+  for (const [r, z] of planZwischen) if (!z || z.bis < jetzt) planZwischen.delete(r);
+  for (const map of [planVonRaum, bonusGeprueft, playNachgefragt]) if (map.size > 5000) map.clear();
+}, 60 * 60 * 1000).unref?.();
 const ANRUF_KLINGELT_MS = 60 * 1000;
 
 const RUFT_AN = {
@@ -2246,7 +2256,30 @@ app.post("/api/gif", async (req, res) => {
 const DATEI_MAX_BYTES = Number(process.env.DATEI_MAX_BYTES || 25_000_000);
 const dateiRoh = express.raw({ type: () => true, limit: DATEI_MAX_BYTES + 1000 });
 
+/* Grosse Dateien kommen ganz in den Speicher. Damit ein paar gleichzeitige
+   25-MB-Uploads den Server nicht an die Speichergrenze bringen, laufen
+   hoechstens DATEI_GLEICHZEITIG auf einmal; je Adresse gibt es am Tag
+   hoechstens DATEI_MB_TAG Megabyte (sonst liefe die Datenbank voll). */
+const DATEI_GLEICHZEITIG = Number(process.env.DATEI_GLEICHZEITIG || 4);
+const DATEI_MB_TAG = Number(process.env.DATEI_MB_TAG || 300);
+let dateiLaufend = 0;
+const dateiBytes = new Map();   // "tag|ip" -> Bytes
+function dateiBytesDazu(ip, n) {
+  const tag = new Date().toISOString().slice(0, 10);
+  if (dateiBytes.size > 20000) dateiBytes.clear();
+  const k = `${tag}|${ip}`;
+  const neu = (dateiBytes.get(k) || 0) + n;
+  dateiBytes.set(k, neu);
+  return neu <= DATEI_MB_TAG * 1_000_000;
+}
+
 app.post("/api/datei", (req, res, next) => {
+  if (dateiLaufend >= DATEI_GLEICHZEITIG) return res.status(503).json({ error: "Gerade viel los - gleich nochmal" });
+  dateiLaufend++;
+  let fertig = false;
+  const frei = () => { if (!fertig) { fertig = true; dateiLaufend--; } };
+  res.on("finish", frei);
+  res.on("close", frei);
   dateiRoh(req, res, (err) => {
     if (err) return res.status(err.status === 413 ? 413 : 400).json({ error: err.status === 413 ? "Datei zu gross" : "Datei unlesbar" });
     next();
@@ -2258,6 +2291,7 @@ app.post("/api/datei", (req, res, next) => {
     return res.status(400).json({ error: "Angaben unvollstaendig" });
   }
   if (bytes.length > DATEI_MAX_BYTES) return res.status(413).json({ error: "Datei zu gross" });
+  if (!dateiBytesDazu(req.ip, bytes.length)) return res.status(429).json({ error: "Fuer heute genug hochgeladen" });
 
   /* Der Typ entscheidet nur ueber die Anzeige (Video oder Datei). Was
      ausgeliefert wird, ist nie als Seite ausfuehrbar - siehe /medien. */
@@ -2637,7 +2671,11 @@ io.on("connection", (socket) => {
   });
 
   /* Gruppen: Name, Mitglieder, Entfernen (gruppe.js). */
-  gruppe.handler(io, socket, () => room, () => me, () => { room = null; });
+  gruppe.handler(io, socket, () => room, () => me, () => { room = null; }, async (r) => {
+    if (OHNE_GRENZE.has(String(r).toLowerCase())) return "teamplus";   // Betreiber-Chat zum Testen
+    const abo = await store.getAboByRoom(r);
+    return laeuftNoch(abo) ? abo.plan : "frei";
+  });
 
   /* Lesebestaetigung: jemand hat den Chat offen und alles bis "bis"
      gesehen. Nur an die anderen im Raum weiterreichen (nicht zurueck an

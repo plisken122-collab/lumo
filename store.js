@@ -310,6 +310,8 @@ export async function init() {
         entfernt BOOLEAN NOT NULL DEFAULT FALSE,
         PRIMARY KEY (room, device)
       );`);
+    /* Angeheftete Durchsage (Nachrichten-ID) - Team Plus. */
+    await pool.query(`ALTER TABLE gruppen ADD COLUMN IF NOT EXISTS angeheftet TEXT`);
   } catch (err) {
     schemaFehler = "Gruppen-Tabellen: " + err.message.slice(0, 150);
   }
@@ -1259,14 +1261,15 @@ export async function bonusAnzahl(geraet, seit) {
 --------------------------------------------------------------------- */
 export async function getGruppe(room) {
   if (!usingDatabase) return mem.gruppen.get(room) || null;
-  const { rows } = await pool.query(`SELECT name, admin, erstellt FROM gruppen WHERE room = $1`, [room]);
-  return rows[0] ? { name: rows[0].name, admin: rows[0].admin, erstellt: Number(rows[0].erstellt) } : null;
+  const { rows } = await pool.query(`SELECT name, admin, erstellt, angeheftet FROM gruppen WHERE room = $1`, [room]);
+  return rows[0] ? { name: rows[0].name, admin: rows[0].admin, erstellt: Number(rows[0].erstellt),
+                     angeheftet: rows[0].angeheftet || null } : null;
 }
 
 export async function setGruppe(room, name, admin) {
   if (!usingDatabase) {
     const alt = mem.gruppen.get(room);
-    mem.gruppen.set(room, { name, admin: alt?.admin || admin, erstellt: alt?.erstellt || Date.now() });
+    mem.gruppen.set(room, { name, admin: alt?.admin || admin, erstellt: alt?.erstellt || Date.now(), angeheftet: alt?.angeheftet || null });
     return;
   }
   await pool.query(
@@ -1274,6 +1277,16 @@ export async function setGruppe(room, name, admin) {
      ON CONFLICT (room) DO UPDATE SET name = EXCLUDED.name`,
     [room, name, admin, Date.now()]
   );
+}
+
+/* Durchsage anheften (Nachrichten-ID) oder loesen (null). */
+export async function setAngeheftet(room, id) {
+  if (!usingDatabase) {
+    const g = mem.gruppen.get(room);
+    if (g) g.angeheftet = id || null;
+    return;
+  }
+  await pool.query(`UPDATE gruppen SET angeheftet = $2 WHERE room = $1`, [room, id || null]);
 }
 
 export async function mitgliedDa(room, device, name, lang) {
