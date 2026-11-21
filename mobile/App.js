@@ -30,6 +30,7 @@ import * as Notifications from "expo-notifications";
 import * as Speech from "expo-speech";
 import { useShareIntent } from "expo-share-intent";
 import * as Application from "expo-application";
+import * as StoreReview from "expo-store-review";
 import { Anruf, Klingeln } from "./Anruf";
 import {
   initConnection, fetchProducts, requestPurchase, finishTransaction,
@@ -2350,6 +2351,25 @@ async function geheimLaden() {
   return GEHEIM;
 }
 
+/* Bewertung im Play Store - ueber Googles eigenes Fenster (In-App Review).
+   Gefragt wird nur, wer Diralo wirklich benutzt: mindestens 20 Nachrichten
+   von anderen bekommen, die App seit 2 Tagen, und hoechstens alle 90 Tage.
+   Ob das Fenster dann erscheint, entscheidet Google selbst (es hat eigene
+   Grenzen); nie mit Belohnung, nie nur an Zufriedene - so will es Google. */
+async function vielleichtBewerten() {
+  try {
+    const d = await jsonLaden("diralo_bewertung", {});
+    d.n = (d.n || 0) + 1;
+    d.erst = d.erst || Date.now();
+    const tag = 24 * 60 * 60 * 1000;
+    let fragen = d.n >= 20 && Date.now() - d.erst >= 2 * tag && (!d.zuletzt || Date.now() - d.zuletzt >= 90 * tag);
+    if (fragen && !(await StoreReview.hasAction())) fragen = false;
+    if (fragen) d.zuletzt = Date.now();
+    await AsyncStorage.setItem("diralo_bewertung", JSON.stringify(d));
+    if (fragen) setTimeout(() => StoreReview.requestReview().catch(() => {}), 2000);
+  } catch {}
+}
+
 /* Dauerhafte Geraete-Kennung (fuer "meine" Nachrichten + Server-Limits). */
 async function geraeteId() {
   try {
@@ -3499,6 +3519,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       if (m.device === device) amEnde.current = true;   // eigene Nachricht: immer runter
       if (amEnde.current) scrollUnten();
       if (m.device !== device) gelesenMelden();
+      if (m.device !== device && m.device !== "demo") vielleichtBewerten();
       if (m.device !== device && autoRef.current && m.text && AppState.currentState === "active") {
         const gleich = String(m.lang || "").split("-")[0] === String(lang).split("-")[0];
         if (gleich || !/\p{L}/u.test(m.text)) vorlesen(m.text, lang);

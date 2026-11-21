@@ -27,6 +27,7 @@
     "expo-speech": "~58.0.4",
     "expo-speech-recognition": "^58.0.1",
     "expo-status-bar": "~58.0.3",
+    "expo-store-review": "~58.0.3",
     "livekit-client": "^2.24.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
