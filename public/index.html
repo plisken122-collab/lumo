@@ -901,7 +901,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v87";
+const BUILD = "v88";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1026,6 +1026,16 @@ let installEreignis = null;
 const schonInstalliert = () =>
   window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 const PLAY_URL = "https://play.google.com/store/apps/details?id=app.diralo.twa";
+/* Woher der Besucher kam (?von=facebook ...) - beim ersten Besuch gemerkt.
+   Geht als Kennung mit in den Play Store; die Play Console zeigt dann,
+   wie viele Installationen aus welcher Quelle kommen. */
+let besuchsQuelle = new URLSearchParams(location.search).get("von");
+try {
+  if (besuchsQuelle && besuchsQuelle !== "android") localStorage.setItem("diralo-quelle", besuchsQuelle);
+  else besuchsQuelle = localStorage.getItem("diralo-quelle");
+} catch {}
+const playMitQuelle = () => PLAY_URL + "&referrer=" + encodeURIComponent(
+  "utm_source=" + String(besuchsQuelle || "website").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) + "&utm_medium=website");
 const istAndroid = () => /android/i.test(navigator.userAgent);
 const istIos = () =>
   /iphone|ipad|ipod/i.test(navigator.userAgent) ||
@@ -1087,10 +1097,11 @@ $("installLater").onclick = () => installBalkenWeg(true);
 /* Google-Play-Knopf auf der Startseite: nicht auf iPhones und nicht in
    der schon installierten Web-App. */
 if (!istIos() && !schonInstalliert()) $("playLink").classList.remove("hide");
+$("playLink").href = playMitQuelle();
 $("installGo").onclick = async () => {
   if (istAndroid()) {
     installBalkenWeg(true);
-    window.open(PLAY_URL, "_blank", "noopener");
+    window.open(playMitQuelle(), "_blank", "noopener");
     return;
   }
   const e = installEreignis;
