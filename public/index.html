@@ -110,6 +110,7 @@
   .demo-row.you .demo-bubble { background:var(--surface); border:1px solid var(--line); color:var(--ink); border-bottom-left-radius:5px; }
   .demo-row.them .demo-bubble { background:var(--mine); color:#fff; border-bottom-right-radius:5px; }
   .demo-flag { font-size:18px; line-height:1; padding-bottom:4px; }
+  .keine-app { text-align:center; font-size:14px; color:var(--ink); margin:10px 0 0; font-weight:600; }
   .demo-cap { margin:3px 0 0; text-align:center; font-size:11.5px; color:var(--muted); }
   /* Der eine Knopf, der einen kalten Besucher die Uebersetzung sofort
      erleben laesst - ohne Formular, direkt auf der Startseite. */
@@ -549,15 +550,16 @@
          versteht auch ein Besucher allein in einer Sekunde, was Diralo tut. -->
     <div class="demo" aria-hidden="true">
       <div class="demo-row you">
-        <span class="demo-flag">🇬🇧</span>
-        <span class="demo-bubble">I miss you ❤️</span>
+        <span class="demo-flag" id="demoFlagA">🇬🇧</span>
+        <span class="demo-bubble" id="demoTextA">I miss you ❤️</span>
       </div>
       <div class="demo-row them">
-        <span class="demo-flag">🇵🇹</span>
-        <span class="demo-bubble">Sinto a tua falta ❤️</span>
+        <span class="demo-flag" id="demoFlagB">🇵🇹</span>
+        <span class="demo-bubble" id="demoTextB">Sinto a tua falta ❤️</span>
       </div>
       <p class="demo-cap" id="t-demoCap">One writes — the other reads in their own language</p>
     </div>
+    <p class="keine-app" id="t-keineApp"></p>
 
     <!-- Der wichtigste Knopf der Startseite: ein kalter Besucher tippt hier
          einmal und sieht die Uebersetzung sofort - ohne Namen, ohne Code,
@@ -786,7 +788,15 @@ function guessLang() {
 }
 $("name").value = saved.name || "";
 $("room").value = saved.room || "";
-$("lang").value = saved.lang || guessLang();
+/* ?lang=ne aus einem Werbelink geht vor - wer auf eine Nepali-Anzeige
+   tippt, soll die Seite auf Nepali sehen, egal wie sein Handy steht. */
+const langAusLink = (() => {
+  try {
+    const l = new URLSearchParams(location.search).get("lang");
+    return l && LANGS.some(([c]) => c === l) ? l : "";
+  } catch { return ""; }
+})();
+$("lang").value = langAusLink || saved.lang || guessLang();
 
 /* Ueber einen Einladungslink gekommen? Dann steht der Chat schon fest.
    Das Feld bleibt sichtbar, damit man sieht, wo man landet - aber es
@@ -880,7 +890,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v83";
+const BUILD = "v84";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -894,13 +904,35 @@ const asked = new Set();
 /* ------------------------------------------------------------------
    Oberflaeche in der Sprache, die jemand fuer seine Nachrichten waehlt.
 ------------------------------------------------------------------- */
+/* Das Beispiel oben passt sich der Sprache an: Wer aus Nepal, Bangladesch,
+   Indien oder Pakistan kommt, schreibt in Portugal vor allem dem Chef -
+   also zeigen wir genau das, statt eines Liebesgrusses. */
+const ARBEIT_BEISPIEL = {
+  ne: ["🇳🇵", "हाकिम, आज म १० मिनेट ढिलो आउँछु, माफ गर्नुहोस्!"],
+  bn: ["🇧🇩", "বস, আজ আমি ১০ মিনিট দেরি করে আসব, দুঃখিত!"],
+  hi: ["🇮🇳", "सर, आज मैं 10 मिनट देर से आऊँगा, माफ़ कीजिए!"],
+  ur: ["🇵🇰", "سر، آج میں 10 منٹ دیر سے آؤں گا، معذرت!"],
+  pa: ["🇮🇳", "ਸਰ, ਅੱਜ ਮੈਂ 10 ਮਿੰਟ ਦੇਰੀ ਨਾਲ ਆਵਾਂਗਾ, ਮਾਫ਼ ਕਰਨਾ!"],
+};
+function zeigeBeispiel(code) {
+  const b = ARBEIT_BEISPIEL[String(code || "").slice(0, 2)];
+  const [fa, ta, fb, tb] = b
+    ? [b[0], b[1], "🇵🇹", "Chefe, hoje chego 10 minutos atrasado, desculpe!"]
+    : ["🇬🇧", "I miss you ❤️", "🇵🇹", "Sinto a tua falta ❤️"];
+  $("demoFlagA").textContent = fa; $("demoTextA").textContent = ta;
+  $("demoFlagB").textContent = fb; $("demoTextB").textContent = tb;
+  $("demoTextA").dir = "auto";
+  $("demoTextB").dir = "ltr";
+}
+
 function applyLanguage(code) {
   const L = window.LUMO_T;
   L.set(code);
   document.documentElement.lang = code;
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
-  for (const key of ["tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
+  zeigeBeispiel(code);
+  for (const key of ["keineApp", "tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText", "leerFalsch"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);

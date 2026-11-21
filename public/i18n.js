@@ -11,6 +11,7 @@
 window.LUMO_T = (function () {
   const S = {
     de: {
+      keineApp: "✅ Die andere Person öffnet nur einen Link – nichts installieren.",
       bonusHinweis: "🎁 Schreibt deine Person mit, bekommt ihr beide 1 Monat Diralo Plus gratis.", bonusDa: "🎁 Geschafft! Ihr habt für diesen Chat 1 Monat Diralo Plus gratis bekommen.",
       einlTitel: "Du hast eine Einladung bekommen?", einlText: "Gib den Chat-Code aus dem Link ein, dann landest du im selben Chat wie deine Person.",
       neuTitel: "Du möchtest jemanden einladen?", neuText: "Das startet einen neuen, leeren Chat. Danach schickst du deiner Person den Link.", beitreten: "Beitreten",
@@ -99,6 +100,7 @@ window.LUMO_T = (function () {
       gateWrong: "Das Wort stimmt nicht.", gateOffline: "Keine Verbindung. Nochmal versuchen.",
     },
     en: {
+      keineApp: "✅ The other person just opens a link – nothing to install.",
       bonusHinweis: "🎁 Once your person writes too, you both get 1 month of Diralo Plus free.", bonusDa: "🎁 Done! You both got 1 month of Diralo Plus free for this chat.",
       einlTitel: "Did you get an invitation?", einlText: "Enter the chat code from the link and you'll join the same chat as your person.",
       neuTitel: "Want to invite someone?", neuText: "This starts a new, empty chat. Then you send your person the link.", beitreten: "Join",
@@ -187,6 +189,7 @@ window.LUMO_T = (function () {
       gateWrong: "That word isn't right.", gateOffline: "No connection. Try again.",
     },
     "pt-PT": {
+      keineApp: "✅ A outra pessoa só abre um link – não precisa de instalar nada.",
       bonusHinweis: "🎁 Quando a tua pessoa também escrever, ganham os dois 1 mês de Diralo Plus grátis.", bonusDa: "🎁 Conseguido! Ganharam 1 mês de Diralo Plus grátis para este chat.",
       einlTitel: "Recebeste um convite?", einlText: "Escreve o código do chat que vem no link e entras no mesmo chat que a outra pessoa.",
       neuTitel: "Queres convidar alguém?", neuText: "Isto cria um chat novo e vazio. Depois envias o link à outra pessoa.", beitreten: "Entrar",
@@ -275,6 +278,7 @@ window.LUMO_T = (function () {
       gateWrong: "A palavra não está certa.", gateOffline: "Sem ligação. Tenta outra vez.",
     },
     "pt-BR": {
+      keineApp: "✅ A outra pessoa só abre um link – não precisa instalar nada.",
       bonusHinweis: "🎁 Quando a sua pessoa também escrever, vocês dois ganham 1 mês de Diralo Plus grátis.", bonusDa: "🎁 Pronto! Vocês ganharam 1 mês de Diralo Plus grátis para este chat.",
       einlTitel: "Recebeu um convite?", einlText: "Digite o código do chat que veio no link e você entra no mesmo chat que a outra pessoa.",
       neuTitel: "Quer convidar alguém?", neuText: "Isso cria um chat novo e vazio. Depois você manda o link para a outra pessoa.", beitreten: "Entrar",
@@ -363,6 +367,7 @@ window.LUMO_T = (function () {
       gateWrong: "A palavra não confere.", gateOffline: "Sem conexão. Tente de novo.",
     },
     es: {
+      keineApp: "✅ La otra persona solo abre un enlace, sin instalar nada.",
       bonusHinweis: "🎁 Cuando tu persona también escriba, los dos recibís 1 mes de Diralo Plus gratis.", bonusDa: "🎁 ¡Listo! Habéis recibido 1 mes de Diralo Plus gratis para este chat.",
       einlTitel: "¿Has recibido una invitación?", einlText: "Escribe el código del chat que viene en el enlace y entrarás en el mismo chat que la otra persona.",
       neuTitel: "¿Quieres invitar a alguien?", neuText: "Esto crea un chat nuevo y vacío. Después envías el enlace a tu persona.", beitreten: "Unirse",
@@ -438,6 +443,7 @@ window.LUMO_T = (function () {
       gateWrong: "La palabra no es correcta.", gateOffline: "Sin conexión. Inténtalo otra vez.",
     },
     fr: {
+      keineApp: "✅ L'autre personne ouvre simplement un lien – rien à installer.",
       bonusHinweis: "🎁 Dès que ta personne écrit aussi, vous recevez tous les deux 1 mois de Diralo Plus gratuit.", bonusDa: "🎁 C'est fait ! Vous avez reçu 1 mois de Diralo Plus gratuit pour ce chat.",
       einlTitel: "Tu as reçu une invitation ?", einlText: "Saisis le code du chat qui figure dans le lien et tu rejoins le même chat que l'autre personne.",
       neuTitel: "Tu veux inviter quelqu'un ?", neuText: "Cela crée un nouveau chat vide. Ensuite tu envoies le lien à ta personne.", beitreten: "Rejoindre",
@@ -513,6 +519,7 @@ window.LUMO_T = (function () {
       gateWrong: "Ce mot n'est pas le bon.", gateOffline: "Pas de connexion. Réessaie.",
     },
     it: {
+      keineApp: "✅ L'altra persona apre solo un link – niente da installare.",
       bonusHinweis: "🎁 Quando anche la tua persona scrive, ricevete entrambi 1 mese di Diralo Plus gratis.", bonusDa: "🎁 Fatto! Avete ricevuto 1 mese di Diralo Plus gratis per questa chat.",
       einlTitel: "Hai ricevuto un invito?", einlText: "Inserisci il codice chat che trovi nel link ed entri nella stessa chat dell'altra persona.",
       neuTitel: "Vuoi invitare qualcuno?", neuText: "Così si crea una chat nuova e vuota. Poi mandi il link alla tua persona.", beitreten: "Entra",
@@ -588,6 +595,7 @@ window.LUMO_T = (function () {
       gateWrong: "La parola non è giusta.", gateOffline: "Nessuna connessione. Riprova.",
     },
     nl: {
+      keineApp: "✅ De ander opent alleen een link – niets installeren.",
       tagline: "Iedereen schrijft in zijn eigen taal. Iedereen leest in de zijne.",
       freeStart: "Gratis beginnen", back: "Terug",
       nameLabel: "Je naam", namePlaceholder: "Naam",
@@ -657,6 +665,7 @@ window.LUMO_T = (function () {
       gateWrong: "Dat woord klopt niet.", gateOffline: "Geen verbinding. Probeer opnieuw.",
     },
     pl: {
+      keineApp: "✅ Druga osoba otwiera tylko link – nic nie trzeba instalować.",
       tagline: "Każdy pisze w swoim języku. Każdy czyta w swoim.",
       freeStart: "Zacznij za darmo", back: "Wstecz",
       nameLabel: "Twoje imię", namePlaceholder: "Imię",
@@ -726,6 +735,7 @@ window.LUMO_T = (function () {
       gateWrong: "To słowo się nie zgadza.", gateOffline: "Brak połączenia. Spróbuj ponownie.",
     },
     ru: {
+      keineApp: "✅ Собеседник просто открывает ссылку – ничего устанавливать не нужно.",
       tagline: "Каждый пишет на своём языке. Каждый читает на своём.",
       freeStart: "Начать бесплатно", back: "Назад",
       nameLabel: "Ваше имя", namePlaceholder: "Имя",
@@ -795,6 +805,7 @@ window.LUMO_T = (function () {
       gateWrong: "Слово не подходит.", gateOffline: "Нет связи. Попробуйте ещё раз.",
     },
     uk: {
+      keineApp: "✅ Співрозмовник просто відкриває посилання – нічого не треба встановлювати.",
       tagline: "Кожен пише своєю мовою. Кожен читає своєю.",
       freeStart: "Почати безкоштовно", back: "Назад",
       nameLabel: "Ваше ім'я", namePlaceholder: "Ім'я",
@@ -864,6 +875,7 @@ window.LUMO_T = (function () {
       gateWrong: "Слово не підходить.", gateOffline: "Немає зв'язку. Спробуйте ще раз.",
     },
     tr: {
+      keineApp: "✅ Karşı taraf sadece bir bağlantı açar – hiçbir şey yüklemez.",
       tagline: "Herkes kendi dilinde yazar. Herkes kendi dilinde okur.",
       freeStart: "Ücretsiz başla", back: "Geri",
       nameLabel: "Adın", namePlaceholder: "Ad",
@@ -933,6 +945,7 @@ window.LUMO_T = (function () {
       gateWrong: "Kelime doğru değil.", gateOffline: "Bağlantı yok. Tekrar dene.",
     },
     ar: {
+      keineApp: "✅ الطرف الآخر يفتح رابطًا فقط – دون تثبيت أي شيء.",
       tagline: "كل واحد يكتب بلغته. وكل واحد يقرأ بلغته.",
       freeStart: "ابدأ مجانًا", back: "رجوع",
       nameLabel: "اسمك", namePlaceholder: "الاسم",
@@ -1002,6 +1015,7 @@ window.LUMO_T = (function () {
       gateWrong: "الكلمة غير صحيحة.", gateOffline: "لا يوجد اتصال. حاول مرة أخرى.",
     },
     ja: {
+      keineApp: "✅ 相手はリンクを開くだけ。インストール不要です。",
       bonusHinweis: "🎁 相手からもメッセージが届くと、2人ともDiralo Plusが1か月無料になります。",
       bonusDa: "🎁 完了！このチャットで2人ともDiralo Plusが1か月無料になりました。",
       einlTitel: "招待されましたか？",
@@ -1124,6 +1138,7 @@ window.LUMO_T = (function () {
       gateOffline: "接続できません。もう一度お試しください。",
     },
     hi: {
+      keineApp: "✅ सामने वाला बस एक लिंक खोलता है – कुछ इंस्टॉल नहीं करना।",
       bonusHinweis: "🎁 जैसे ही आपका साथी भी लिखेगा, आप दोनों को 1 महीने का Diralo Plus मुफ़्त मिलेगा।",
       bonusDa: "🎁 हो गया! इस चैट के लिए आप दोनों को 1 महीने का Diralo Plus मुफ़्त मिला।",
       einlTitel: "क्या आपको न्योता मिला है?",
@@ -1246,6 +1261,7 @@ window.LUMO_T = (function () {
       gateOffline: "कनेक्शन नहीं है। फिर कोशिश करें।",
     },
     ur: {
+      keineApp: "✅ دوسرا شخص صرف ایک لنک کھولتا ہے – کچھ انسٹال نہیں کرنا۔",
       bonusHinweis: "🎁 جیسے ہی آپ کا ساتھی بھی لکھے گا، آپ دونوں کو 1 مہینہ Diralo Plus مفت ملے گا۔",
       bonusDa: "🎁 ہو گیا! اس چیٹ کے لیے آپ دونوں کو 1 مہینہ Diralo Plus مفت مل گیا۔",
       einlTitel: "کیا آپ کو دعوت ملی ہے؟",
@@ -1368,6 +1384,7 @@ window.LUMO_T = (function () {
       gateOffline: "کنکشن نہیں۔ دوبارہ کوشش کریں۔",
     },
     bn: {
+      keineApp: "✅ অন্যজন শুধু একটি লিঙ্ক খোলেন – কিছু ইনস্টল করতে হয় না।",
       bonusHinweis: "🎁 আপনার মানুষটিও লিখলেই আপনারা দুজনেই ১ মাস Diralo Plus ফ্রি পাবেন।",
       bonusDa: "🎁 হয়ে গেছে! এই চ্যাটের জন্য আপনারা দুজনেই ১ মাস Diralo Plus ফ্রি পেয়েছেন।",
       einlTitel: "আমন্ত্রণ পেয়েছেন?",
@@ -1490,6 +1507,7 @@ window.LUMO_T = (function () {
       gateOffline: "সংযোগ নেই। আবার চেষ্টা করুন।",
     },
     pa: {
+      keineApp: "✅ ਦੂਜਾ ਵਿਅਕਤੀ ਬੱਸ ਇੱਕ ਲਿੰਕ ਖੋਲ੍ਹਦਾ ਹੈ – ਕੁਝ ਇੰਸਟਾਲ ਨਹੀਂ ਕਰਨਾ।",
       bonusHinweis: "🎁 ਜਦੋਂ ਤੁਹਾਡਾ ਸਾਥੀ ਵੀ ਲਿਖੇਗਾ, ਤੁਹਾਨੂੰ ਦੋਵਾਂ ਨੂੰ 1 ਮਹੀਨੇ ਲਈ Diralo Plus ਮੁਫ਼ਤ ਮਿਲੇਗਾ।",
       bonusDa: "🎁 ਹੋ ਗਿਆ! ਤੁਹਾਨੂੰ ਦੋਵਾਂ ਨੂੰ ਇਸ ਚੈਟ ਲਈ 1 ਮਹੀਨੇ ਦਾ Diralo Plus ਮੁਫ਼ਤ ਮਿਲ ਗਿਆ।",
       einlTitel: "ਕੀ ਤੁਹਾਨੂੰ ਸੱਦਾ ਮਿਲਿਆ ਹੈ?",
@@ -1612,6 +1630,7 @@ window.LUMO_T = (function () {
       gateOffline: "ਕੋਈ ਕਨੈਕਸ਼ਨ ਨਹੀਂ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
     },
     ne: {
+      keineApp: "✅ अर्को व्यक्तिले लिङ्क मात्र खोल्छ – केही इन्स्टल गर्नु पर्दैन।",
       bonusHinweis: "🎁 तपाईंको व्यक्तिले पनि लेखेपछि, तपाईं दुवैले १ महिना Diralo Plus निःशुल्क पाउनुहुन्छ।",
       bonusDa: "🎁 भयो! यो च्याटका लागि तपाईं दुवैले १ महिना Diralo Plus निःशुल्क पाउनुभयो।",
       einlTitel: "के तपाईंलाई निमन्त्रणा आएको छ?",

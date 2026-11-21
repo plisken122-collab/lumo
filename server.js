@@ -788,8 +788,10 @@ const KURZ = { tt: "tiktok", tiktok: "tiktok", ig: "instagram", insta: "instagra
    Vorschau-Bots (Facebook, WhatsApp ...) zaehlen nicht. */
 const PLAY_LINK = "https://play.google.com/store/apps/details?id=app.diralo.twa";
 const VORSCHAU_BOT = /bot|crawler|spider|facebookexternalhit|facebot|whatsapp|telegram|slack|discord|preview/i;
-app.get(/^\/(tt|tiktok|ig|insta|fb|yt)\/?$/i, (req, res) => {
+/* Mit Sprache: diralo.app/fb/ne -> Seite und Play Store auf Nepali. */
+app.get(/^\/(tt|tiktok|ig|insta|fb|yt)(?:\/([a-z]{2,3}(?:-[a-z0-9]{2,3})?))?\/?$/i, (req, res) => {
   const tag = KURZ[req.params[0].toLowerCase()];
+  const sprache = req.params[1] ? req.params[1].toLowerCase().replace(/-([a-z0-9]+)$/, (_, r) => "-" + r.toUpperCase()) : "";
   const ua = String(req.headers["user-agent"] || "");
   if (/android/i.test(ua) && !VORSCHAU_BOT.test(ua) && req.query.web === undefined) {
     if (!istIntern(req)) {
@@ -798,9 +800,10 @@ app.get(/^\/(tt|tiktok|ig|insta|fb|yt)\/?$/i, (req, res) => {
       zaehleQuelle(tag, "store");
     }
     const ref = encodeURIComponent(`utm_source=${tag}&utm_medium=kurzlink`);
-    return res.redirect(302, `${PLAY_LINK}&referrer=${ref}`);
+    const hl = sprache ? `&hl=${encodeURIComponent(sprache)}` : "";
+    return res.redirect(302, `${PLAY_LINK}${hl}&referrer=${ref}`);
   }
-  res.redirect(302, "/?von=" + tag);
+  res.redirect(302, "/?von=" + tag + (sprache ? "&lang=" + encodeURIComponent(sprache) : ""));
 });
 
 /* Ohne Tag, aber von einer Social-App verlinkt? Dann die Quelle aus dem
