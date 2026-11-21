@@ -1322,6 +1322,24 @@ export async function mitgliedEntfernen(room, device) {
   await pool.query(`DELETE FROM subscriptions WHERE room = $1 AND device = $2`, [room, device]);
 }
 
+/* Wie viele verschiedene Personen sind in diesen Chats (ohne Entfernte),
+   und ist dieses Geraet schon darunter? Fuer die Team-Grenze. */
+export async function personenInRaeumen(raeume, device) {
+  const liste = (raeume || []).filter(Boolean);
+  if (!liste.length) return { anzahl: 0, dabei: false };
+  if (!usingDatabase) {
+    const geraete = new Set();
+    for (const m of mem.mitglieder.values()) if (liste.includes(m.room) && !m.entfernt) geraete.add(m.device);
+    return { anzahl: geraete.size, dabei: geraete.has(device) };
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(DISTINCT device)::int AS anzahl, BOOL_OR(device = $2) AS dabei
+       FROM mitglieder WHERE room = ANY($1) AND NOT entfernt`,
+    [liste, device]
+  );
+  return { anzahl: rows[0]?.anzahl || 0, dabei: Boolean(rows[0]?.dabei) };
+}
+
 export async function istEntfernt(room, device) {
   if (!room || !device) return false;
   if (!usingDatabase) return Boolean(mem.mitglieder.get(`${room}|${device}`)?.entfernt);

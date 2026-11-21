@@ -50,6 +50,22 @@ export async function darfRein(room, device) {
   try { return !(await store.istEntfernt(room, device)); } catch { return true; }
 }
 
+/* Team-Tarife haben eine Personen-Grenze ueber alle Gruppen des Abos.
+   teamGrenze(room) kommt aus server.js und liefert { grenze, raeume }
+   oder null. Wer schon dabei ist, kommt immer hinein. Im Zweifel (Fehler)
+   wird durchgelassen - lieber einer zu viel als ein Betrieb ausgesperrt. */
+export async function platzFrei(room, device, teamGrenze) {
+  if (zaehltNicht(room)) return true;
+  try {
+    const t = await teamGrenze(room);
+    if (!t) return true;
+    const { anzahl, dabei } = await store.personenInRaeumen(t.raeume, device);
+    return dabei || anzahl < t.grenze;
+  } catch {
+    return true;
+  }
+}
+
 /* Nach dem Beitritt: Mitglied vermerken, allen die neue Liste schicken. */
 export async function beigetreten(io, room, me) {
   if (zaehltNicht(room)) return;

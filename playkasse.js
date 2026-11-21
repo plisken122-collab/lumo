@@ -47,6 +47,8 @@ export const playAn = Boolean(PAKET && KONTO);
 export const PRODUKTE = {
   plus: { monat: "diralo_plus_monat", jahr: "diralo_plus_jahr" },
   familie: { monat: "diralo_familie_monat", jahr: "diralo_familie_jahr" },
+  team: { monat: "diralo_team_monat", jahr: "diralo_team_jahr" },
+  teamplus: { monat: "diralo_teamplus_monat", jahr: "diralo_teamplus_jahr" },
 };
 
 export function planZuProdukt(produkt) {

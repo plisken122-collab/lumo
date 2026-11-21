@@ -107,6 +107,13 @@ const TEXTE = {
     codeEingeben: "Zurück und Code eingeben",
     umbenennen: "Name für diesen Chat",
     chatNameBsp: "z. B. Maria 💕",
+    teamName: "Diralo Team",
+    teamText: "Für Betriebe: bis 20 Personen, 3 Gruppen, 5.000 Übersetzungen im Monat",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "Für größere Betriebe: bis 60 Personen, 10 Gruppen, 12.000 Übersetzungen im Monat",
+    teamFreischalten: "🏢 Für den Betrieb freischalten",
+    teamVoll: "Diese Gruppe ist voll – das Team-Abo hat keine freien Plätze mehr. Sag dem Chef Bescheid.",
+    kontingentTeam: "Die {n} Übersetzungen eures Team-Abos sind für diesen Monat aufgebraucht. Nachrichten kommen weiter an, nur nicht übersetzt.",
     gruppe: "Gruppe",
     gruppeName: "Name der Gruppe",
     gruppeNameBsp: "z. B. Estufa Silva – Team",
@@ -272,6 +279,13 @@ const TEXTE = {
     codeEingeben: "Voltar e escrever o código",
     umbenennen: "Nome para este chat",
     chatNameBsp: "p. ex. Carsten 💕",
+    teamName: "Diralo Team",
+    teamText: "Para empresas: até 20 pessoas, 3 grupos, 5.000 traduções por mês",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "Para empresas maiores: até 60 pessoas, 10 grupos, 12.000 traduções por mês",
+    teamFreischalten: "🏢 Ativar para a empresa",
+    teamVoll: "Este grupo está cheio – a subscrição Team não tem mais lugares. Avise o responsável.",
+    kontingentTeam: "As {n} traduções da vossa subscrição Team acabaram este mês. As mensagens continuam a chegar, mas sem tradução.",
     gruppe: "Grupo",
     gruppeName: "Nome do grupo",
     gruppeNameBsp: "p. ex. Estufa Silva – Equipa",
@@ -437,6 +451,13 @@ const TEXTE = {
     codeEingeben: "Go back and enter the code",
     umbenennen: "Name for this chat",
     chatNameBsp: "e.g. Maria 💕",
+    teamName: "Diralo Team",
+    teamText: "For businesses: up to 20 people, 3 groups, 5,000 translations a month",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "For larger businesses: up to 60 people, 10 groups, 12,000 translations a month",
+    teamFreischalten: "🏢 Activate for the business",
+    teamVoll: "This group is full – the Team plan has no free places left. Let the admin know.",
+    kontingentTeam: "Your Team plan's {n} translations are used up for this month. Messages still arrive, just untranslated.",
     gruppe: "Group",
     gruppeName: "Group name",
     gruppeNameBsp: "e.g. Estufa Silva – Team",
@@ -602,6 +623,13 @@ const TEXTE = {
     codeEingeben: "Volver y escribir el código",
     umbenennen: "Nombre para este chat",
     chatNameBsp: "p. ej. María 💕",
+    teamName: "Diralo Team",
+    teamText: "Para empresas: hasta 20 personas, 3 grupos, 5.000 traducciones al mes",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "Para empresas más grandes: hasta 60 personas, 10 grupos, 12.000 traducciones al mes",
+    teamFreischalten: "🏢 Activar para la empresa",
+    teamVoll: "Este grupo está lleno: la suscripción Team no tiene plazas libres. Avisa al administrador.",
+    kontingentTeam: "Las {n} traducciones de vuestra suscripción Team se han agotado este mes. Los mensajes siguen llegando, pero sin traducir.",
     gruppe: "Grupo",
     gruppeName: "Nombre del grupo",
     gruppeNameBsp: "p. ej. Estufa Silva – Equipo",
@@ -767,6 +795,13 @@ const TEXTE = {
     codeEingeben: "Revenir et saisir le code",
     umbenennen: "Nom de ce chat",
     chatNameBsp: "p. ex. Marie 💕",
+    teamName: "Diralo Team",
+    teamText: "Pour les entreprises : jusqu’à 20 personnes, 3 groupes, 5 000 traductions par mois",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "Pour les plus grandes entreprises : jusqu’à 60 personnes, 10 groupes, 12 000 traductions par mois",
+    teamFreischalten: "🏢 Activer pour l’entreprise",
+    teamVoll: "Ce groupe est complet : l’abonnement Team n’a plus de place. Préviens l’admin.",
+    kontingentTeam: "Les {n} traductions de votre abonnement Team sont épuisées ce mois-ci. Les messages arrivent toujours, mais sans traduction.",
     gruppe: "Groupe",
     gruppeName: "Nom du groupe",
     gruppeNameBsp: "p. ex. Estufa Silva – Équipe",
@@ -932,6 +967,13 @@ const TEXTE = {
     codeEingeben: "Torna indietro e inserisci il codice",
     umbenennen: "Nome di questa chat",
     chatNameBsp: "es. Maria 💕",
+    teamName: "Diralo Team",
+    teamText: "Per aziende: fino a 20 persone, 3 gruppi, 5.000 traduzioni al mese",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "Per aziende più grandi: fino a 60 persone, 10 gruppi, 12.000 traduzioni al mese",
+    teamFreischalten: "🏢 Attiva per l’azienda",
+    teamVoll: "Questo gruppo è pieno: l’abbonamento Team non ha più posti. Avvisa l’amministratore.",
+    kontingentTeam: "Le {n} traduzioni del vostro abbonamento Team sono finite per questo mese. I messaggi arrivano comunque, ma senza traduzione.",
     gruppe: "Gruppo",
     gruppeName: "Nome del gruppo",
     gruppeNameBsp: "es. Estufa Silva – Squadra",
@@ -1097,6 +1139,13 @@ const TEXTE = {
     codeEingeben: "戻ってコードを入力",
     umbenennen: "チャット名",
     chatNameBsp: "例：マリア 💕",
+    teamName: "Diralo Team",
+    teamText: "事業者向け：最大20人、3グループ、月5,000回の翻訳",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "大きな事業者向け：最大60人、10グループ、月12,000回の翻訳",
+    teamFreischalten: "🏢 事業用に有効にする",
+    teamVoll: "このグループは満員です。Teamプランに空きがありません。管理者に知らせてください。",
+    kontingentTeam: "Teamプランの今月の翻訳{n}回を使い切りました。メッセージは届きますが、翻訳されません。",
     gruppe: "グループ",
     gruppeName: "グループ名",
     gruppeNameBsp: "例：Estufa Silva チーム",
@@ -1262,6 +1311,13 @@ const TEXTE = {
     codeEingeben: "वापस जाएँ और कोड डालें",
     umbenennen: "इस चैट का नाम",
     chatNameBsp: "जैसे मारिया 💕",
+    teamName: "Diralo Team",
+    teamText: "व्यवसायों के लिए: 20 लोग तक, 3 समूह, हर महीने 5,000 अनुवाद",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "बड़े व्यवसायों के लिए: 60 लोग तक, 10 समूह, हर महीने 12,000 अनुवाद",
+    teamFreischalten: "🏢 व्यवसाय के लिए चालू करें",
+    teamVoll: "यह समूह भर गया है – Team प्लान में कोई जगह नहीं बची। एडमिन को बताएँ।",
+    kontingentTeam: "आपके Team प्लान के इस महीने के {n} अनुवाद ख़त्म हो गए हैं। संदेश आते रहेंगे, बस अनुवाद नहीं होंगे।",
     gruppe: "समूह",
     gruppeName: "समूह का नाम",
     gruppeNameBsp: "जैसे Estufa Silva – टीम",
@@ -1427,6 +1483,13 @@ const TEXTE = {
     codeEingeben: "واپس جائیں اور کوڈ درج کریں",
     umbenennen: "اس چیٹ کا نام",
     chatNameBsp: "مثلاً ماریہ 💕",
+    teamName: "Diralo Team",
+    teamText: "کاروبار کے لیے: 20 افراد تک، 3 گروپ، ہر ماہ 5,000 ترجمے",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "بڑے کاروبار کے لیے: 60 افراد تک، 10 گروپ، ہر ماہ 12,000 ترجمے",
+    teamFreischalten: "🏢 کاروبار کے لیے فعال کریں",
+    teamVoll: "یہ گروپ بھر گیا ہے – Team پلان میں کوئی جگہ نہیں بچی۔ ایڈمن کو بتائیں۔",
+    kontingentTeam: "آپ کے Team پلان کے اس مہینے کے {n} ترجمے ختم ہو گئے ہیں۔ پیغامات آتے رہیں گے، بس ترجمہ نہیں ہوگا۔",
     gruppe: "گروپ",
     gruppeName: "گروپ کا نام",
     gruppeNameBsp: "مثلاً Estufa Silva – ٹیم",
@@ -1592,6 +1655,13 @@ const TEXTE = {
     codeEingeben: "ফিরে গিয়ে কোডটি দিন",
     umbenennen: "এই চ্যাটের নাম",
     chatNameBsp: "যেমন মারিয়া 💕",
+    teamName: "Diralo Team",
+    teamText: "ব্যবসার জন্য: ২০ জন পর্যন্ত, ৩টি গ্রুপ, মাসে ৫,০০০ অনুবাদ",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "বড় ব্যবসার জন্য: ৬০ জন পর্যন্ত, ১০টি গ্রুপ, মাসে ১২,০০০ অনুবাদ",
+    teamFreischalten: "🏢 ব্যবসার জন্য চালু করুন",
+    teamVoll: "এই গ্রুপ পূর্ণ – Team প্ল্যানে আর জায়গা নেই। অ্যাডমিনকে জানান।",
+    kontingentTeam: "আপনাদের Team প্ল্যানের এই মাসের {n}টি অনুবাদ শেষ। মেসেজ আসতে থাকবে, শুধু অনুবাদ হবে না।",
     gruppe: "গ্রুপ",
     gruppeName: "গ্রুপের নাম",
     gruppeNameBsp: "যেমন Estufa Silva – টিম",
@@ -1757,6 +1827,13 @@ const TEXTE = {
     codeEingeben: "ਵਾਪਸ ਜਾਓ ਅਤੇ ਕੋਡ ਦਰਜ ਕਰੋ",
     umbenennen: "ਇਸ ਚੈਟ ਦਾ ਨਾਮ",
     chatNameBsp: "ਜਿਵੇਂ Maria 💕",
+    teamName: "Diralo Team",
+    teamText: "ਕਾਰੋਬਾਰਾਂ ਲਈ: 20 ਲੋਕਾਂ ਤੱਕ, 3 ਗਰੁੱਪ, ਹਰ ਮਹੀਨੇ 5,000 ਅਨੁਵਾਦ",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "ਵੱਡੇ ਕਾਰੋਬਾਰਾਂ ਲਈ: 60 ਲੋਕਾਂ ਤੱਕ, 10 ਗਰੁੱਪ, ਹਰ ਮਹੀਨੇ 12,000 ਅਨੁਵਾਦ",
+    teamFreischalten: "🏢 ਕਾਰੋਬਾਰ ਲਈ ਚਾਲੂ ਕਰੋ",
+    teamVoll: "ਇਹ ਗਰੁੱਪ ਭਰ ਗਿਆ ਹੈ – Team ਪਲਾਨ ਵਿੱਚ ਕੋਈ ਥਾਂ ਨਹੀਂ ਬਚੀ। ਐਡਮਿਨ ਨੂੰ ਦੱਸੋ।",
+    kontingentTeam: "ਤੁਹਾਡੇ Team ਪਲਾਨ ਦੇ ਇਸ ਮਹੀਨੇ ਦੇ {n} ਅਨੁਵਾਦ ਖ਼ਤਮ ਹੋ ਗਏ ਹਨ। ਸੁਨੇਹੇ ਆਉਂਦੇ ਰਹਿਣਗੇ, ਬੱਸ ਅਨੁਵਾਦ ਨਹੀਂ ਹੋਣਗੇ।",
     gruppe: "ਗਰੁੱਪ",
     gruppeName: "ਗਰੁੱਪ ਦਾ ਨਾਮ",
     gruppeNameBsp: "ਜਿਵੇਂ Estufa Silva – ਟੀਮ",
@@ -1922,6 +1999,13 @@ const TEXTE = {
     codeEingeben: "फर्केर कोड हाल्नुहोस्",
     umbenennen: "यो च्याटको नाम",
     chatNameBsp: "जस्तै: मारिया 💕",
+    teamName: "Diralo Team",
+    teamText: "व्यवसायका लागि: २० जनासम्म, ३ समूह, महिनामा ५,००० अनुवाद",
+    teamplusName: "Diralo Team Plus",
+    teamplusText: "ठूला व्यवसायका लागि: ६० जनासम्म, १० समूह, महिनामा १२,००० अनुवाद",
+    teamFreischalten: "🏢 व्यवसायका लागि सक्रिय गर्नुहोस्",
+    teamVoll: "यो समूह भरियो – Team योजनामा ठाउँ बाँकी छैन। एडमिनलाई भन्नुहोस्।",
+    kontingentTeam: "तपाईंहरूको Team योजनाका यो महिनाका {n} अनुवाद सकिए। सन्देशहरू आइरहन्छन्, तर अनुवाद हुँदैनन्।",
     gruppe: "समूह",
     gruppeName: "समूहको नाम",
     gruppeNameBsp: "जस्तै: Estufa Silva – टिम",
@@ -3057,9 +3141,15 @@ function FotoUebersetzen({ lang, device, unten, onBack }) {
    frei (/api/play-kauf). Erst danach wird der Kauf hier abgeschlossen -
    sonst erstattet Google ihn nach drei Tagen.
    Die Produkt-IDs muessen genau so in der Play Console heissen. */
-const PLAY_SKUS = ["diralo_plus_monat", "diralo_plus_jahr", "diralo_familie_monat", "diralo_familie_jahr"];
+const PLAY_SKUS = ["diralo_plus_monat", "diralo_plus_jahr", "diralo_familie_monat", "diralo_familie_jahr",
+  "diralo_team_monat", "diralo_team_jahr", "diralo_teamplus_monat", "diralo_teamplus_jahr"];
+/* Welcher Tarif steckt hinter einem Produkt? */
+const skuPlan = (id) => (id.includes("teamplus") ? "teamplus" : id.includes("team") ? "team" : id.includes("familie") ? "familie" : "plus");
+const PLAN_NAME = { plus: "plusName", familie: "familieName", team: "teamName", teamplus: "teamplusName" };
+const PLAN_TEXT = { plus: "plusText", familie: "familieText", team: "teamText", teamplus: "teamplusText" };
 
-function AboFenster({ offen, raum, onZu, onHinweis }) {
+/* art: "privat" zeigt Plus/Family, "team" die Tarife fuer Betriebe. */
+function AboFenster({ offen, raum, onZu, onHinweis, art = "privat" }) {
   const [produkte, setProdukte] = useState([]);
   const [plan, setPlan] = useState(null);
   const [fehler, setFehler] = useState(null);
@@ -3158,15 +3248,15 @@ function AboFenster({ offen, raum, onZu, onHinweis }) {
         {plan && (
           <Text style={s.aboStand}>
             {plan.bezahlt
-              ? t("aboAktiv").replace("{p}", plan.plan === "familie" ? t("familieName") : t("plusName"))
+              ? t("aboAktiv").replace("{p}", t(PLAN_NAME[plan.plan] || "plusName"))
               : t("aboStand").replace("{b}", String(plan.benutzt ?? 0)).replace("{g}", String(plan.grenze ?? 0))}
           </Text>
         )}
         {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
         {!fehler && produkte.length === 0 && <ActivityIndicator color={FARBE.navy} style={{ marginVertical: 20 }} />}
         <ScrollView style={{ maxHeight: 360 }}>
-          {produkte.map((prod) => {
-            const familie = prod.id.includes("familie");
+          {produkte.filter((prod) => (art === "team") === prod.id.includes("team")).map((prod) => {
+            const p = skuPlan(prod.id);
             const jahr = prod.id.endsWith("jahr");
             return (
               <Pressable
@@ -3176,8 +3266,8 @@ function AboFenster({ offen, raum, onZu, onHinweis }) {
                 onPress={() => kaufen(prod)}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={s.aboName}>{familie ? t("familieName") : t("plusName")}</Text>
-                  <Text style={s.aboBeschr}>{familie ? t("familieText") : t("plusText")}</Text>
+                  <Text style={s.aboName}>{t(PLAN_NAME[p])}</Text>
+                  <Text style={s.aboBeschr}>{t(PLAN_TEXT[p])}</Text>
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
                   <Text style={s.aboPreis}>{preis(prod)}</Text>
@@ -3258,6 +3348,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   /* Bis zu welchem Zeitpunkt das Gegenueber gelesen hat -> ✓✓ */
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
+  const [aboArt, setAboArt] = useState("privat");
   const [anwesend, setAnwesend] = useState([]);
   /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
   const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [] });
@@ -3418,13 +3509,16 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     socket.on("quotaReached", (ev) => {
       /* Der Server sagt, welcher Tarif aufgebraucht ist und wie gross er war. */
       const plan = ev?.plan || "frei";
-      const schluessel = plan === "plus" ? "kontingentPlus" : plan === "familie" ? "kontingentFamilie" : "kontingent";
+      const schluessel = plan === "plus" ? "kontingentPlus" : plan === "familie" ? "kontingentFamilie"
+        : plan === "team" || plan === "teamplus" ? "kontingentTeam" : "kontingent";
       const n = Number(ev?.grenze) || (plan === "plus" ? 1500 : plan === "familie" ? 5000 : 200);
       let zahl = String(n);
       try { zahl = n.toLocaleString(lang); } catch {}
       setHinweis(t(schluessel).replace("{n}", zahl));
-      /* Family ist der groesste Tarif - da gibt es nichts mehr anzubieten. */
-      if (plan !== "familie" && plan !== "firma") setAboOffen(true);
+      /* Family und Team Plus sind die groessten Tarife - da gibt es nichts mehr
+         anzubieten. Bei Team wird der groessere Team-Tarif gezeigt. */
+      if (plan === "team") { setAboArt("team"); setAboOffen(true); }
+      else if (!["familie", "firma", "teamplus"].includes(plan)) { setAboArt("privat"); setAboOffen(true); }
     });
     socket.on("translationError", () => {
       setHinweis(t("uebersFehler"));
@@ -3432,6 +3526,10 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     socket.on("system", (ev) => {
       if (ev?.type === "tooManyJoins") setHinweis(t("zuVieleJoins"));
       /* Aus der Gruppe entfernt: Chat aus der Liste nehmen und zurueck. */
+      if (ev?.type === "teamVoll") {
+        Alert.alert(t("gruppe"), t("teamVoll"));
+        onBack();
+      }
       if (ev?.type === "entfernt") {
         chatVergessen(raum).catch(() => {});
         Alert.alert(t("gruppe"), t("gruppeEntferntDu"));
@@ -3742,7 +3840,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         <Pressable onPress={autoUmschalten} style={[s.plusKnopf, autoVorlesen && s.autoAn]} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>{autoVorlesen ? "🔊" : "🔈"}</Text>
         </Pressable>
-        <Pressable onPress={() => setAboOffen(true)} style={s.plusKnopf} hitSlop={8}>
+        <Pressable onPress={() => { setAboArt("privat"); setAboOffen(true); }} style={s.plusKnopf} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>★</Text>
         </Pressable>
         <Pressable onPress={einladen} style={s.einladen} hitSlop={8}>
@@ -3775,6 +3873,14 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
                 <Text style={s.btnPrimaryTxt}>{t("speichern")}</Text>
               </Pressable>
               <Text style={s.gruppeHinweis}>{gruppe.admin ? t("gruppeDuChef") : t("gruppeHinweis")}</Text>
+              {gruppe.admin === device ? (
+                <Pressable
+                  style={[s.btnPrimary, { marginTop: 10, backgroundColor: FARBE.gold }]}
+                  onPress={() => { setGruppeOffen(false); setAboArt("team"); setAboOffen(true); }}
+                >
+                  <Text style={[s.btnPrimaryTxt, { color: FARBE.navy }]}>{t("teamFreischalten")}</Text>
+                </Pressable>
+              ) : null}
             </>
           ) : (
             <Text style={s.gruppeNameGross}>{gruppe.name}</Text>
@@ -3998,7 +4104,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
           </Pressable>
         )}
       </View>
-      <AboFenster offen={aboOffen} raum={raum} onZu={() => setAboOffen(false)} onHinweis={setHinweis} />
+      <AboFenster offen={aboOffen} art={aboArt} raum={raum} onZu={() => setAboOffen(false)} onHinweis={setHinweis} />
       <Modal visible={menueAuf} transparent animationType="slide" onRequestClose={() => setMenueAuf(false)}>
         <Pressable style={s.modalHinten} onPress={() => setMenueAuf(false)} />
         <View style={[s.modalBox, { paddingBottom: 16 + unten }]}>

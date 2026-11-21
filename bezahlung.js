@@ -49,6 +49,9 @@ export const KONTINGENT = {
   frei: Number(process.env.KONTINGENT_FREI || 200),
   plus: Number(process.env.KONTINGENT_PLUS || 1500),
   familie: Number(process.env.KONTINGENT_FAMILIE || 5000),
+  /* Fuer Betriebe: ein Abo, mehrere Gruppen, viele Leute. */
+  team: Number(process.env.KONTINGENT_TEAM || 5000),
+  teamplus: Number(process.env.KONTINGENT_TEAMPLUS || 12000),
 };
 
 /* Wie viele Chats ein Tarif freischaltet. Das Kontingent oben gilt fuer
@@ -58,6 +61,15 @@ export const PLAETZE = {
   frei: 1,
   plus: Number(process.env.PLAETZE_PLUS || 3),
   familie: Number(process.env.PLAETZE_FAMILIE || 10),
+  team: Number(process.env.PLAETZE_TEAM || 3),
+  teamplus: Number(process.env.PLAETZE_TEAMPLUS || 10),
+};
+
+/* Wie viele Personen (Geraete) alle Gruppen eines Abos zusammen haben
+   duerfen. Nur die Team-Tarife haben eine Grenze - privat ist sie offen. */
+export const PERSONEN = {
+  team: Number(process.env.PERSONEN_TEAM || 20),
+  teamplus: Number(process.env.PERSONEN_TEAMPLUS || 60),
 };
 
 /* Welche Preis-Kennungen wirklich hinterlegt sind. Die Preisseite fragt

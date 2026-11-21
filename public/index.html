@@ -901,7 +901,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v85";
+const BUILD = "v86";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1214,6 +1214,13 @@ function start() {
        wenn doch, soll er wissen, warum, statt vor einer stummen App zu
        sitzen. */
     if (ev && ev.type === "tooManyJoins") { showErr(T("tooManyJoins")); return; }
+    /* Team-Abo voll: nicht hinein, Bescheid sagen. */
+    if (ev && ev.type === "teamVoll") {
+      me.room = "";
+      zurStartseite();
+      alert(T("teamVoll"));
+      return;
+    }
     /* Aus der Gruppe entfernt: Chat vergessen, zurueck zur Startseite. */
     if (ev && ev.type === "entfernt") {
       chatsSpeichern(chatsLaden().filter((c) => c.code !== me.room));
@@ -3005,7 +3012,8 @@ function zeigeQuotaLeiste(plan) {
   $("quotaText").textContent = T("errQuotaMonat");
   $("quotaLink").textContent = T("quotaLink");
   /* Family ist der groesste Tarif - dann gibt es keinen Tarif mehr anzubieten. */
-  $("quotaLink").classList.toggle("hide", plan === "familie" || plan === "firma");
+  /* Team-Abos kauft der Chef in der App - im Web kein Link dorthin. */
+  $("quotaLink").classList.toggle("hide", ["familie", "firma", "team", "teamplus"].includes(plan));
   $("quotaBar").classList.remove("hide");
 }
 function versteckeQuotaLeiste() {

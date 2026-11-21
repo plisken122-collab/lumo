@@ -287,6 +287,14 @@ async function einladeBonus(room) {
   }
 }
 
+/* Personen-Grenze der Team-Tarife: null, wenn der Chat keine hat. */
+async function teamGrenze(room) {
+  const abo = await store.getAboByRoom(room);
+  if (!laeuftNoch(abo)) return null;
+  const grenze = geld.PERSONEN?.[abo.plan];
+  return grenze ? { grenze, raeume: await store.raeumeVonAbo(abo.id) } : null;
+}
+
 async function kontingent(room) {
   let abo = await store.getAboByRoom(room);
   if (play.istPlay(abo)) abo = await playAuffrischen(abo);
@@ -1649,6 +1657,8 @@ const UNTERTITEL_MIN = {
   frei: Number(process.env.UNTERTITEL_MIN_FREI || 10),
   plus: Number(process.env.UNTERTITEL_MIN_PLUS || 60),
   familie: Number(process.env.UNTERTITEL_MIN_FAMILIE || 200),
+  team: Number(process.env.UNTERTITEL_MIN_TEAM || 60),
+  teamplus: Number(process.env.UNTERTITEL_MIN_TEAMPLUS || 200),
 };
 
 async function untertitelStand(room) {
@@ -2381,6 +2391,11 @@ io.on("connection", (socket) => {
     /* Aus einer Gruppe entfernt? Dann bleibt die Tuer zu. */
     if (!(await gruppe.darfRein(gewuenscht, String(device || socket.id).slice(0, 60)))) {
       socket.emit("system", { type: "entfernt" });
+      return;
+    }
+    /* Team-Abo voll? Wer schon dabei ist, kommt immer hinein. */
+    if (!(await gruppe.platzFrei(gewuenscht, String(device || socket.id).slice(0, 60), teamGrenze))) {
+      socket.emit("system", { type: "teamVoll" });
       return;
     }
     room = gewuenscht;

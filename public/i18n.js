@@ -12,6 +12,7 @@ window.LUMO_T = (function () {
   const S = {
     de: {
       keineApp: "✅ Die andere Person öffnet nur einen Link – nichts installieren.",
+      teamVoll: "Diese Gruppe ist voll – das Team-Abo hat keine freien Plätze mehr. Sag dem Chef Bescheid.",
       gruppe: "Gruppe",
       gruppeName: "Name der Gruppe",
       gruppeNameBsp: "z. B. Estufa Silva – Team",
@@ -117,6 +118,7 @@ window.LUMO_T = (function () {
     },
     en: {
       keineApp: "✅ The other person just opens a link – nothing to install.",
+      teamVoll: "This group is full – the Team plan has no free places left. Let the admin know.",
       gruppe: "Group",
       gruppeName: "Group name",
       gruppeNameBsp: "e.g. Estufa Silva – Team",
@@ -222,6 +224,7 @@ window.LUMO_T = (function () {
     },
     "pt-PT": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa de instalar nada.",
+      teamVoll: "Este grupo está cheio – a subscrição Team não tem mais lugares. Avise o responsável.",
       gruppe: "Grupo",
       gruppeName: "Nome do grupo",
       gruppeNameBsp: "p. ex. Estufa Silva – Equipa",
@@ -327,6 +330,7 @@ window.LUMO_T = (function () {
     },
     "pt-BR": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa instalar nada.",
+      teamVoll: "Este grupo está cheio – a subscrição Team não tem mais lugares. Avise o responsável.",
       gruppe: "Grupo",
       gruppeName: "Nome do grupo",
       gruppeNameBsp: "p. ex. Estufa Silva – Equipa",
@@ -432,6 +436,7 @@ window.LUMO_T = (function () {
     },
     es: {
       keineApp: "✅ La otra persona solo abre un enlace, sin instalar nada.",
+      teamVoll: "Este grupo está lleno: la suscripción Team no tiene plazas libres. Avisa al administrador.",
       gruppe: "Grupo",
       gruppeName: "Nombre del grupo",
       gruppeNameBsp: "p. ej. Estufa Silva – Equipo",
@@ -524,6 +529,7 @@ window.LUMO_T = (function () {
     },
     fr: {
       keineApp: "✅ L'autre personne ouvre simplement un lien – rien à installer.",
+      teamVoll: "Ce groupe est complet : l’abonnement Team n’a plus de place. Préviens l’admin.",
       gruppe: "Groupe",
       gruppeName: "Nom du groupe",
       gruppeNameBsp: "p. ex. Estufa Silva – Équipe",
@@ -616,6 +622,7 @@ window.LUMO_T = (function () {
     },
     it: {
       keineApp: "✅ L'altra persona apre solo un link – niente da installare.",
+      teamVoll: "Questo gruppo è pieno: l’abbonamento Team non ha più posti. Avvisa l’amministratore.",
       gruppe: "Gruppo",
       gruppeName: "Nome del gruppo",
       gruppeNameBsp: "es. Estufa Silva – Squadra",
@@ -1128,6 +1135,7 @@ window.LUMO_T = (function () {
     },
     ja: {
       keineApp: "✅ 相手はリンクを開くだけ。インストール不要です。",
+      teamVoll: "このグループは満員です。Teamプランに空きがありません。管理者に知らせてください。",
       gruppe: "グループ",
       gruppeName: "グループ名",
       gruppeNameBsp: "例：Estufa Silva チーム",
@@ -1267,6 +1275,7 @@ window.LUMO_T = (function () {
     },
     hi: {
       keineApp: "✅ सामने वाला बस एक लिंक खोलता है – कुछ इंस्टॉल नहीं करना।",
+      teamVoll: "यह समूह भर गया है – Team प्लान में कोई जगह नहीं बची। एडमिन को बताएँ।",
       gruppe: "समूह",
       gruppeName: "समूह का नाम",
       gruppeNameBsp: "जैसे Estufa Silva – टीम",
@@ -1406,6 +1415,7 @@ window.LUMO_T = (function () {
     },
     ur: {
       keineApp: "✅ دوسرا شخص صرف ایک لنک کھولتا ہے – کچھ انسٹال نہیں کرنا۔",
+      teamVoll: "یہ گروپ بھر گیا ہے – Team پلان میں کوئی جگہ نہیں بچی۔ ایڈمن کو بتائیں۔",
       gruppe: "گروپ",
       gruppeName: "گروپ کا نام",
       gruppeNameBsp: "مثلاً Estufa Silva – ٹیم",
@@ -1545,6 +1555,7 @@ window.LUMO_T = (function () {
     },
     bn: {
       keineApp: "✅ অন্যজন শুধু একটি লিঙ্ক খোলেন – কিছু ইনস্টল করতে হয় না।",
+      teamVoll: "এই গ্রুপ পূর্ণ – Team প্ল্যানে আর জায়গা নেই। অ্যাডমিনকে জানান।",
       gruppe: "গ্রুপ",
       gruppeName: "গ্রুপের নাম",
       gruppeNameBsp: "যেমন Estufa Silva – টিম",
@@ -1684,6 +1695,7 @@ window.LUMO_T = (function () {
     },
     pa: {
       keineApp: "✅ ਦੂਜਾ ਵਿਅਕਤੀ ਬੱਸ ਇੱਕ ਲਿੰਕ ਖੋਲ੍ਹਦਾ ਹੈ – ਕੁਝ ਇੰਸਟਾਲ ਨਹੀਂ ਕਰਨਾ।",
+      teamVoll: "ਇਹ ਗਰੁੱਪ ਭਰ ਗਿਆ ਹੈ – Team ਪਲਾਨ ਵਿੱਚ ਕੋਈ ਥਾਂ ਨਹੀਂ ਬਚੀ। ਐਡਮਿਨ ਨੂੰ ਦੱਸੋ।",
       gruppe: "ਗਰੁੱਪ",
       gruppeName: "ਗਰੁੱਪ ਦਾ ਨਾਮ",
       gruppeNameBsp: "ਜਿਵੇਂ Estufa Silva – ਟੀਮ",
@@ -1823,6 +1835,7 @@ window.LUMO_T = (function () {
     },
     ne: {
       keineApp: "✅ अर्को व्यक्तिले लिङ्क मात्र खोल्छ – केही इन्स्टल गर्नु पर्दैन।",
+      teamVoll: "यो समूह भरियो – Team योजनामा ठाउँ बाँकी छैन। एडमिनलाई भन्नुहोस्।",
       gruppe: "समूह",
       gruppeName: "समूहको नाम",
       gruppeNameBsp: "जस्तै: Estufa Silva – टिम",
