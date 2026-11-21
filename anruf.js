@@ -92,8 +92,13 @@ const bots = new Map();   // room -> { raum, hoerer: Map(identity -> stop) }
    budget (optional): { darf(), verbrauche(sek), ende() } - das Minuten-
    Kontingent der Untertitel. Ist es leer, laeuft der Anruf ohne
    Untertitel weiter, und alle bekommen einmal den Hinweis. */
+const MAX_BOTS = Number(process.env.UNTERTITEL_MAX_BOTS || 15);
+
 export async function untertitelStarten(room, uebersetze, budget = null) {
   if (!anrufAn || bots.has(room)) return;
+  /* Jeder Untertitel-Bot ist eine eigene Verbindung im Server und kostet
+     Spracherkennung - nie unbegrenzt viele gleichzeitig. */
+  if (bots.size >= MAX_BOTS) { console.error("Untertitel: Hoechstzahl gleichzeitiger Anrufe erreicht"); return; }
   const konto = dienstkonto();
   if (!konto) return;
   const eintrag = { raum: null, hoerer: new Map(), budget };

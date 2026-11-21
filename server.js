@@ -16,6 +16,12 @@ import * as gruppe from "./gruppe.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+/* Letztes Auffangnetz: Ein Fehler, den niemand abfaengt, darf nie den
+   ganzen Server beenden - sonst reicht ein kaputtes Paket von aussen,
+   und Diralo ist fuer alle weg. Protokollieren und weiterlaufen. */
+process.on("unhandledRejection", (err) => console.error("Unbehandelt (Promise):", err?.message || err));
+process.on("uncaughtException", (err) => console.error("Unbehandelt:", err?.message || err));
+
 const app = express();
 
 /* --------------------------------------------------------------------
@@ -212,7 +218,33 @@ app.get("/preise", (_req, res) =>
    ohne Konten - und der Chat-Code ist ohnehin schon der Schluessel zu
    allem, was drin steht.
 -------------------------------------------------------------------- */
-const raumCode = (r) => String(r || "").trim().toLowerCase().slice(0, 60);
+const raumCode = (r) => String(r || "").trim().toLowerCase().replace(/[<>"'`&\\]/g, "").slice(0, 60);
+
+/* Wer aus einer Gruppe entfernt wurde, darf auch ueber diese Wege nichts
+   mehr hineinschicken, keine Anrufe starten und keine Push-Nachrichten
+   fuer den Chat abonnieren. Raum und Geraet stehen im Inhalt oder - bei
+   Dateien - in der Adresse. */
+const RAUM_WEGE = ["/api/voice", "/api/bild", "/api/gif", "/api/datei", "/api/anruf", "/api/subscribe", "/api/expo-push"];
+async function entfernteSperren(req, res, next) {
+  if (req.method !== "POST") return next();
+  try {
+    const q = req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body) ? req.body : (req.query || {});
+    const geraet = String(q.device || "").slice(0, 60);
+    if (!geraet) return next();
+    if (q.room && !(await gruppe.darfRein(raumCode(q.room), geraet))) {
+      return res.status(403).json({ error: "Aus diesem Chat entfernt" });
+    }
+    if (Array.isArray(q.rooms)) {
+      const erlaubt = [];
+      for (const r of q.rooms.slice(0, 60)) if (await gruppe.darfRein(raumCode(r), geraet)) erlaubt.push(r);
+      q.rooms = erlaubt;
+    }
+  } catch {}
+  next();
+}
+/* Sprachnachricht und Bild lesen ihren Inhalt erst in der Route - dort
+   steht die Pruefung direkt. Fuer die anderen reicht es hier. */
+app.use(RAUM_WEGE.filter((w) => w !== "/api/voice" && w !== "/api/bild"), entfernteSperren);
 
 /* Woher der Kaeufer kam. Nicht aus dem Browser uebernehmen: Sonst legt
    ein Fremder einen Kassengang an, der nach dem Bezahlen auf seine
@@ -316,12 +348,16 @@ async function kontingent(room) {
 app.get("/api/plan", async (req, res) => {
   const room = raumCode(req.query.room);
   if (!room) return res.status(400).json({ error: "Kein Chat angegeben" });
+  if (!take(`plan:${req.ip}`, 60, 60 * 1000)) return res.status(429).json({ error: "Zu viele Anfragen" });
   try {
     const k = await kontingent(room);
     /* Ueber alle Chats des Abos zusammen - sie teilen sich das Kontingent. */
     const benutzt = await store.translationsThisMonthForRooms(k.raeume);
     res.json({
-      ...k, benutzt, rest: Math.max(0, k.grenze - benutzt),
+      /* Nie die Chat-Codes des Abos herausgeben - wer einen Chat kennt,
+         kaeme sonst in alle. Nur die Anzahl. */
+      ...k, raeume: undefined, chats: k.raeume.length,
+      benutzt, rest: Math.max(0, k.grenze - benutzt),
       bezahlungAn: geld.bezahlungAn,
       plaetzeFrei: Math.max(0, k.plaetze - k.raeume.length),
       /* Welche Tarife wirklich hinterlegt sind. Ohne diese Angabe zeigt
@@ -421,7 +457,14 @@ async function eintragen(sitzung, room, { frischerSchluessel = false } = {}) {
      sonst entsteht ein neues, und der gekaufte Chat ist sein erster. */
   const abosNr = typeof sitzung.subscription === "string"
     ? sitzung.subscription : sitzung.subscription?.id;
-  const vorher = (await store.getAboBySubscription(abosNr)) || (await store.getAboByRoom(room));
+  let vorher = await store.getAboBySubscription(abosNr);
+  if (!vorher) {
+    /* Das Abo am Chat nur uebernehmen, wenn es kein fremdes, laufendes
+       Abo ist - sonst schriebe ein Fremder, der den Chat-Code kennt, mit
+       seinem Kauf einen neuen Verwaltungsschluessel in das Abo des Opfers. */
+    const amRaum = await store.getAboByRoom(room);
+    if (amRaum && (!amRaum.subscription || amRaum.subscription === abosNr || !laeuftNoch(amRaum))) vorher = amRaum;
+  }
   /* Reihenfolge mit Bedacht: Die Metadaten haben wir selbst gesetzt, die
      Posten kommen nur mit, wenn wir sie ausdruecklich anfordern - und in
      der Webhook-Meldung fehlen sie ganz. */
@@ -868,6 +911,11 @@ app.post("/api/neues", async (req, res) => {
   const paare = (Array.isArray(req.body?.chats) ? req.body.chats : [])
     .map((c) => ({ room: raumCode(c?.room), seit: Number(c?.seit) || 0 }))
     .filter((c) => c.room);
+  /* Jeder Code zaehlt einzeln - sonst liessen sich 20 Codes je Anfrage
+     durchprobieren. 300 je Stunde reichen fuer jede echte Chatliste. */
+  for (let i = 0; i < paare.length; i++) {
+    if (!take(`neuescode:${req.ip}`, 300, 60 * 60 * 1000)) return res.status(429).json({});
+  }
   try {
     const geraet = String(req.body?.device || "").slice(0, 60);
     /* Aus einer Gruppe Entfernte sehen auch hier nichts Neues mehr. */
@@ -1280,7 +1328,8 @@ function dateiSymbol(d) {
 
 async function ensure(room, msgId, target) {
   const msg = await store.getMessage(msgId);
-  if (!msg) return null;
+  /* Nur Nachrichten aus diesem Chat - eine fremde ID darf hier nichts verraten. */
+  if (!msg || msg.room !== room) return null;
   if (msg.lang === target) return msg.text;
   if (msg.tr[target]) return msg.tr[target];
 
@@ -1356,6 +1405,8 @@ async function ensure(room, msgId, target) {
    Sprache zwischengespeichert, damit das Ansehen nur einmal kostet. */
 const bildTextInFlight = new Map();
 async function uebersetzeBildText(room, msgId, target) {
+  /* Nur Bilder aus diesem Chat. */
+  if ((await store.getMessage(msgId))?.room !== room) return null;
   const zwischen = await store.getBildText(msgId, target);
   if (zwischen != null) {
     io.to(room).emit("bildTextFertig", { id: msgId, lang: target, text: zwischen });
@@ -1413,7 +1464,7 @@ async function uebersetzeBildText(room, msgId, target) {
 const ausspracheInFlight = new Map();
 async function ausspracheHelfen(room, msgId, target) {
   const msg = await store.getMessage(msgId);
-  if (!msg || !msg.text.trim()) { io.to(room).emit("ausspracheFehler", { id: msgId, lang: target }); return null; }
+  if (!msg || msg.room !== room || !String(msg.text || "").trim()) { io.to(room).emit("ausspracheFehler", { id: msgId, lang: target }); return null; }
 
   const key = `au:${msgId}:${target}`;
   if (ausspracheInFlight.has(key)) return ausspracheInFlight.get(key);
@@ -1693,6 +1744,7 @@ async function untertitelBudget(room) {
 app.get("/api/anruf/minuten", async (req, res) => {
   const room = raumCode(req.query.room);
   if (!room) return res.status(400).json({ error: "room angeben" });
+  if (!take(`minuten:${req.ip}`, 60, 60 * 1000)) return res.status(429).json({ error: "Zu viele Anfragen" });
   try {
     const st = await untertitelStand(room);
     if (!st) return res.json({ unbegrenzt: true });
@@ -1709,11 +1761,15 @@ app.post("/api/anruf", async (req, res) => {
   const device = String(req.body?.device || "").slice(0, 60);
   if (!room || !device) return res.status(400).json({ error: "room und device angeben" });
   if (!take(`anruf:${device}`, 30, 60 * 60 * 1000)) return res.status(429).json({ error: "Zu viele Anrufe" });
+  /* Die Geraete-Kennung waehlt der Client selbst - deshalb auch je Adresse. */
+  if (!take(`anrufip:${req.ip}`, 40, 60 * 60 * 1000)) return res.status(429).json({ error: "Zu viele Anrufe" });
   try {
     const zugang = await anruf.tokenFuer({
       room, device, name: req.body?.name, lang: clean(req.body?.lang),
     });
     anruf.untertitelStarten(room, async (text, ziel) => {
+      /* Dieselbe Tagesgrenze wie fuer Chat-Uebersetzungen. */
+      if (!take("tr:day", TRANSLATIONS_PER_DAY, 24 * 60 * 60 * 1000)) return null;
       const { result, usage } = await translate(text, ziel);
       store.logUsage({ room, target: ziel, chars: text.length, inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
       return result.translation || null;
@@ -1939,7 +1995,7 @@ const VOICE_MIME = {
    die fuer gepackte Formate nicht mit aufgeweicht wird. */
 const VOICE_MAX_BYTES_WAV = Number(process.env.VOICE_MAX_BYTES_WAV || 4_000_000);
 
-app.post("/api/voice", express.json({ limit: "6mb" }), async (req, res) => {
+app.post("/api/voice", express.json({ limit: "6mb" }), entfernteSperren, async (req, res) => {
   const { room, device, name, lang, seconds, transcript, mime, audio } = req.body || {};
   if (!room || !device || !audio) {
     return res.status(400).json({ error: "Angaben unvollstaendig" });
@@ -2011,7 +2067,7 @@ const BILD_MIME = {
   "image/png": "image/png",
 };
 
-app.post("/api/bild", express.json({ limit: "5mb" }), async (req, res) => {
+app.post("/api/bild", express.json({ limit: "5mb" }), entfernteSperren, async (req, res) => {
   const { room, device, name, lang, caption, mime, bild } = req.body || {};
   if (!room || !device || !bild) {
     return res.status(400).json({ error: "Angaben unvollstaendig" });
@@ -2231,7 +2287,7 @@ app.post("/api/datei", (req, res, next) => {
    Videos brauchen "Range", sonst laesst sich im Player nicht spulen.
    Alles ausser Bild, Ton und Video kommt als Download - eine hochgeladene
    HTML-Datei darf nie als Seite von diralo.app laufen. */
-const MEDIEN_ANZEIGEN = /^(image\/(jpeg|png|webp)|audio\/|video\/)/;
+const MEDIEN_ANZEIGEN = /^(image\/(jpeg|png|webp|gif)|audio\/(webm|ogg|mp4|mpeg|wav|aac|x-m4a|3gpp|amr)|video\/(mp4|webm|3gpp|quicktime))$/;
 app.get("/medien/:id", async (req, res) => {
   const id = String(req.params.id);
   let m = null;
@@ -2243,8 +2299,14 @@ app.get("/medien/:id", async (req, res) => {
   }
   if (!m) return res.sendStatus(404);
   const bytes = Buffer.from(m.bytes);
-  const zeigen = MEDIEN_ANZEIGEN.test(m.mime);
-  res.setHeader("Content-Type", zeigen ? m.mime : "application/octet-stream");
+  /* Nur der reine Typ zaehlt (ohne ";codecs=..."), und nur aus einer
+     festen Liste - "audio/x+xml" wuerde der Browser sonst als Seite mit
+     Skript darstellen. Dazu eine Sandbox: Selbst wenn doch etwas als
+     Dokument geoeffnet wird, laeuft darin kein Skript. */
+  const grundTyp = String(m.mime || "").split(";")[0].trim().toLowerCase();
+  const zeigen = MEDIEN_ANZEIGEN.test(grundTyp);
+  res.setHeader("Content-Type", zeigen ? grundTyp : "application/octet-stream");
+  res.setHeader("Content-Security-Policy", "sandbox; default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'");
   res.setHeader("Cache-Control", "private, max-age=86400");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Accept-Ranges", "bytes");
@@ -2347,14 +2409,33 @@ io.use((socket, next) => {
 /* Die echte Adresse hinter dem Proxy von Render. socket.handshake.address
    waere nur der Proxy - alle Besucher haetten dieselbe. */
 function sockAdresse(socket) {
+  /* Wie Express mit "trust proxy 1": der LETZTE Eintrag ist der, den
+     Render selbst angehaengt hat. Den ersten setzt der Besucher - wer
+     dort Zufall eintraegt, umginge sonst jede Bremse. */
   const vor = socket.handshake.headers["x-forwarded-for"];
-  if (vor) return String(vor).split(",")[0].trim();
+  if (vor) {
+    const teile = String(vor).split(",").map((s) => s.trim()).filter(Boolean);
+    if (teile.length) return teile[teile.length - 1];
+  }
   return socket.handshake.address || "?";
 }
 
 io.on("connection", (socket) => {
   let room = null;
   let me = { name: "Gast", lang: "de", device: null };
+  /* Schutz fuer alle Ereignisse dieser Verbindung: Fehlende oder kaputte
+     Daten (emit("setLang") ohne Inhalt, text als Zahl ...) duerfen nur
+     dieses eine Ereignis scheitern lassen, nie den Server. */
+  const anmelden = socket.on.bind(socket);
+  socket.on = (ereignis, fn) => anmelden(ereignis, (erstes, ...rest) => {
+    const daten = erstes === undefined || erstes === null ? {} : erstes;
+    try {
+      const r = fn(daten, ...rest);
+      if (r && typeof r.catch === "function") r.catch((e) => console.error(`Socket ${ereignis}:`, e?.message || e));
+    } catch (e) {
+      console.error(`Socket ${ereignis}:`, e?.message || e);
+    }
+  });
   const ip = sockAdresse(socket);
   /* Dasselbe "nicht zaehlen"-Cookie wie oben - der Handschlag traegt es
      mit, also bleiben auch Eintritt und Nachricht dieses Geraets draussen. */
@@ -2589,6 +2670,7 @@ io.on("connection", (socket) => {
     if (!take(`reagieren:${me.device}`, 30, 60 * 1000)) return;
     const e = REAKTIONEN.includes(emoji) ? emoji : "";
     try {
+      if ((await store.getMessage(String(id)))?.room !== room) return;
       await store.setReaction(String(id), me.device, e);
     } catch (err) {
       console.error("Reaktion nicht speicherbar:", err.message);
@@ -2608,6 +2690,7 @@ io.on("connection", (socket) => {
                              at: new Date().toISOString() };
     if (!room || !id) return;
     try {
+      if ((await store.getMessage(String(id)))?.room !== room) { socket.emit("deleteFailed", { grund: "nicht erlaubt" }); return; }
       const ok = await store.deleteForAll(String(id), me.device);
       if (ok) { letzterLoeschVersuch.ergebnis = "geloescht";
                 io.to(room).emit("deleted", { id: String(id) }); }

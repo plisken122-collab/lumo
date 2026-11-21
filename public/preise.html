@@ -634,15 +634,18 @@ document.querySelectorAll("[data-wiederherstellen]").forEach((b) => {
   b.onclick = async () => { b.disabled = true; await playAbgleichen(false); b.disabled = false; };
 });
 
+const htmlSicher = (x) => String(x ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 /* Nach einem Kauf - ueber Stripe oder Play - Dank und Schluessel zeigen. */
 function gekauftZeigen(daten) {
   const w = WORTE[sprache];
   if (daten.wartet) { melden("gut", w.wartet); return; }
   let html = daten.room
-    ? w.gekauft.replace("{room}", daten.room).replace("{plan}", daten.plan)
+    /* Chat-Code und Tarif kommen von aussen - nie als HTML einsetzen. */
+    ? w.gekauft.replace("{room}", htmlSicher(daten.room)).replace("{plan}", htmlSicher(daten.plan))
     : w.ohneRaum;
   if (daten.schluessel) {
-    html += "<p>" + w.bewahren + '</p><div class="schluessel">' + daten.schluessel + "</div>";
+    html += "<p>" + w.bewahren + '</p><div class="schluessel">' + htmlSicher(daten.schluessel) + "</div>";
   } else {
     /* Darf nicht vorkommen - aber ohne Schluessel kann niemand
        kuendigen, deshalb hier lieber ein deutlicher Hinweis als ein
