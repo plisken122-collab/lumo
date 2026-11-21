@@ -17,8 +17,34 @@
    beigetreten() danach, handler() fuer die Ereignisse.
 -------------------------------------------------------------------- */
 import * as store from "./store.js";
+import crypto from "crypto";
 
 const NAME_MAX = 50;
+
+/* ------------------------- Geraete-Schluessel -------------------------
+   Ergebnis je Verbindung (socket.data.geraet):
+   "ok"    Schluessel passt         -> darf alles als dieses Geraet
+   "neu"   erster Schluessel, jetzt fest an die Kennung gebunden -> ebenso
+   "ohne"  alte App ohne Schluessel, Kennung noch frei -> wie bisher, aber
+           keine Gruppen-Verwaltung (die gibt es dort ohnehin nicht)
+   "falsch" Kennung gehoert jemand anderem (oder App neu installiert) ->
+           darf chatten, aber nichts "als dieses Geraet" (Loeschen, Chef) */
+const abdruckVon = (geheim) => crypto.createHash("sha256").update("diralo-geraet:" + geheim).digest("hex");
+export async function geraetPruefen(device, geheim) {
+  try {
+    const g = typeof geheim === "string" && geheim.length >= 20 && geheim.length <= 200 ? geheim : null;
+    const vorhanden = await store.geraetAbdruck(device);
+    if (!g) return vorhanden ? "falsch" : "ohne";
+    const mein = abdruckVon(g);
+    if (!vorhanden) return (await store.geraetMerken(device, mein)) === mein ? "neu" : "falsch";
+    const a = Buffer.from(vorhanden), b = Buffer.from(mein);
+    return a.length === b.length && crypto.timingSafeEqual(a, b) ? "ok" : "falsch";
+  } catch {
+    return "ohne";
+  }
+}
+const verifiziert = (socket) => ["ok", "neu"].includes(socket.data.geraet);
+export const darfAlsGeraet = (socket) => socket.data.geraet !== "falsch";
 
 /* Probe-Chats der Startseite und Firmen-Kundenchats sind keine Gruppen. */
 const zaehltNicht = (room) => !room || room.startsWith("demo-") || room.startsWith("f-") || room === "lobby";
@@ -101,6 +127,7 @@ export function handler(io, socket, raum, ich, rauswerfen) {
     const room = raum();
     const me = ich();
     if (zaehltNicht(room) || !me?.device) return;
+    if (!verifiziert(socket)) { socket.emit("gruppeFehler", { grund: "geraet" }); return; }
     const neu = String(name || "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX);
     if (!neu) return;
     try {
@@ -122,6 +149,7 @@ export function handler(io, socket, raum, ich, rauswerfen) {
     const me = ich();
     const wen = String(device || "").slice(0, 60);
     if (zaehltNicht(room) || !me?.device || !wen || wen === me.device) return;
+    if (!verifiziert(socket)) { socket.emit("gruppeFehler", { grund: "geraet" }); return; }
     try {
       const g = await store.getGruppe(room);
       if (!g || g.admin !== me.device) {

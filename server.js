@@ -1255,7 +1255,7 @@ const costOf = (u) => (u.inTokens / 1e6) * PRICE_IN + (u.outTokens / 1e6) * PRIC
 /* Chats ohne Monatsgrenze, z. B. der eigene des Betreibers. Kommagetrennt
    in RAEUME_OHNE_GRENZE; ohne Angabe gilt "algarve". */
 const OHNE_GRENZE = new Set(
-  String(process.env.RAEUME_OHNE_GRENZE ?? "algarve")
+  String(process.env.RAEUME_OHNE_GRENZE ?? "")
     .split(",").map((r) => r.trim().toLowerCase()).filter(Boolean)
 );
 
@@ -1626,6 +1626,24 @@ app.get("/api/admin/suche", async (req, res) => {
   const liste = await store.getHistory(room, 500);
   res.json(liste.filter((m) => !m.deleted && String(m.text || "").toLowerCase().includes(q))
     .map((m) => ({ id: m.id, name: m.name, text: String(m.text || "").slice(0, 200), at: m.at })));
+});
+
+/* Einen Chat unter einen neuen Code legen (z. B. weil der alte zu leicht
+   zu erraten war). Ziel muss leer sein. Wer im alten Chat sitzt, sieht ihn
+   danach leer - den neuen Code bekommt nur, wem man ihn gibt. */
+app.post("/api/admin/umziehen", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
+  const von = raumCode(req.body?.von);
+  const nach = raumCode(req.body?.nach);
+  if (!von || !nach || von === nach || nach.length < 10) return res.status(400).json({ error: "von und nach (mind. 10 Zeichen) angeben" });
+  try {
+    const r = await store.raumUmziehen(von, nach);
+    planZwischen.delete(von);
+    io.to(von).emit("system", { type: "umgezogen" });
+    res.json({ ok: true, ...r });
+  } catch (err) {
+    res.status(400).json({ error: err.message.slice(0, 150) });
+  }
 });
 
 app.post("/api/admin/loeschen", async (req, res) => {
@@ -2444,7 +2462,7 @@ io.on("connection", (socket) => {
      der Quelle zuzuordnen. */
   const vonSock = istQuelle({ headers: { cookie: socket.handshake.headers.cookie || "" } });
 
-  socket.on("join", async ({ roomCode, name, lang, device, build, speech }) => {
+  socket.on("join", async ({ roomCode, name, lang, device, build, speech, geheim }) => {
     /* Zur Fehlersuche: Welche Fassung hat das Geraet geladen, und kann
        sein Browser mitschreiben? Nur diese zwei Angaben, nichts, woran
        sich jemand erkennen liesse. */
@@ -2469,6 +2487,8 @@ io.on("connection", (socket) => {
       return;
     }
 
+    /* Gehoert die Geraete-Kennung wirklich diesem Geraet? (gruppe.js) */
+    socket.data.geraet = await gruppe.geraetPruefen(String(device || socket.id).slice(0, 60), geheim);
     /* Aus einer Gruppe entfernt? Dann bleibt die Tuer zu. */
     if (!(await gruppe.darfRein(gewuenscht, String(device || socket.id).slice(0, 60)))) {
       socket.emit("system", { type: "entfernt" });
@@ -2689,6 +2709,8 @@ io.on("connection", (socket) => {
                              geraet: String(me.device || "?").slice(0, 12),
                              at: new Date().toISOString() };
     if (!room || !id) return;
+    /* Nur wer den geheimen Schluessel dieses Geraets hat, loescht "als" es. */
+    if (!gruppe.darfAlsGeraet(socket)) { socket.emit("deleteFailed", { grund: "nicht erlaubt" }); return; }
     try {
       if ((await store.getMessage(String(id)))?.room !== room) { socket.emit("deleteFailed", { grund: "nicht erlaubt" }); return; }
       const ok = await store.deleteForAll(String(id), me.device);

@@ -901,12 +901,25 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v86";
+const BUILD = "v87";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
   deviceId = "d-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
   localStorage.setItem("diralo-device", deviceId);
+}
+/* Geheimer Geraete-Schluessel: Die Kennung oben steht an jeder Nachricht
+   und ist damit oeffentlich. Nur wer diesen Schluessel hat, darf "als"
+   dieses Geraet loeschen oder eine Gruppe verwalten. Verlaesst nie das
+   Geraet ausser beim Betreten eines Chats (der Server merkt sich nur
+   einen Abdruck). */
+let geraetGeheim = null;
+try { geraetGeheim = localStorage.getItem("diralo-geheim"); } catch {}
+if (!geraetGeheim) {
+  const b = new Uint8Array(24);
+  crypto.getRandomValues(b);
+  geraetGeheim = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+  try { localStorage.setItem("diralo-geheim", geraetGeheim); } catch {}
 }
 const msgs = new Map();
 const asked = new Set();
@@ -1122,7 +1135,7 @@ function start() {
     aktualisiereLeer();
     versteckeQuotaLeiste();
     socket.emit("join", {
-      roomCode: me.room, name: me.name, lang: me.lang, device: deviceId,
+      roomCode: me.room, name: me.name, lang: me.lang, device: deviceId, geheim: geraetGeheim,
       build: BUILD,
       speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
     });
@@ -1133,7 +1146,7 @@ function start() {
   socket = io();
   socket.on("connect", () => {
     socket.emit("join", {
-      roomCode: me.room, name: me.name, lang: me.lang, device: deviceId,
+      roomCode: me.room, name: me.name, lang: me.lang, device: deviceId, geheim: geraetGeheim,
       /* Nur zwei Angaben zur Fehlersuche: welche Fassung der Seite hier
          laeuft, und ob der Browser ueberhaupt mitschreiben kann. Kein
          Geraetename, keine Kennung - das steht sonst gleich in /health. */
@@ -1214,6 +1227,8 @@ function start() {
        wenn doch, soll er wissen, warum, statt vor einer stummen App zu
        sitzen. */
     if (ev && ev.type === "tooManyJoins") { showErr(T("tooManyJoins")); return; }
+    /* Chat wurde vom Betreiber unter einen neuen Code gelegt - nichts anzeigen. */
+    if (ev && ev.type === "umgezogen") return;
     /* Team-Abo voll: nicht hinein, Bescheid sagen. */
     if (ev && ev.type === "teamVoll") {
       me.room = "";
@@ -3083,7 +3098,7 @@ function wechsleZu(code) {
   zeigeRaumLabel();
   schliesseSheet();
   socket.emit("join", {
-    roomCode: code, name: me.name, lang: me.lang, device: deviceId,
+    roomCode: code, name: me.name, lang: me.lang, device: deviceId, geheim: geraetGeheim,
     build: BUILD,
     speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
   });

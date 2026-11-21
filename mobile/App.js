@@ -2327,6 +2327,24 @@ function neuerCode() {
   return s;
 }
 
+/* Geheimer Geraete-Schluessel: Die Kennung unten ist oeffentlich (sie steht
+   an jeder Nachricht). Nur wer diesen Schluessel hat, darf "als" dieses
+   Geraet loeschen oder eine Gruppe verwalten. Bleibt auf dem Handy; der
+   Server kennt nur einen Abdruck. Wird beim Start einmal geladen. */
+let GEHEIM = null;
+async function geheimLaden() {
+  try {
+    GEHEIM = await AsyncStorage.getItem("diralo_geheim");
+    if (!GEHEIM) {
+      let g = "";
+      while (g.length < 48) g += Math.random().toString(36).slice(2);
+      GEHEIM = (g + Date.now().toString(36)).slice(0, 56);
+      await AsyncStorage.setItem("diralo_geheim", GEHEIM);
+    }
+  } catch {}
+  return GEHEIM;
+}
+
 /* Dauerhafte Geraete-Kennung (fuer "meine" Nachrichten + Server-Limits). */
 async function geraeteId() {
   try {
@@ -2401,6 +2419,7 @@ function Haupt() {
 
   useEffect(() => {
     (async () => {
+      await geheimLaden();
       setDevice(await geraeteId());
       try {
         const n = await AsyncStorage.getItem("diralo_name");
@@ -3424,7 +3443,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
 
     socket.on("connect", () => {
       setVerbunden(true);
-      socket.emit("join", { roomCode: raum, name, lang, device, build: BUILD, speech: false });
+      socket.emit("join", { roomCode: raum, name, lang, device, geheim: GEHEIM, build: BUILD, speech: false });
     });
     socket.on("disconnect", () => setVerbunden(false));
     socket.on("anrufKommt", (wer) => setKlingelt(wer || null));

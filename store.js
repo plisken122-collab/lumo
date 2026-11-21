@@ -38,6 +38,7 @@ const mem = {
   readState: new Map(), // "room|device" -> bis (bis wann gelesen)
   gruppen: new Map(),   // room -> { name, admin, erstellt }
   mitglieder: new Map(), // "room|device" -> { room, device, name, lang, zuletzt, entfernt }
+  geraete: new Map(),   // device -> Abdruck des geheimen Geraete-Schluessels
   anrufSek: new Map(),  // "topf|monat" -> Sekunden
   zaehler: new Map(),   // "monat|art" -> Menge
 };
@@ -293,6 +294,11 @@ export async function init() {
         room    TEXT PRIMARY KEY,
         name    TEXT NOT NULL,
         admin   TEXT NOT NULL,
+        erstellt BIGINT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS geraete (
+        device  TEXT PRIMARY KEY,
+        abdruck TEXT NOT NULL,
         erstellt BIGINT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS mitglieder (
@@ -1346,4 +1352,72 @@ export async function istEntfernt(room, device) {
   const { rows } = await pool.query(
     `SELECT 1 FROM mitglieder WHERE room = $1 AND device = $2 AND entfernt`, [room, device]);
   return rows.length > 0;
+}
+
+/* ------------------------- Geraete-Schluessel -------------------------
+   Die Geraete-Kennung ist oeffentlich (sie steht an jeder Nachricht).
+   Wer etwas "als dieses Geraet" tun will - eigene Nachrichten loeschen,
+   eine Gruppe verwalten - muss zusaetzlich den geheimen Schluessel
+   kennen, den nur das Geraet selbst hat. Gespeichert wird nur sein
+   Abdruck. Wer zuerst einen Schluessel fuer eine Kennung bringt, dem
+   gehoert sie (danach bleibt sie fest). */
+export async function geraetAbdruck(device) {
+  if (!device) return null;
+  if (!usingDatabase) return mem.geraete.get(device) || null;
+  const { rows } = await pool.query(`SELECT abdruck FROM geraete WHERE device = $1`, [device]);
+  return rows[0]?.abdruck || null;
+}
+
+/* Legt den Abdruck an, falls es noch keinen gibt. Gibt den gueltigen
+   Abdruck zurueck (den neuen oder den, der schon da war). */
+export async function geraetMerken(device, abdruck) {
+  if (!usingDatabase) {
+    if (!mem.geraete.has(device)) mem.geraete.set(device, abdruck);
+    return mem.geraete.get(device);
+  }
+  await pool.query(
+    `INSERT INTO geraete (device, abdruck, erstellt) VALUES ($1,$2,$3) ON CONFLICT (device) DO NOTHING`,
+    [device, abdruck, Date.now()]
+  );
+  return geraetAbdruck(device);
+}
+
+/* ---------------------------- Chat umziehen ----------------------------
+   Alles eines Chats unter einen neuen Code legen: Nachrichten, Lesestand,
+   Push-Anmeldungen, Abo-Zuordnung, Gruppe, Mitglieder, Verbrauch. Fuer den
+   Fall, dass ein Code erraten werden kann. Nur in einen LEEREN Ziel-Chat. */
+export async function raumUmziehen(von, nach) {
+  if (!usingDatabase) {
+    if ((mem.rooms.get(nach) || []).length) throw new Error("Ziel-Chat ist nicht leer");
+    const ids = mem.rooms.get(von) || [];
+    for (const id of ids) { const m = mem.messages.get(id); if (m) m.room = nach; }
+    mem.rooms.set(nach, ids); mem.rooms.delete(von);
+    for (const map of [mem.readState, mem.mitglieder]) {
+      for (const [k, v] of [...map]) if (k.startsWith(von + "|")) {
+        map.delete(k);
+        map.set(nach + k.slice(von.length), typeof v === "object" ? { ...v, room: nach } : v);
+      }
+    }
+    for (const [k, v] of [...mem.subs]) if (v.room === von) { mem.subs.delete(k); mem.subs.set(v.endpoint + "|" + nach, { ...v, room: nach }); }
+    if (mem.gruppen.has(von)) { mem.gruppen.set(nach, mem.gruppen.get(von)); mem.gruppen.delete(von); }
+    if (mem.aboRaeume.has(von)) { mem.aboRaeume.set(nach, mem.aboRaeume.get(von)); mem.aboRaeume.delete(von); }
+    return { nachrichten: ids.length };
+  }
+  const leer = await pool.query(`SELECT 1 FROM messages WHERE room = $1 LIMIT 1`, [nach]);
+  if (leer.rows.length) throw new Error("Ziel-Chat ist nicht leer");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const r = await client.query(`UPDATE messages SET room = $2 WHERE room = $1`, [von, nach]);
+    for (const tabelle of ["read_state", "subscriptions", "abo_raeume", "mitglieder", "gruppen", "usage_log", "plans"]) {
+      await client.query(`UPDATE ${tabelle} SET room = $2 WHERE room = $1`, [von, nach]);
+    }
+    await client.query("COMMIT");
+    return { nachrichten: r.rowCount };
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }
