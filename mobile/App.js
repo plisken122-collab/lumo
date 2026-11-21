@@ -107,6 +107,21 @@ const TEXTE = {
     codeEingeben: "Zurück und Code eingeben",
     umbenennen: "Name für diesen Chat",
     chatNameBsp: "z. B. Maria 💕",
+    gruppe: "Gruppe",
+    gruppeName: "Name der Gruppe",
+    gruppeNameBsp: "z. B. Estufa Silva – Team",
+    gruppeChef: "👑 Chef",
+    gruppeDuChef: "Du verwaltest diese Gruppe.",
+    gruppeNurChef: "Nur wer die Gruppe verwaltet, kann das ändern.",
+    gruppeMitglieder: "{n} Mitglieder",
+    gruppeEntfernen: "Entfernen",
+    gruppeEntfernenFrage: "{name} aus der Gruppe entfernen? Die Person kann den Chat danach nicht mehr öffnen.",
+    gruppeEntferntDu: "Du wurdest aus dieser Gruppe entfernt.",
+    gruppeOnline: "online",
+    gruppeZuletzt: "zuletzt",
+    gruppeGelesen: "Gelesen von",
+    gruppeUngelesen: "Noch nicht gelesen",
+    gruppeHinweis: "Gib dem Chat einen Namen – dann wird er zur Gruppe mit Mitgliederliste und „Gelesen von“. Wer den Namen zuerst vergibt, verwaltet die Gruppe.",
     speichern: "Speichern",
     fuerMich: "🙈 Für mich löschen",
     geteiltTitel: "Geteilt – übersetzt",
@@ -257,6 +272,21 @@ const TEXTE = {
     codeEingeben: "Voltar e escrever o código",
     umbenennen: "Nome para este chat",
     chatNameBsp: "p. ex. Carsten 💕",
+    gruppe: "Grupo",
+    gruppeName: "Nome do grupo",
+    gruppeNameBsp: "p. ex. Estufa Silva – Equipa",
+    gruppeChef: "👑 Responsável",
+    gruppeDuChef: "É você quem gere este grupo.",
+    gruppeNurChef: "Só quem gere o grupo pode alterar isto.",
+    gruppeMitglieder: "{n} membros",
+    gruppeEntfernen: "Remover",
+    gruppeEntfernenFrage: "Remover {name} do grupo? Essa pessoa deixa de poder abrir o chat.",
+    gruppeEntferntDu: "Foi removido deste grupo.",
+    gruppeOnline: "online",
+    gruppeZuletzt: "última vez",
+    gruppeGelesen: "Lido por",
+    gruppeUngelesen: "Ainda não leu",
+    gruppeHinweis: "Dê um nome ao chat – passa a ser um grupo com lista de membros e «Lido por». Quem der o nome primeiro gere o grupo.",
     speichern: "Guardar",
     fuerMich: "🙈 Apagar para mim",
     geteiltTitel: "Partilhado – traduzido",
@@ -407,6 +437,21 @@ const TEXTE = {
     codeEingeben: "Go back and enter the code",
     umbenennen: "Name for this chat",
     chatNameBsp: "e.g. Maria 💕",
+    gruppe: "Group",
+    gruppeName: "Group name",
+    gruppeNameBsp: "e.g. Estufa Silva – Team",
+    gruppeChef: "👑 Admin",
+    gruppeDuChef: "You manage this group.",
+    gruppeNurChef: "Only the group admin can change this.",
+    gruppeMitglieder: "{n} members",
+    gruppeEntfernen: "Remove",
+    gruppeEntfernenFrage: "Remove {name} from the group? They won't be able to open the chat any more.",
+    gruppeEntferntDu: "You have been removed from this group.",
+    gruppeOnline: "online",
+    gruppeZuletzt: "last seen",
+    gruppeGelesen: "Read by",
+    gruppeUngelesen: "Not read yet",
+    gruppeHinweis: "Give the chat a name and it becomes a group with a member list and “Read by”. Whoever names it first manages the group.",
     speichern: "Save",
     fuerMich: "🙈 Delete for me",
     geteiltTitel: "Shared – translated",
@@ -557,6 +602,21 @@ const TEXTE = {
     codeEingeben: "Volver y escribir el código",
     umbenennen: "Nombre para este chat",
     chatNameBsp: "p. ej. María 💕",
+    gruppe: "Grupo",
+    gruppeName: "Nombre del grupo",
+    gruppeNameBsp: "p. ej. Estufa Silva – Equipo",
+    gruppeChef: "👑 Admin",
+    gruppeDuChef: "Tú administras este grupo.",
+    gruppeNurChef: "Solo quien administra el grupo puede cambiar esto.",
+    gruppeMitglieder: "{n} miembros",
+    gruppeEntfernen: "Eliminar",
+    gruppeEntfernenFrage: "¿Eliminar a {name} del grupo? Ya no podrá abrir el chat.",
+    gruppeEntferntDu: "Te han eliminado de este grupo.",
+    gruppeOnline: "en línea",
+    gruppeZuletzt: "últ. vez",
+    gruppeGelesen: "Leído por",
+    gruppeUngelesen: "Aún no lo ha leído",
+    gruppeHinweis: "Ponle un nombre al chat y se convierte en un grupo con lista de miembros y «Leído por». Quien le pone el nombre primero administra el grupo.",
     speichern: "Guardar",
     fuerMich: "🙈 Borrar para mí",
     geteiltTitel: "Compartido – traducido",
@@ -707,6 +767,21 @@ const TEXTE = {
     codeEingeben: "Revenir et saisir le code",
     umbenennen: "Nom de ce chat",
     chatNameBsp: "p. ex. Marie 💕",
+    gruppe: "Groupe",
+    gruppeName: "Nom du groupe",
+    gruppeNameBsp: "p. ex. Estufa Silva – Équipe",
+    gruppeChef: "👑 Admin",
+    gruppeDuChef: "Tu gères ce groupe.",
+    gruppeNurChef: "Seul l’admin du groupe peut modifier ceci.",
+    gruppeMitglieder: "{n} membres",
+    gruppeEntfernen: "Retirer",
+    gruppeEntfernenFrage: "Retirer {name} du groupe ? Cette personne ne pourra plus ouvrir le chat.",
+    gruppeEntferntDu: "Tu as été retiré(e) de ce groupe.",
+    gruppeOnline: "en ligne",
+    gruppeZuletzt: "vu",
+    gruppeGelesen: "Lu par",
+    gruppeUngelesen: "Pas encore lu",
+    gruppeHinweis: "Donne un nom au chat : il devient un groupe avec liste des membres et « Lu par ». Celui qui le nomme en premier gère le groupe.",
     speichern: "Enregistrer",
     fuerMich: "🙈 Supprimer pour moi",
     geteiltTitel: "Partagé – traduit",
@@ -857,6 +932,21 @@ const TEXTE = {
     codeEingeben: "Torna indietro e inserisci il codice",
     umbenennen: "Nome di questa chat",
     chatNameBsp: "es. Maria 💕",
+    gruppe: "Gruppo",
+    gruppeName: "Nome del gruppo",
+    gruppeNameBsp: "es. Estufa Silva – Squadra",
+    gruppeChef: "👑 Admin",
+    gruppeDuChef: "Gestisci tu questo gruppo.",
+    gruppeNurChef: "Solo chi gestisce il gruppo può modificarlo.",
+    gruppeMitglieder: "{n} membri",
+    gruppeEntfernen: "Rimuovi",
+    gruppeEntfernenFrage: "Rimuovere {name} dal gruppo? Non potrà più aprire la chat.",
+    gruppeEntferntDu: "Sei stato rimosso da questo gruppo.",
+    gruppeOnline: "online",
+    gruppeZuletzt: "ultimo accesso",
+    gruppeGelesen: "Letto da",
+    gruppeUngelesen: "Non ancora letto",
+    gruppeHinweis: "Dai un nome alla chat: diventa un gruppo con elenco dei membri e «Letto da». Chi la nomina per primo gestisce il gruppo.",
     speichern: "Salva",
     fuerMich: "🙈 Elimina per me",
     geteiltTitel: "Condiviso – tradotto",
@@ -1007,6 +1097,21 @@ const TEXTE = {
     codeEingeben: "戻ってコードを入力",
     umbenennen: "チャット名",
     chatNameBsp: "例：マリア 💕",
+    gruppe: "グループ",
+    gruppeName: "グループ名",
+    gruppeNameBsp: "例：Estufa Silva チーム",
+    gruppeChef: "👑 管理者",
+    gruppeDuChef: "あなたがこのグループの管理者です。",
+    gruppeNurChef: "グループの管理者だけが変更できます。",
+    gruppeMitglieder: "メンバー {n} 人",
+    gruppeEntfernen: "削除",
+    gruppeEntfernenFrage: "{name} さんをグループから削除しますか？このチャットを開けなくなります。",
+    gruppeEntferntDu: "このグループから削除されました。",
+    gruppeOnline: "オンライン",
+    gruppeZuletzt: "最終",
+    gruppeGelesen: "既読",
+    gruppeUngelesen: "未読",
+    gruppeHinweis: "チャットに名前を付けると、メンバー一覧と既読表示のあるグループになります。最初に名前を付けた人が管理者になります。",
     speichern: "保存",
     fuerMich: "🙈 自分だけ削除",
     geteiltTitel: "共有 – 翻訳済み",
@@ -1157,6 +1262,21 @@ const TEXTE = {
     codeEingeben: "वापस जाएँ और कोड डालें",
     umbenennen: "इस चैट का नाम",
     chatNameBsp: "जैसे मारिया 💕",
+    gruppe: "समूह",
+    gruppeName: "समूह का नाम",
+    gruppeNameBsp: "जैसे Estufa Silva – टीम",
+    gruppeChef: "👑 एडमिन",
+    gruppeDuChef: "आप इस समूह के एडमिन हैं।",
+    gruppeNurChef: "सिर्फ़ समूह का एडमिन इसे बदल सकता है।",
+    gruppeMitglieder: "{n} सदस्य",
+    gruppeEntfernen: "हटाएँ",
+    gruppeEntfernenFrage: "{name} को समूह से हटाएँ? वे यह चैट फिर नहीं खोल पाएँगे।",
+    gruppeEntferntDu: "आपको इस समूह से हटा दिया गया है।",
+    gruppeOnline: "ऑनलाइन",
+    gruppeZuletzt: "आख़िरी बार",
+    gruppeGelesen: "इन्होंने पढ़ा",
+    gruppeUngelesen: "अभी नहीं पढ़ा",
+    gruppeHinweis: "चैट को नाम दें – यह सदस्य सूची और “किसने पढ़ा” वाला समूह बन जाएगा। जो पहले नाम देता है, वही समूह का एडमिन होता है।",
     speichern: "सेव करें",
     fuerMich: "🙈 मेरे लिए डिलीट करें",
     geteiltTitel: "शेयर किया गया – अनुवादित",
@@ -1307,6 +1427,21 @@ const TEXTE = {
     codeEingeben: "واپس جائیں اور کوڈ درج کریں",
     umbenennen: "اس چیٹ کا نام",
     chatNameBsp: "مثلاً ماریہ 💕",
+    gruppe: "گروپ",
+    gruppeName: "گروپ کا نام",
+    gruppeNameBsp: "مثلاً Estufa Silva – ٹیم",
+    gruppeChef: "👑 ایڈمن",
+    gruppeDuChef: "آپ اس گروپ کے ایڈمن ہیں۔",
+    gruppeNurChef: "صرف گروپ کا ایڈمن اسے بدل سکتا ہے۔",
+    gruppeMitglieder: "{n} ممبر",
+    gruppeEntfernen: "ہٹائیں",
+    gruppeEntfernenFrage: "{name} کو گروپ سے ہٹائیں؟ وہ یہ چیٹ دوبارہ نہیں کھول سکیں گے۔",
+    gruppeEntferntDu: "آپ کو اس گروپ سے ہٹا دیا گیا ہے۔",
+    gruppeOnline: "آن لائن",
+    gruppeZuletzt: "آخری بار",
+    gruppeGelesen: "جنہوں نے پڑھا",
+    gruppeUngelesen: "ابھی نہیں پڑھا",
+    gruppeHinweis: "چیٹ کو نام دیں – یہ ممبر لسٹ اور “کس نے پڑھا” والا گروپ بن جائے گا۔ جو پہلے نام دے، وہی گروپ کا ایڈمن ہوتا ہے۔",
     speichern: "محفوظ کریں",
     fuerMich: "🙈 میرے لیے حذف کریں",
     geteiltTitel: "شیئر کیا گیا – ترجمہ شدہ",
@@ -1457,6 +1592,21 @@ const TEXTE = {
     codeEingeben: "ফিরে গিয়ে কোডটি দিন",
     umbenennen: "এই চ্যাটের নাম",
     chatNameBsp: "যেমন মারিয়া 💕",
+    gruppe: "গ্রুপ",
+    gruppeName: "গ্রুপের নাম",
+    gruppeNameBsp: "যেমন Estufa Silva – টিম",
+    gruppeChef: "👑 অ্যাডমিন",
+    gruppeDuChef: "আপনি এই গ্রুপের অ্যাডমিন।",
+    gruppeNurChef: "শুধু গ্রুপের অ্যাডমিন এটা বদলাতে পারেন।",
+    gruppeMitglieder: "{n} জন সদস্য",
+    gruppeEntfernen: "সরান",
+    gruppeEntfernenFrage: "{name}-কে গ্রুপ থেকে সরাবেন? তিনি আর এই চ্যাট খুলতে পারবেন না।",
+    gruppeEntferntDu: "আপনাকে এই গ্রুপ থেকে সরিয়ে দেওয়া হয়েছে।",
+    gruppeOnline: "অনলাইন",
+    gruppeZuletzt: "শেষ দেখা",
+    gruppeGelesen: "যাঁরা পড়েছেন",
+    gruppeUngelesen: "এখনও পড়েননি",
+    gruppeHinweis: "চ্যাটের একটা নাম দিন – এটা সদস্য তালিকা ও “কে পড়েছে” সহ একটি গ্রুপ হয়ে যাবে। যিনি প্রথম নাম দেন, তিনিই গ্রুপের অ্যাডমিন।",
     speichern: "সেভ করুন",
     fuerMich: "🙈 আমার জন্য মুছুন",
     geteiltTitel: "শেয়ার করা – অনুবাদিত",
@@ -1607,6 +1757,21 @@ const TEXTE = {
     codeEingeben: "ਵਾਪਸ ਜਾਓ ਅਤੇ ਕੋਡ ਦਰਜ ਕਰੋ",
     umbenennen: "ਇਸ ਚੈਟ ਦਾ ਨਾਮ",
     chatNameBsp: "ਜਿਵੇਂ Maria 💕",
+    gruppe: "ਗਰੁੱਪ",
+    gruppeName: "ਗਰੁੱਪ ਦਾ ਨਾਮ",
+    gruppeNameBsp: "ਜਿਵੇਂ Estufa Silva – ਟੀਮ",
+    gruppeChef: "👑 ਐਡਮਿਨ",
+    gruppeDuChef: "ਤੁਸੀਂ ਇਸ ਗਰੁੱਪ ਦੇ ਐਡਮਿਨ ਹੋ।",
+    gruppeNurChef: "ਸਿਰਫ਼ ਗਰੁੱਪ ਦਾ ਐਡਮਿਨ ਇਹ ਬਦਲ ਸਕਦਾ ਹੈ।",
+    gruppeMitglieder: "{n} ਮੈਂਬਰ",
+    gruppeEntfernen: "ਹਟਾਓ",
+    gruppeEntfernenFrage: "{name} ਨੂੰ ਗਰੁੱਪ ਤੋਂ ਹਟਾਉਣਾ ਹੈ? ਉਹ ਇਹ ਚੈਟ ਫਿਰ ਨਹੀਂ ਖੋਲ੍ਹ ਸਕਣਗੇ।",
+    gruppeEntferntDu: "ਤੁਹਾਨੂੰ ਇਸ ਗਰੁੱਪ ਤੋਂ ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਹੈ।",
+    gruppeOnline: "ਆਨਲਾਈਨ",
+    gruppeZuletzt: "ਆਖਰੀ ਵਾਰ",
+    gruppeGelesen: "ਜਿਨ੍ਹਾਂ ਨੇ ਪੜ੍ਹਿਆ",
+    gruppeUngelesen: "ਹਾਲੇ ਨਹੀਂ ਪੜ੍ਹਿਆ",
+    gruppeHinweis: "ਚੈਟ ਨੂੰ ਨਾਮ ਦਿਓ – ਇਹ ਮੈਂਬਰਾਂ ਦੀ ਸੂਚੀ ਅਤੇ “ਕਿਸ ਨੇ ਪੜ੍ਹਿਆ” ਵਾਲਾ ਗਰੁੱਪ ਬਣ ਜਾਵੇਗਾ। ਜੋ ਪਹਿਲਾਂ ਨਾਮ ਦਿੰਦਾ ਹੈ, ਉਹੀ ਐਡਮਿਨ ਹੁੰਦਾ ਹੈ।",
     speichern: "ਸੇਵ ਕਰੋ",
     fuerMich: "🙈 ਮੇਰੇ ਲਈ ਮਿਟਾਓ",
     geteiltTitel: "ਸਾਂਝਾ ਕੀਤਾ – ਅਨੁਵਾਦਿਤ",
@@ -1757,6 +1922,21 @@ const TEXTE = {
     codeEingeben: "फर्केर कोड हाल्नुहोस्",
     umbenennen: "यो च्याटको नाम",
     chatNameBsp: "जस्तै: मारिया 💕",
+    gruppe: "समूह",
+    gruppeName: "समूहको नाम",
+    gruppeNameBsp: "जस्तै: Estufa Silva – टिम",
+    gruppeChef: "👑 एडमिन",
+    gruppeDuChef: "तपाईं यो समूहको एडमिन हुनुहुन्छ।",
+    gruppeNurChef: "समूहको एडमिनले मात्र यो बदल्न सक्छ।",
+    gruppeMitglieder: "{n} सदस्य",
+    gruppeEntfernen: "हटाउनुहोस्",
+    gruppeEntfernenFrage: "{name} लाई समूहबाट हटाउने? उहाँले यो च्याट फेरि खोल्न सक्नुहुने छैन।",
+    gruppeEntferntDu: "तपाईंलाई यो समूहबाट हटाइएको छ।",
+    gruppeOnline: "अनलाइन",
+    gruppeZuletzt: "पछिल्लो पटक",
+    gruppeGelesen: "पढ्नेहरू",
+    gruppeUngelesen: "अहिलेसम्म पढेको छैन",
+    gruppeHinweis: "च्याटलाई नाम दिनुहोस् – यो सदस्य सूची र “कसले पढ्यो” भएको समूह बन्छ। जसले पहिले नाम दिन्छ, उही समूहको एडमिन हुन्छ।",
     speichern: "सेभ गर्नुहोस्",
     fuerMich: "🙈 मेरा लागि मेटाउनुहोस्",
     geteiltTitel: "सेयर गरिएको – अनुवादित",
@@ -1920,6 +2100,16 @@ async function chatBenennen(code, name) {
   const liste = await chatsLaden();
   const da = liste.find((c) => c.code === code);
   if (da) da.name = String(name || "").trim().slice(0, 40);
+  try { await AsyncStorage.setItem(CHATS_KEY, JSON.stringify(liste)); } catch {}
+}
+/* Gruppenname vom Server: als Chat-Name uebernehmen, solange man den Chat
+   nicht selbst anders benannt hat. */
+async function chatGruppeMerken(code, name) {
+  const liste = await chatsLaden();
+  const da = liste.find((c) => c.code === code);
+  if (!da || da.gruppe === name) return;
+  if (!da.name || da.name === da.gruppe) da.name = String(name || "").trim().slice(0, 40);
+  da.gruppe = name;
   try { await AsyncStorage.setItem(CHATS_KEY, JSON.stringify(liste)); } catch {}
 }
 async function chatVergessen(code) {
@@ -3069,6 +3259,10 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
   const [anwesend, setAnwesend] = useState([]);
+  /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
+  const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [] });
+  const [gruppeOffen, setGruppeOffen] = useState(false);
+  const [gruppeEntwurf, setGruppeEntwurf] = useState("");
   /* Anrufe: offen = ich bin im Anruf; klingelt = jemand ruft mich an. */
   const [anrufOffen, setAnrufOffen] = useState(false);
   const [anrufVideo, setAnrufVideo] = useState(false);
@@ -3182,7 +3376,15 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       if (von === device) return;
       const b = Number(bis);
       if (Number.isFinite(b)) setGelesenBis((alt) => Math.max(alt, b));
+      if (von && Number.isFinite(b)) setGruppe((g) => ({ ...g, mitglieder: g.mitglieder.map((m) =>
+        (m.device === von ? { ...m, bis: Math.max(m.bis || 0, b) } : m)) }));
     });
+    socket.on("gruppe", (g) => {
+      if (!g || typeof g !== "object") return;
+      setGruppe({ name: g.name || "", admin: g.admin || "", mitglieder: Array.isArray(g.mitglieder) ? g.mitglieder : [] });
+      if (g.name) chatGruppeMerken(raum, g.name).catch(() => {});
+    });
+    socket.on("gruppeFehler", () => setHinweis(t("gruppeNurChef")));
     /* Zurueck in die App, waehrend der Chat offen ist: jetzt gelesen. */
     socket.on("anwesend", (liste) => {
       setAnwesend((Array.isArray(liste) ? liste : []).filter((w) => w.device !== device).map((w) => w.name));
@@ -3229,6 +3431,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     });
     socket.on("system", (ev) => {
       if (ev?.type === "tooManyJoins") setHinweis(t("zuVieleJoins"));
+      /* Aus der Gruppe entfernt: Chat aus der Liste nehmen und zurueck. */
+      if (ev?.type === "entfernt") {
+        chatVergessen(raum).catch(() => {});
+        Alert.alert(t("gruppe"), t("gruppeEntferntDu"));
+        onBack();
+      }
     });
     socket.on("tooFast", () => setHinweis(t("langsamer")));
     /* Reaktion von irgendwem im Raum (auch die eigene kommt so zurueck).
@@ -3495,6 +3703,14 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     sockRef.current.emit("reagieren", { id: m.id, emoji: aktuell === emoji ? "" : emoji });
   };
 
+  /* "Gelesen von 3/5" - nur in Gruppen (Name gesetzt oder mehr als zwei Leute). */
+  const andereMitglieder = gruppe.mitglieder.filter((m) => m.device !== device);
+  const istGruppe = Boolean(gruppe.name) || andereMitglieder.length >= 2;
+  const lesestand = (m) => ({
+    ja: andereMitglieder.filter((x) => (x.bis || 0) >= m.at),
+    nein: andereMitglieder.filter((x) => (x.bis || 0) < m.at),
+  });
+
   return (
     /* "padding" auch auf Android: edge-to-edge schaltet das automatische
        Verkleinern des Fensters ab, sonst laege die Tastatur ueber dem Feld. */
@@ -3508,14 +3724,18 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       {/* Kopfzeile */}
       <View style={s.chatHead}>
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={s.chatTitel} numberOfLines={1}>{chatName || "Chat " + raum}</Text>
+        <Pressable
+          style={{ flex: 1 }}
+          onPress={() => { setGruppeEntwurf(gruppe.name || chatName || ""); setGruppeOffen(true); sockRef.current?.emit("gruppeInfo"); }}
+        >
+          <Text style={s.chatTitel} numberOfLines={1}>{gruppe.name ? "👥 " + gruppe.name : (chatName || "Chat " + raum)}</Text>
           <Text style={s.chatSub} numberOfLines={1}>
+            {gruppe.name ? t("gruppeMitglieder").replace("{n}", String(gruppe.mitglieder.length)) + " · " : ""}
             {!verbunden ? t("verbinde")
               : anwesend.length ? `🟢 ${[...new Set(anwesend)].join(", ")} · ${t("imChat")}`
               : `${t("verbunden")} · ${t("du")}: ${name}`}
           </Text>
-        </View>
+        </Pressable>
         <Pressable onPress={anrufWaehlen} style={s.plusKnopf} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>📞</Text>
         </Pressable>
@@ -3531,6 +3751,64 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       </View>
 
       <Klingeln wer={klingelt} t={t} onAnnehmen={anrufAnnehmen} onAblehnen={anrufAblehnen} />
+
+      {/* Gruppe: Name (nur der Chef), Mitglieder, Entfernen */}
+      <Modal visible={gruppeOffen} transparent animationType="fade" onRequestClose={() => setGruppeOffen(false)}>
+        <Pressable style={s.modalHinten} onPress={() => setGruppeOffen(false)} />
+        <View style={[s.benennenBox, { top: "10%", maxHeight: "80%" }]}>
+          <Text style={[s.modalTitel, { paddingHorizontal: 0 }]}>👥 {t("gruppe")}</Text>
+          {!gruppe.admin || gruppe.admin === device ? (
+            <>
+              <TextInput
+                style={[s.input, { marginTop: 6 }]} maxLength={50}
+                value={gruppeEntwurf} onChangeText={setGruppeEntwurf}
+                placeholder={t("gruppeNameBsp")} placeholderTextColor={FARBE.grau}
+              />
+              <Pressable
+                style={[s.btnPrimary, { marginTop: 10 }]}
+                onPress={() => {
+                  if (!gruppeEntwurf.trim()) return;
+                  sockRef.current?.emit("gruppeName", { name: gruppeEntwurf.trim() });
+                  setGruppeOffen(false);
+                }}
+              >
+                <Text style={s.btnPrimaryTxt}>{t("speichern")}</Text>
+              </Pressable>
+              <Text style={s.gruppeHinweis}>{gruppe.admin ? t("gruppeDuChef") : t("gruppeHinweis")}</Text>
+            </>
+          ) : (
+            <Text style={s.gruppeNameGross}>{gruppe.name}</Text>
+          )}
+          <Text style={[s.gruppeHinweis, { fontWeight: "800", color: FARBE.navy, marginTop: 14 }]}>
+            {t("gruppeMitglieder").replace("{n}", String(gruppe.mitglieder.length))}
+          </Text>
+          <ScrollView style={{ marginTop: 4 }}>
+            {gruppe.mitglieder.map((m) => (
+              <View key={m.device} style={s.mitglied}>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.mitgliedName} numberOfLines={1}>
+                    {m.name}{m.device === device ? ` (${t("du")})` : ""}{m.device === gruppe.admin ? "  " + t("gruppeChef") : ""}
+                  </Text>
+                  <Text style={s.mitgliedSub} numberOfLines={1}>
+                    {sprachName(m.lang)} · {m.online ? "🟢 " + t("gruppeOnline") : `${t("gruppeZuletzt")} ${tagText(m.zuletzt)} ${uhrzeit(m.zuletzt)}`}
+                  </Text>
+                </View>
+                {gruppe.admin === device && m.device !== device ? (
+                  <Pressable
+                    hitSlop={6} style={s.mitgliedWeg}
+                    onPress={() => Alert.alert(t("gruppeEntfernen"), t("gruppeEntfernenFrage").replace("{name}", m.name), [
+                      { text: t("abbrechen"), style: "cancel" },
+                      { text: t("gruppeEntfernen"), style: "destructive", onPress: () => sockRef.current?.emit("gruppeEntfernen", { device: m.device }) },
+                    ])}
+                  >
+                    <Text style={s.mitgliedWegTxt}>{t("gruppeEntfernen")}</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
       <Anruf
         offen={anrufOffen} server={SERVER_URL} raum={raum} device={device} name={name} lang={lang}
         video={anrufVideo} t={t} onEnde={anrufBeenden}
@@ -3559,6 +3837,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
           )}
           <Bubble
             msg={item} lang={lang} device={device} gelesenBis={gelesenBis}
+            gelesenVon={istGruppe && item.device === device ? lesestand(item) : null}
             onKeineStimme={() => setHinweis(t("keineStimme"))}
             zitat={item.replyTo ? nachrichten.find((m) => m.id === item.replyTo) || { fehlt: true } : null}
             onLangDruck={() => setReagierenAuf(item)}
@@ -3752,7 +4031,7 @@ function LinkText({ text, style, onLongPress }) {
 
 /* Eine Sprechblase. Zeigt die Nachricht in MEINER Sprache (sonst Original).
    Langes Druecken oeffnet die Emoji-Leiste. */
-function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStimme }) {
+function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon, onKeineStimme }) {
   const meins = msg.device === device;
   const hatLink = LINK_RE.test(msg.text || "");
   const uebersetzt = !meins && !hatLink && msg.tr && msg.tr[lang];
@@ -3849,7 +4128,19 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, onKeineStim
             </Pressable>
           ) : null}
           <Text style={[s.metaZeit, meins && s.bubbleOrigMeins]}>{uhrzeit(msg.at)}</Text>
-          {meins && (
+          {meins && gelesenVon ? (
+            <Pressable
+              hitSlop={8}
+              onPress={() => Alert.alert(t("gruppeGelesen"),
+                [gelesenVon.ja.length ? gelesenVon.ja.map((x) => "✓✓ " + x.name).join("\n") : "–",
+                 gelesenVon.nein.length ? `${t("gruppeUngelesen")}:\n` + gelesenVon.nein.map((x) => "⏳ " + x.name).join("\n") : ""]
+                  .filter(Boolean).join("\n\n"))}
+            >
+              <Text style={[s.haken, gelesenVon.nein.length === 0 && s.hakenGelesen]}>
+                ✓✓ {gelesenVon.ja.length}/{gelesenVon.ja.length + gelesenVon.nein.length}
+              </Text>
+            </Pressable>
+          ) : meins && (
             <Text style={[s.haken, msg.at <= gelesenBis && s.hakenGelesen]}>
               {msg.at <= gelesenBis ? "✓✓" : "✓"}
             </Text>
@@ -4206,6 +4497,13 @@ const s = StyleSheet.create({
   wegTitel: { fontSize: 16.5, fontWeight: "800", color: FARBE.navy },
   wegText: { fontSize: 13.5, color: FARBE.grau, marginTop: 4, marginBottom: 12, lineHeight: 19 },
   chatCodeKlein: { fontSize: 12, color: FARBE.grau, marginTop: 1 },
+  gruppeHinweis: { fontSize: 13, color: FARBE.grau, marginTop: 10, lineHeight: 18 },
+  gruppeNameGross: { fontSize: 20, fontWeight: "800", color: FARBE.navy, marginTop: 4 },
+  mitglied: { flexDirection: "row", alignItems: "center", paddingVertical: 9, borderTopWidth: 1, borderTopColor: "#E7EAF2" },
+  mitgliedName: { fontSize: 15, fontWeight: "700", color: FARBE.navy },
+  mitgliedSub: { fontSize: 12, color: FARBE.grau, marginTop: 2 },
+  mitgliedWeg: { borderWidth: 1, borderColor: "#D64545", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, marginLeft: 8 },
+  mitgliedWegTxt: { color: "#D64545", fontSize: 13, fontWeight: "700" },
   benennenBox: { position: "absolute", left: 20, right: 20, top: "25%", backgroundColor: FARBE.weiss, borderRadius: 18, padding: 18 },
   leerBox: { alignItems: "center", paddingHorizontal: 24, paddingVertical: 30 },
   leerTitel: { fontSize: 20, fontWeight: "800", color: FARBE.navy, textAlign: "center" },

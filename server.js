@@ -12,6 +12,7 @@ import * as store from "./store.js";
 import * as geld from "./bezahlung.js";
 import * as play from "./playkasse.js";
 import * as anruf from "./anruf.js";
+import * as gruppe from "./gruppe.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -860,7 +861,11 @@ app.post("/api/neues", async (req, res) => {
     .map((c) => ({ room: raumCode(c?.room), seit: Number(c?.seit) || 0 }))
     .filter((c) => c.room);
   try {
-    res.json(await store.neueNachrichten(paare, String(req.body?.device || "").slice(0, 60)));
+    const geraet = String(req.body?.device || "").slice(0, 60);
+    /* Aus einer Gruppe Entfernte sehen auch hier nichts Neues mehr. */
+    const erlaubt = [];
+    for (const p of paare) if (await gruppe.darfRein(p.room, geraet)) erlaubt.push(p);
+    res.json(await store.neueNachrichten(erlaubt, geraet));
   } catch (err) {
     res.status(500).json({ error: err.message.slice(0, 150) });
   }
@@ -2373,6 +2378,11 @@ io.on("connection", (socket) => {
       return;
     }
 
+    /* Aus einer Gruppe entfernt? Dann bleibt die Tuer zu. */
+    if (!(await gruppe.darfRein(gewuenscht, String(device || socket.id).slice(0, 60)))) {
+      socket.emit("system", { type: "entfernt" });
+      return;
+    }
     room = gewuenscht;
     /* Der Probe-Chat von der Startseite (Raum "demo-...") ist kein echter
        Eintritt - sonst blaeht er die Trichterzahl "Chat betreten" auf.
@@ -2406,6 +2416,7 @@ io.on("connection", (socket) => {
     socket.to(room).emit("system", { type: "joined", name: me.name });
     socket.data.wer = { name: me.name, device: me.device };
     anwesendMelden(room);
+    gruppe.beigetreten(io, room, me);
     /* Klingelt es in diesem Chat gerade? Dann auch dem Neuen zeigen. */
     const laeuft = anrufe.get(room);
     if (laeuft && laeuft.device !== me.device && Date.now() - laeuft.at < ANRUF_KLINGELT_MS) {
@@ -2438,6 +2449,7 @@ io.on("connection", (socket) => {
 
   socket.on("setLang", ({ lang }) => {
     me.lang = clean(lang);
+    if (room) gruppe.spracheNeu(io, room, me);
   });
 
   socket.on("send", async ({ text, replyTo }) => {
@@ -2507,6 +2519,9 @@ io.on("connection", (socket) => {
     einladeBonus(room).catch(() => {});
     pushToRoom(room, msg).catch((e) => console.error("Push-Lauf:", e.message));
   });
+
+  /* Gruppen: Name, Mitglieder, Entfernen (gruppe.js). */
+  gruppe.handler(io, socket, () => room, () => me, () => { room = null; });
 
   /* Lesebestaetigung: jemand hat den Chat offen und alles bis "bis"
      gesehen. Nur an die anderen im Raum weiterreichen (nicht zurueck an

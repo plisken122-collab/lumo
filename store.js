@@ -36,6 +36,8 @@ const mem = {
   aboRaeume: new Map(), // room -> abo_id
   reactions: new Map(), // message_id -> { device: emoji }
   readState: new Map(), // "room|device" -> bis (bis wann gelesen)
+  gruppen: new Map(),   // room -> { name, admin, erstellt }
+  mitglieder: new Map(), // "room|device" -> { room, device, name, lang, zuletzt, entfernt }
   anrufSek: new Map(),  // "topf|monat" -> Sekunden
   zaehler: new Map(),   // "monat|art" -> Menge
 };
@@ -281,6 +283,29 @@ export async function init() {
     if (!da.includes("audio_seconds")) schemaFehler = "Spalte audio_seconds fehlt";
   } catch (err) {
     schemaFehler = "Pruefung fehlgeschlagen: " + err.message.slice(0, 150);
+  }
+
+  /* Gruppen (z. B. ein Betrieb): Name und Chef je Chat, dazu wer
+     dabei ist. "entfernt" sperrt ein Geraet fuer diesen Chat. */
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS gruppen (
+        room    TEXT PRIMARY KEY,
+        name    TEXT NOT NULL,
+        admin   TEXT NOT NULL,
+        erstellt BIGINT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS mitglieder (
+        room     TEXT NOT NULL,
+        device   TEXT NOT NULL,
+        name     TEXT NOT NULL,
+        lang     TEXT NOT NULL,
+        zuletzt  BIGINT NOT NULL,
+        entfernt BOOLEAN NOT NULL DEFAULT FALSE,
+        PRIMARY KEY (room, device)
+      );`);
+  } catch (err) {
+    schemaFehler = "Gruppen-Tabellen: " + err.message.slice(0, 150);
   }
 
   /* Einmalig: alte, am Chat haengende Mitgliedschaften in Abos ueberfuehren. */
@@ -664,6 +689,10 @@ export async function purgeOlderThan(days) {
   /* Verbrauchszahlen bleiben ein Jahr - sie enthalten keinen Nachrichtentext. */
   await pool.query(`DELETE FROM usage_log WHERE at < $1`,
                    [Date.now() - 365 * 24 * 60 * 60 * 1000]);
+  /* Mitglieder, die lange nicht mehr da waren, vergessen - Sperren
+     (entfernt) bleiben ein Jahr, sonst kaeme der Entfernte zurueck. */
+  await pool.query(`DELETE FROM mitglieder WHERE zuletzt < $1 AND (NOT entfernt OR zuletzt < $2)`,
+                   [cutoff, Date.now() - 365 * 24 * 60 * 60 * 1000]);
   /* Push-Anmeldungen, die seit einem halben Jahr nichts mehr getan haben,
      sind mit hoher Wahrscheinlichkeit tote Geraete. */
   await pool.query(`DELETE FROM subscriptions WHERE at < $1`,
@@ -1214,4 +1243,89 @@ export async function bonusAnzahl(geraet, seit) {
   const { rows } = await pool.query(
     `SELECT COUNT(*)::int AS n FROM abos WHERE status = 'bonus' AND customer = $1 AND at >= $2`, [geraet, seit]);
   return rows[0]?.n || 0;
+}
+
+/* ------------------------------ Gruppen ------------------------------
+   Ein Chat wird zur Gruppe, sobald jemand ihm einen Namen gibt. Wer das
+   als Erster tut, ist der Chef (admin): Er darf umbenennen und Leute
+   entfernen. Die Mitgliederliste fuehrt jedes Geraet, das den Chat
+   betreten hat - mit Name, Sprache und wann es zuletzt da war.
+--------------------------------------------------------------------- */
+export async function getGruppe(room) {
+  if (!usingDatabase) return mem.gruppen.get(room) || null;
+  const { rows } = await pool.query(`SELECT name, admin, erstellt FROM gruppen WHERE room = $1`, [room]);
+  return rows[0] ? { name: rows[0].name, admin: rows[0].admin, erstellt: Number(rows[0].erstellt) } : null;
+}
+
+export async function setGruppe(room, name, admin) {
+  if (!usingDatabase) {
+    const alt = mem.gruppen.get(room);
+    mem.gruppen.set(room, { name, admin: alt?.admin || admin, erstellt: alt?.erstellt || Date.now() });
+    return;
+  }
+  await pool.query(
+    `INSERT INTO gruppen (room, name, admin, erstellt) VALUES ($1,$2,$3,$4)
+     ON CONFLICT (room) DO UPDATE SET name = EXCLUDED.name`,
+    [room, name, admin, Date.now()]
+  );
+}
+
+export async function mitgliedDa(room, device, name, lang) {
+  if (!usingDatabase) {
+    const k = `${room}|${device}`;
+    const alt = mem.mitglieder.get(k);
+    mem.mitglieder.set(k, { room, device, name, lang, zuletzt: Date.now(), entfernt: alt?.entfernt || false });
+    return;
+  }
+  await pool.query(
+    `INSERT INTO mitglieder (room, device, name, lang, zuletzt) VALUES ($1,$2,$3,$4,$5)
+     ON CONFLICT (room, device) DO UPDATE
+       SET name = EXCLUDED.name, lang = EXCLUDED.lang, zuletzt = EXCLUDED.zuletzt`,
+    [room, device, name, lang, Date.now()]
+  );
+}
+
+/* Alle (nicht entfernten) Mitglieder, dazu ihr Lesestand. */
+export async function mitgliederVon(room) {
+  if (!usingDatabase) {
+    return [...mem.mitglieder.values()]
+      .filter((m) => m.room === room && !m.entfernt)
+      .map((m) => ({ device: m.device, name: m.name, lang: m.lang, zuletzt: m.zuletzt,
+                     bis: mem.readState.get(`${room}|${m.device}`) || 0 }));
+  }
+  const { rows } = await pool.query(
+    `SELECT m.device, m.name, m.lang, m.zuletzt, COALESCE(r.bis, 0)::bigint AS bis
+       FROM mitglieder m LEFT JOIN read_state r ON r.room = m.room AND r.device = m.device
+      WHERE m.room = $1 AND NOT m.entfernt
+      ORDER BY m.zuletzt DESC LIMIT 300`,
+    [room]
+  );
+  return rows.map((r) => ({ device: r.device, name: r.name, lang: r.lang,
+                            zuletzt: Number(r.zuletzt), bis: Number(r.bis) }));
+}
+
+/* Geraet aus dem Chat sperren und seine Push-Anmeldungen fuer diesen
+   Chat loeschen - sonst bekaeme es weiter die Nachrichten aufs Handy. */
+export async function mitgliedEntfernen(room, device) {
+  if (!usingDatabase) {
+    const k = `${room}|${device}`;
+    const alt = mem.mitglieder.get(k) || { room, device, name: "?", lang: "de" };
+    mem.mitglieder.set(k, { ...alt, zuletzt: Date.now(), entfernt: true });
+    for (const [key, sub] of [...mem.subs]) if (sub.room === room && sub.device === device) mem.subs.delete(key);
+    return;
+  }
+  await pool.query(
+    `INSERT INTO mitglieder (room, device, name, lang, zuletzt, entfernt) VALUES ($1,$2,'?','de',$3,TRUE)
+     ON CONFLICT (room, device) DO UPDATE SET entfernt = TRUE, zuletzt = EXCLUDED.zuletzt`,
+    [room, device, Date.now()]
+  );
+  await pool.query(`DELETE FROM subscriptions WHERE room = $1 AND device = $2`, [room, device]);
+}
+
+export async function istEntfernt(room, device) {
+  if (!room || !device) return false;
+  if (!usingDatabase) return Boolean(mem.mitglieder.get(`${room}|${device}`)?.entfernt);
+  const { rows } = await pool.query(
+    `SELECT 1 FROM mitglieder WHERE room = $1 AND device = $2 AND entfernt`, [room, device]);
+  return rows.length > 0;
 }

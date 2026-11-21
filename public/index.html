@@ -401,6 +401,16 @@
   .meta .zeit { opacity:.7; }
   /* Lese-Haken (gelesen) - in der Akzentfarbe, wie das Blau bei WhatsApp. */
   .gelesen-haken { color:var(--mine); font-weight:600; letter-spacing:-2px; }
+  .gelesen-zahl { cursor:pointer; color:var(--muted, #8C96AD); font-weight:600; }
+  .gelesen-zahl.alle { color:var(--mine); }
+  .sheet-inner button.primary { background:#14213D; color:#fff; text-align:center; font-weight:700; border-radius:12px; }
+  .sheet-inner button.primary:hover { background:#1f3157; }
+  .gruppe-name { width:100%; box-sizing:border-box; font-size:16px; padding:10px 12px; border-radius:12px; border:1px solid #D5DAE6; margin:6px 0 8px; }
+  .mitglied { display:flex; align-items:center; gap:8px; padding:8px 4px; border-top:1px solid #E7EAF2; }
+  .mitglied .wer { flex:1; min-width:0; }
+  .mitglied .n { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mitglied .u { font-size:12px; color:#8C96AD; }
+  .sheet-inner .mitglied button.weg { width:auto; color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:4px 10px; font-size:13px; }
 
   /* "... schreibt gerade"-Anzeige mit drei blinkenden Puenktchen. */
   .tippt { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); padding:2px 8px 6px; }
@@ -648,6 +658,7 @@
         <span id="count" class="count">0</span>
       </span>
       <button class="room" id="roomLabel" type="button"></button>
+      <button id="gruppeBtn" class="bell" type="button" aria-label="">👥</button>
       <button id="inviteBtn" class="bell"></button>
       <button id="bell" class="bell" type="button"></button>
       <span class="langwrap" id="langwrap">🌐<select id="langSwitch" aria-label=""></select></span>
@@ -890,7 +901,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v84";
+const BUILD = "v85";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1104,6 +1115,7 @@ function start() {
      empfangen und Verbindungen liegenlassen. Nur Verlauf leeren und in
      den (evtl. neuen) Raum beitreten. */
   if (socket) {
+    gruppe = { name: "", admin: "", mitglieder: [] };
     $("log").textContent = "";
     msgs.clear();
     asked.clear();
@@ -1159,12 +1171,36 @@ function start() {
   });
   /* Das Gegenueber hat den Chat offen und alles bis "bis" gesehen - meine
      eigenen Nachrichten bis dahin bekommen die Lese-Haken. */
-  socket.on("gelesen", ({ bis }) => {
+  socket.on("gelesen", ({ device, bis }) => {
     const t = Number(bis); if (!t) return;
+    if (device) {
+      const wer = gruppe.mitglieder.find((x) => x.device === device);
+      if (wer) wer.bis = Math.max(wer.bis || 0, t);
+    }
     msgs.forEach((m) => {
-      if (m.device === deviceId && !m.gelesen && m.at <= t) { m.gelesen = true; render(m); }
+      if (m.device !== deviceId) return;
+      if (istGruppe()) { render(m); return; }
+      if (!m.gelesen && m.at <= t) { m.gelesen = true; render(m); }
     });
   });
+  /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
+  socket.on("gruppe", (g) => {
+    if (!g || typeof g !== "object") return;
+    gruppe = { name: g.name || "", admin: g.admin || "", mitglieder: Array.isArray(g.mitglieder) ? g.mitglieder : [] };
+    if (gruppe.name) {
+      const liste = chatsLaden();
+      const c = liste.find((x) => x.code === me.room);
+      if (c && c.gruppe !== gruppe.name) {
+        if (!c.name || c.name === c.gruppe) c.name = gruppe.name.slice(0, 40);
+        c.gruppe = gruppe.name;
+        chatsSpeichern(liste);
+      }
+    }
+    zeigeRaumLabel();
+    msgs.forEach((m) => { if (m.device === deviceId) render(m); });
+    if (sheet && sheet.dataset.art === "gruppe") zeigeGruppe();
+  });
+  socket.on("gruppeFehler", () => showErr(T("gruppeNurChef")));
   socket.on("deleteFailed", () => { showErr(T("delFailed")); });
   socket.on("deleted", ({ id }) => {
     const m = msgs.get(id);
@@ -1178,6 +1214,15 @@ function start() {
        wenn doch, soll er wissen, warum, statt vor einer stummen App zu
        sitzen. */
     if (ev && ev.type === "tooManyJoins") { showErr(T("tooManyJoins")); return; }
+    /* Aus der Gruppe entfernt: Chat vergessen, zurueck zur Startseite. */
+    if (ev && ev.type === "entfernt") {
+      chatsSpeichern(chatsLaden().filter((c) => c.code !== me.room));
+      me.room = "";
+      gruppe = { name: "", admin: "", mitglieder: [] };
+      zurStartseite();
+      alert(T("gruppeEntferntDu"));
+      return;
+    }
     const d = document.createElement("div");
     d.className = "system";
     d.textContent = typeof ev === "string" ? ev : T(ev.type, { name: ev.name });
@@ -1629,7 +1674,20 @@ function render(m) {
   meta.appendChild(zeit);
   /* Lesebestaetigung: zwei Haken auf den EIGENEN Nachrichten, sobald das
      Gegenueber sie gesehen hat (wie bei WhatsApp). */
-  if (m.device === deviceId && m.gelesen) {
+  if (m.device === deviceId && istGruppe()) {
+    /* In Gruppen: "✓✓ 3/5" - antippen zeigt, wer gelesen hat. */
+    const st = lesestand(m);
+    const zahl = document.createElement("span");
+    zahl.className = "gelesen-zahl" + (st.nein.length ? "" : " alle");
+    zahl.textContent = `✓✓ ${st.ja.length}/${st.ja.length + st.nein.length}`;
+    zahl.title = T("gruppeGelesen");
+    zahl.onclick = (e) => {
+      e.stopPropagation();
+      alert(T("gruppeGelesen") + ":\n" + (st.ja.map((x) => "✓✓ " + x.name).join("\n") || "–") +
+        (st.nein.length ? "\n\n" + T("gruppeUngelesen") + ":\n" + st.nein.map((x) => "⏳ " + x.name).join("\n") : ""));
+    };
+    meta.appendChild(zahl);
+  } else if (m.device === deviceId && m.gelesen) {
     const haken = document.createElement("span");
     haken.className = "gelesen-haken";
     haken.textContent = "✓✓";
@@ -2686,10 +2744,108 @@ async function zeigeChatListe() {
   document.body.appendChild(sheet);
 }
 
-/* Der Name, wenn es einen gibt - sonst der Code. */
+/* Der Name, wenn es einen gibt - sonst der Code. Gruppen zeigen ihren
+   gemeinsamen Namen. */
 function zeigeRaumLabel() {
   const c = chatsLaden().find((x) => x.code === me.room);
-  $("roomLabel").textContent = c && c.name ? c.name : "#" + me.room;
+  $("roomLabel").textContent = gruppe.name ? "👥 " + gruppe.name : (c && c.name ? c.name : "#" + me.room);
+}
+
+/* ------------------------------ Gruppe ------------------------------
+   Ein Chat wird zur Gruppe, sobald jemand ihm einen Namen gibt; wer das
+   zuerst tut, verwaltet sie (umbenennen, Leute entfernen). */
+let gruppe = { name: "", admin: "", mitglieder: [] };
+const andereMitglieder = () => gruppe.mitglieder.filter((x) => x.device !== deviceId);
+const istGruppe = () => Boolean(gruppe.name) || andereMitglieder().length >= 2;
+function lesestand(m) {
+  const andere = andereMitglieder();
+  return { ja: andere.filter((x) => (x.bis || 0) >= m.at), nein: andere.filter((x) => (x.bis || 0) < m.at) };
+}
+function zeitKurz(at) {
+  try {
+    return new Date(at).toLocaleString(undefined, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  } catch { return ""; }
+}
+function zeigeGruppe() {
+  schliesseSheet();
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  sheet.dataset.art = "gruppe";
+  const box = document.createElement("div");
+  box.className = "sheet-inner";
+
+  const kopf = document.createElement("p");
+  kopf.className = "sheet-kopf";
+  kopf.textContent = "👥 " + T("gruppe");
+  box.appendChild(kopf);
+
+  const binChef = gruppe.admin === deviceId;
+  if (!gruppe.admin || binChef) {
+    const feld = document.createElement("input");
+    feld.className = "gruppe-name";
+    feld.maxLength = 50;
+    feld.value = gruppe.name || "";
+    feld.placeholder = T("gruppeNameBsp");
+    box.appendChild(feld);
+    const ok = document.createElement("button");
+    ok.type = "button";
+    ok.className = "primary";
+    ok.textContent = T("gruppeSpeichern");
+    ok.onclick = () => {
+      const name = feld.value.trim();
+      if (!name || !socket) return;
+      socket.emit("gruppeName", { name });
+      schliesseSheet();
+    };
+    box.appendChild(ok);
+    const h = document.createElement("p");
+    h.className = "sheet-hinweis";
+    h.textContent = gruppe.admin ? T("gruppeDuChef") : T("gruppeHinweis");
+    box.appendChild(h);
+  } else {
+    const n = document.createElement("p");
+    n.className = "sheet-kopf";
+    n.textContent = gruppe.name;
+    box.appendChild(n);
+  }
+
+  const zahl = document.createElement("p");
+  zahl.className = "sheet-hinweis";
+  zahl.style.fontWeight = "700";
+  zahl.textContent = T("gruppeMitglieder", { n: gruppe.mitglieder.length });
+  box.appendChild(zahl);
+
+  for (const m of gruppe.mitglieder) {
+    const z = document.createElement("div");
+    z.className = "mitglied";
+    const wer = document.createElement("div");
+    wer.className = "wer";
+    const n = document.createElement("div");
+    n.className = "n";
+    n.textContent = m.name + (m.device === deviceId ? " ✱" : "") + (m.device === gruppe.admin ? "  " + T("gruppeChef") : "");
+    const u = document.createElement("div");
+    u.className = "u";
+    const sprache = (LANGS.find(([c]) => c === m.lang) || [])[1] || m.lang;
+    u.textContent = sprache + " · " + (m.online ? "🟢 " + T("gruppeOnline") : T("gruppeZuletzt") + " " + zeitKurz(m.zuletzt));
+    wer.appendChild(n); wer.appendChild(u);
+    z.appendChild(wer);
+    if (binChef && m.device !== deviceId) {
+      const weg = document.createElement("button");
+      weg.type = "button";
+      weg.className = "weg";
+      weg.textContent = T("gruppeEntfernen");
+      weg.onclick = () => {
+        if (!confirm(T("gruppeEntfernenFrage", { name: m.name }))) return;
+        socket.emit("gruppeEntfernen", { device: m.device });
+      };
+      z.appendChild(weg);
+    }
+    box.appendChild(z);
+  }
+
+  sheet.appendChild(box);
+  sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
+  document.body.appendChild(sheet);
 }
 
 function zeigeMenue(m) {
@@ -2930,6 +3086,7 @@ window.addEventListener("hashchange", () => {
 });
 
 $("roomLabel").onclick = () => zeigeChatListe();
+$("gruppeBtn").onclick = () => { zeigeGruppe(); if (socket) socket.emit("gruppeInfo"); };
 
 $("bell").onclick = async () => {
   /* Schon an? Dann Ton aus und Push abmelden. */
