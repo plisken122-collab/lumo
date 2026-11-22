@@ -4233,6 +4233,11 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       if (amEnde.current) scrollUnten();
       if (m.device !== device) gelesenMelden();
       if (m.device !== device && m.device !== "demo") vielleichtBewerten();
+      /* Sprachnachricht ohne Mitschrift: Der Server schreibt nach und
+         uebersetzt - dann ("translated") vorlesen. */
+      if (m.device !== device && autoRef.current && !m.text && m.audioSeconds && AppState.currentState === "active") {
+        wartetAufVorlesen.current.add(m.id);
+      }
       if (m.device !== device && autoRef.current && m.text && AppState.currentState === "active") {
         const gleich = String(m.lang || "").split("-")[0] === String(lang).split("-")[0];
         if (gleich || !/\p{L}/u.test(m.text)) vorlesen(m.text, lang);
@@ -5015,6 +5020,12 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon,
           </Pressable>
         ) : null}
         {msg.audioSeconds ? <Sprachnachricht id={msg.id} sekunden={msg.audioSeconds} meins={meins} onLangDruck={onLangDruck} /> : null}
+        {/* Fremde Sprachnachricht: die Uebersetzung anhören, in meiner Sprache. */}
+        {msg.audioSeconds && !meins && uebersetzt ? (
+          <Pressable onPress={() => vorlesen(uebersetzt, lang, false, onKeineStimme)} onLongPress={onLangDruck} style={s.uebHoeren} hitSlop={6}>
+            <Text style={s.uebHoerenTxt}>🔊 {sprachName(lang)}</Text>
+          </Pressable>
+        ) : null}
         {msg.gif ? (
           <Pressable onLongPress={onLangDruck}>
             <GifBild
@@ -5558,6 +5569,8 @@ const s = StyleSheet.create({
   lernAbschnitt: { fontWeight: "700", fontSize: 14, color: FARBE.navy, marginTop: 16, marginBottom: 6 },
   lernVorschlag: { flexDirection: "row", gap: 10, borderWidth: 1, borderColor: FARBE.grauHell, borderRadius: 12, padding: 12, marginBottom: 6 },
   lernPlus: { fontWeight: "800", fontSize: 18, color: FARBE.navy },
+  uebHoeren: { alignSelf: "flex-start", backgroundColor: FARBE.hell, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5, marginBottom: 6 },
+  uebHoerenTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 13 },
   lernHaken: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: FARBE.grau, alignItems: "center", justifyContent: "center" },
   lernVsZiel: { fontWeight: "600", fontSize: 15, color: FARBE.text },
   aktionTxt: { color: FARBE.navy, fontWeight: "700" },

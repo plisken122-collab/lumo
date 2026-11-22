@@ -304,6 +304,7 @@
   }
   .sheet-inner button:hover { background:var(--canvas); }
   .sheet-inner .danger { color:var(--danger); }
+  .ueb-hoeren { display:inline-block; margin:2px 0 6px; padding:5px 10px; border-radius:12px; background:var(--canvas); color:var(--ink); font-size:13px; font-weight:700; }
 
   /* Diralo Lernen */
   .lernen-btn { position:relative; }
@@ -948,7 +949,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v93";
+const BUILD = "v94";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1727,6 +1728,16 @@ function render(m) {
       box.appendChild(a);
       box.appendChild(len);
       bubble.appendChild(box);
+      /* Fremde Sprachnachricht: die Uebersetzung anhoeren, in meiner Sprache. */
+      const ueb = m.device !== deviceId && (m.tr || {})[me.lang];
+      if (ueb) {
+        const h = document.createElement("button");
+        h.type = "button";
+        h.className = "ueb-hoeren";
+        h.textContent = "🔊 " + ((LANGS.find(([c]) => c === me.lang) || [])[1] || me.lang);
+        h.onclick = (e) => { e.stopPropagation(); natuerlichVorlesen(ueb, me.lang); };
+        bubble.appendChild(h);
+      }
       if (!m.text.trim()) {
         const hint = document.createElement("span");
         hint.className = "no-text";
@@ -2562,6 +2573,22 @@ function vorlesen(text, lang) {
     u.rate = 0.9;
     speechSynthesis.speak(u);
   } catch { showErr(T("errVorlesen")); }
+}
+
+/* Natuerliche Stimme vom Server (wie in der App), sonst die des Browsers. */
+let stimmePlayer = null;
+async function natuerlichVorlesen(text, lang) {
+  try {
+    if (stimmePlayer) stimmePlayer.pause();
+    const a = await fetch("/api/sprechen", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: String(text).slice(0, 600), lang, device: deviceId }),
+    });
+    if (!a.ok) throw new Error();
+    const { id } = await a.json();
+    stimmePlayer = new Audio("/api/sprechen/" + encodeURIComponent(id));
+    await stimmePlayer.play();
+  } catch { vorlesen(text, lang); }
 }
 
 function zeigeAussprache(m) {
