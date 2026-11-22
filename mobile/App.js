@@ -4664,37 +4664,41 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
       <View style={s.chatHead}>
         <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
         <Pressable
-          style={{ flex: 1 }}
+          style={{ flex: 1, minWidth: 60 }}
           onPress={() => { setGruppeEntwurf(gruppe.name || chatName || ""); setGruppeOffen(true); sockRef.current?.emit("gruppeInfo"); }}
         >
           <Text style={s.chatTitel} numberOfLines={1}>{gruppe.name ? "👥 " + gruppe.name : (chatName || "Chat " + raum)}</Text>
-          <Text style={s.chatSub} numberOfLines={1}>
-            {gruppe.name ? t("gruppeMitglieder").replace("{n}", String(gruppe.mitglieder.length)) + " · " : ""}
-            {!verbunden ? t("verbinde")
-              : anwesend.length ? `🟢 ${[...new Set(anwesend)].join(", ")} · ${t("imChat")}`
-              : `${t("verbunden")} · ${t("du")}: ${name}`}
-          </Text>
         </Pressable>
         <Pressable
           onPress={() => { setGruppeEntwurf(gruppe.name || chatName || ""); setGruppeOffen(true); sockRef.current?.emit("gruppeInfo"); }}
-          style={s.plusKnopf} hitSlop={8}
+          style={s.kopfKnopf} hitSlop={6}
         >
           <Text style={s.plusKnopfTxt}>👥</Text>
         </Pressable>
-        <Pressable onPress={anrufWaehlen} style={s.plusKnopf} hitSlop={8}>
+        <Pressable onPress={anrufWaehlen} style={s.kopfKnopf} hitSlop={6}>
           <Text style={s.plusKnopfTxt}>📞</Text>
         </Pressable>
-        <Pressable onPress={autoUmschalten} style={[s.plusKnopf, autoVorlesen && s.autoAn]} hitSlop={8}>
+        <Pressable onPress={autoUmschalten} style={[s.kopfKnopf, autoVorlesen && s.autoAn]} hitSlop={6}>
           <Text style={s.plusKnopfTxt}>{autoVorlesen ? "🔊" : "🔈"}</Text>
         </Pressable>
         {lernZiel ? (
-          <Pressable onPress={() => setLernenOffen(true)} style={s.plusKnopf} hitSlop={8}>
+          <Pressable onPress={() => setLernenOffen(true)} style={s.kopfKnopf} hitSlop={6}>
             <Text style={s.plusKnopfTxt}>🎓</Text>
           </Pressable>
         ) : null}
         <Pressable onPress={einladen} style={s.einladen} hitSlop={8}>
-          <Text style={s.einladenTxt}>{t("einladen")}</Text>
+          <Text style={s.einladenTxt} numberOfLines={1}>{t("einladen")}</Text>
         </Pressable>
+      </View>
+      {/* Status (online / verbinde) in eigener Zeile unter der Kopfzeile:
+         oben ist mit den Knoepfen kein Platz mehr, so bleibt er immer lesbar. */}
+      <View style={s.chatStatus}>
+        <Text style={s.chatSub} numberOfLines={1}>
+          {gruppe.name ? t("gruppeMitglieder").replace("{n}", String(gruppe.mitglieder.length)) + " · " : ""}
+          {!verbunden ? t("verbinde")
+            : anwesend.length ? `🟢 ${[...new Set(anwesend)].join(", ")} · ${t("imChat")}`
+            : `${t("verbunden")} · ${t("du")}: ${name}`}
+        </Text>
       </View>
 
       {/* Durchsage: vom Chef oben angeheftet, jeder liest sie in seiner Sprache */}
@@ -5510,10 +5514,12 @@ const s = StyleSheet.create({
   btnGoldTxt: { color: FARBE.navy, fontWeight: "800", fontSize: 15 },
 
   /* Chat */
-  chatHead: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: FARBE.navy, paddingHorizontal: 14, paddingVertical: 14 },
+  chatHead: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: FARBE.navy, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 4 },
+  chatStatus: { backgroundColor: FARBE.navy, paddingHorizontal: 14, paddingBottom: 8 },
+  kopfKnopf: { borderWidth: 1, borderColor: FARBE.gold, borderRadius: 16, paddingHorizontal: 7, paddingVertical: 5 },
   back: { color: FARBE.weiss, fontSize: 34, lineHeight: 34, paddingRight: 6, marginTop: -4 },
   chatTitel: { color: FARBE.weiss, fontSize: 17, fontWeight: "800" },
-  chatSub: { color: "#aeb9cc", fontSize: 12, marginTop: 2 },
+  chatSub: { color: "#aeb9cc", fontSize: 12.5 },
   hinweis: { backgroundColor: "#fff5d6", borderBottomWidth: 1, borderBottomColor: "#f0e3b0", paddingHorizontal: 14, paddingVertical: 10 },
   hinweisTxt: { color: "#7a5b00", fontSize: 13 },
   liste: { padding: 14, paddingBottom: 18 },
