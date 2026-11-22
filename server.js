@@ -2369,7 +2369,13 @@ app.get("/medien/:id", async (req, res) => {
   const grundTyp = String(m.mime || "").split(";")[0].trim().toLowerCase();
   const zeigen = MEDIEN_ANZEIGEN.test(grundTyp);
   res.setHeader("Content-Type", zeigen ? grundTyp : "application/octet-stream");
-  res.setHeader("Content-Security-Policy", "sandbox; default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'");
+  /* Bei Ton und Video "allow-same-origin": Ohne das hat die Sandbox einen
+     fremden Ursprung, 'self' passt nicht mehr und der Browser laedt das
+     Video im eigenen Abspieler gar nicht (schwarzes Bild, 0:00). Skripte
+     bleiben trotzdem aus - dafuer muesste "allow-scripts" dabeistehen. */
+  const abspielen = zeigen && /^(audio|video)\//.test(grundTyp);
+  res.setHeader("Content-Security-Policy",
+    `sandbox${abspielen ? " allow-same-origin" : ""}; default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'`);
   res.setHeader("Cache-Control", "private, max-age=86400");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Accept-Ranges", "bytes");
