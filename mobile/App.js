@@ -114,6 +114,25 @@ const TEXTE = {
     codeEingeben: "Zurück und Code eingeben",
     umbenennen: "Name für diesen Chat",
     chatNameBsp: "z. B. Maria 💕",
+    lernenTitel: "Lernen",
+    lernenMerken: "⭐ Zum Lernen merken",
+    lernenGemerkt: "Gemerkt – du findest es unter 🎓",
+    lernenSchon: "Diesen Satz hast du schon gemerkt.",
+    lernenNichtMoeglich: "Für diesen Satz gibt es noch keine Übersetzung.",
+    lernenKeinPartner: "Sobald jemand in einer anderen Sprache schreibt, kannst du hier seine Sprache lernen – mit euren eigenen Sätzen.",
+    lernenGelernt: "{n} Sätze gelernt",
+    lernenSerie: "{n}. Tag in Folge",
+    lernenWie: "Wie heißt das auf {lang}?",
+    lernenAufdecken: "Aufdecken",
+    lernenWusste: "Wusste ich",
+    lernenNochmal: "Nochmal",
+    lernenFertig: "Für heute alles geschafft! Morgen geht's weiter.",
+    lernenLeer: "Noch keine Karten. Tippe unten auf einen Vorschlag oder halte eine Nachricht gedrückt → „Zum Lernen merken“.",
+    lernenVorschlaege: "Vorschläge aus eurem Chat",
+    lernenGratis: "Heute noch {n} Karten gratis",
+    lernenPlus: "Für heute geschafft! Unbegrenzt lernen mit einem Diralo-Abo.",
+    lernenPlusKnopf: "Abos ansehen",
+    lernenKarten: "{n} Karten gesammelt",
     anheften: "📌 Für alle anheften",
     losloesen: "Nicht mehr anheften",
     durchsage: "📌 Durchsage",
@@ -290,6 +309,25 @@ const TEXTE = {
     codeEingeben: "Voltar e escrever o código",
     umbenennen: "Nome para este chat",
     chatNameBsp: "p. ex. Carsten 💕",
+    lernenTitel: "Aprender",
+    lernenMerken: "⭐ Guardar para aprender",
+    lernenGemerkt: "Guardado – encontra em 🎓",
+    lernenSchon: "Já guardou esta frase.",
+    lernenNichtMoeglich: "Ainda não há tradução para esta frase.",
+    lernenKeinPartner: "Assim que alguém escrever noutra língua, pode aprender a língua dessa pessoa aqui – com as vossas próprias frases.",
+    lernenGelernt: "{n} frases aprendidas",
+    lernenSerie: "{n} dias seguidos",
+    lernenWie: "Como se diz em {lang}?",
+    lernenAufdecken: "Mostrar",
+    lernenWusste: "Já sabia",
+    lernenNochmal: "Outra vez",
+    lernenFertig: "Tudo feito por hoje! Amanhã há mais.",
+    lernenLeer: "Ainda sem cartões. Toque numa sugestão em baixo ou mantenha uma mensagem premida → «Guardar para aprender».",
+    lernenVorschlaege: "Sugestões da vossa conversa",
+    lernenGratis: "Hoje ainda {n} cartões grátis",
+    lernenPlus: "Feito por hoje! Aprenda sem limites com uma assinatura Diralo.",
+    lernenPlusKnopf: "Ver planos",
+    lernenKarten: "{n} cartões guardados",
     anheften: "📌 Fixar para todos",
     losloesen: "Desafixar",
     durchsage: "📌 Aviso",
@@ -466,6 +504,25 @@ const TEXTE = {
     codeEingeben: "Go back and enter the code",
     umbenennen: "Name for this chat",
     chatNameBsp: "e.g. Maria 💕",
+    lernenTitel: "Learn",
+    lernenMerken: "⭐ Save to learn",
+    lernenGemerkt: "Saved – find it under 🎓",
+    lernenSchon: "You already saved this sentence.",
+    lernenNichtMoeglich: "There's no translation for this sentence yet.",
+    lernenKeinPartner: "As soon as someone writes in another language, you can learn their language here – with your own sentences.",
+    lernenGelernt: "{n} sentences learned",
+    lernenSerie: "{n}-day streak",
+    lernenWie: "How do you say this in {lang}?",
+    lernenAufdecken: "Reveal",
+    lernenWusste: "I knew it",
+    lernenNochmal: "Again",
+    lernenFertig: "All done for today! See you tomorrow.",
+    lernenLeer: "No cards yet. Tap a suggestion below, or long-press a message → “Save to learn”.",
+    lernenVorschlaege: "Suggestions from your chat",
+    lernenGratis: "{n} free cards left today",
+    lernenPlus: "Done for today! Learn without limits with a Diralo subscription.",
+    lernenPlusKnopf: "See plans",
+    lernenKarten: "{n} cards saved",
     anheften: "📌 Pin for everyone",
     losloesen: "Unpin",
     durchsage: "📌 Announcement",
@@ -642,6 +699,25 @@ const TEXTE = {
     codeEingeben: "Volver y escribir el código",
     umbenennen: "Nombre para este chat",
     chatNameBsp: "p. ej. María 💕",
+    lernenTitel: "Aprender",
+    lernenMerken: "⭐ Guardar para aprender",
+    lernenGemerkt: "Guardado – lo encuentras en 🎓",
+    lernenSchon: "Ya guardaste esta frase.",
+    lernenNichtMoeglich: "Aún no hay traducción para esta frase.",
+    lernenKeinPartner: "En cuanto alguien escriba en otro idioma, podrás aprender su idioma aquí, con vuestras propias frases.",
+    lernenGelernt: "{n} frases aprendidas",
+    lernenSerie: "{n} días seguidos",
+    lernenWie: "¿Cómo se dice en {lang}?",
+    lernenAufdecken: "Mostrar",
+    lernenWusste: "Lo sabía",
+    lernenNochmal: "Otra vez",
+    lernenFertig: "¡Todo hecho por hoy! Mañana más.",
+    lernenLeer: "Aún no hay tarjetas. Toca una sugerencia abajo o mantén pulsado un mensaje → «Guardar para aprender».",
+    lernenVorschlaege: "Sugerencias de vuestro chat",
+    lernenGratis: "Hoy quedan {n} tarjetas gratis",
+    lernenPlus: "¡Hecho por hoy! Aprende sin límites con una suscripción Diralo.",
+    lernenPlusKnopf: "Ver planes",
+    lernenKarten: "{n} tarjetas guardadas",
     anheften: "📌 Fijar para todos",
     losloesen: "Dejar de fijar",
     durchsage: "📌 Aviso",
@@ -818,6 +894,25 @@ const TEXTE = {
     codeEingeben: "Revenir et saisir le code",
     umbenennen: "Nom de ce chat",
     chatNameBsp: "p. ex. Marie 💕",
+    lernenTitel: "Apprendre",
+    lernenMerken: "⭐ Garder pour apprendre",
+    lernenGemerkt: "Gardé – à retrouver sous 🎓",
+    lernenSchon: "Tu as déjà gardé cette phrase.",
+    lernenNichtMoeglich: "Pas encore de traduction pour cette phrase.",
+    lernenKeinPartner: "Dès que quelqu'un écrit dans une autre langue, tu peux apprendre sa langue ici – avec vos propres phrases.",
+    lernenGelernt: "{n} phrases apprises",
+    lernenSerie: "{n} jours d'affilée",
+    lernenWie: "Comment dit-on en {lang} ?",
+    lernenAufdecken: "Afficher",
+    lernenWusste: "Je savais",
+    lernenNochmal: "Encore",
+    lernenFertig: "Tout est fait pour aujourd'hui ! À demain.",
+    lernenLeer: "Pas encore de cartes. Touche une suggestion ci-dessous ou appuie longuement sur un message → « Garder pour apprendre ».",
+    lernenVorschlaege: "Suggestions de votre chat",
+    lernenGratis: "Encore {n} cartes gratuites aujourd'hui",
+    lernenPlus: "C'est fait pour aujourd'hui ! Apprends sans limite avec un abonnement Diralo.",
+    lernenPlusKnopf: "Voir les offres",
+    lernenKarten: "{n} cartes gardées",
     anheften: "📌 Épingler pour tous",
     losloesen: "Désépingler",
     durchsage: "📌 Annonce",
@@ -994,6 +1089,25 @@ const TEXTE = {
     codeEingeben: "Torna indietro e inserisci il codice",
     umbenennen: "Nome di questa chat",
     chatNameBsp: "es. Maria 💕",
+    lernenTitel: "Impara",
+    lernenMerken: "⭐ Salva per imparare",
+    lernenGemerkt: "Salvato – lo trovi sotto 🎓",
+    lernenSchon: "Hai già salvato questa frase.",
+    lernenNichtMoeglich: "Non c'è ancora una traduzione per questa frase.",
+    lernenKeinPartner: "Appena qualcuno scrive in un'altra lingua, qui puoi imparare la sua lingua – con le vostre frasi.",
+    lernenGelernt: "{n} frasi imparate",
+    lernenSerie: "{n} giorni di fila",
+    lernenWie: "Come si dice in {lang}?",
+    lernenAufdecken: "Mostra",
+    lernenWusste: "Lo sapevo",
+    lernenNochmal: "Ancora",
+    lernenFertig: "Tutto fatto per oggi! A domani.",
+    lernenLeer: "Ancora nessuna scheda. Tocca un suggerimento qui sotto o tieni premuto un messaggio → «Salva per imparare».",
+    lernenVorschlaege: "Suggerimenti dalla vostra chat",
+    lernenGratis: "Oggi ancora {n} schede gratis",
+    lernenPlus: "Fatto per oggi! Impara senza limiti con un abbonamento Diralo.",
+    lernenPlusKnopf: "Vedi i piani",
+    lernenKarten: "{n} schede salvate",
     anheften: "📌 Fissa per tutti",
     losloesen: "Non fissare più",
     durchsage: "📌 Avviso",
@@ -1170,6 +1284,25 @@ const TEXTE = {
     codeEingeben: "戻ってコードを入力",
     umbenennen: "チャット名",
     chatNameBsp: "例：マリア 💕",
+    lernenTitel: "学ぶ",
+    lernenMerken: "⭐ 学習用に保存",
+    lernenGemerkt: "保存しました – 🎓 から見られます",
+    lernenSchon: "この文はもう保存済みです。",
+    lernenNichtMoeglich: "この文にはまだ翻訳がありません。",
+    lernenKeinPartner: "相手が別の言語で書くと、ここで二人の実際の文を使って相手の言語を学べます。",
+    lernenGelernt: "{n} 文を覚えました",
+    lernenSerie: "{n} 日連続",
+    lernenWie: "{lang}で何と言う？",
+    lernenAufdecken: "答えを見る",
+    lernenWusste: "わかった",
+    lernenNochmal: "もう一度",
+    lernenFertig: "今日の分は完了！また明日。",
+    lernenLeer: "カードはまだありません。下の候補をタップするか、メッセージを長押し →「学習用に保存」。",
+    lernenVorschlaege: "チャットからのおすすめ",
+    lernenGratis: "今日の無料カード：あと {n} 枚",
+    lernenPlus: "今日の分は完了！Diralo のプランなら無制限に学べます。",
+    lernenPlusKnopf: "プランを見る",
+    lernenKarten: "保存したカード {n} 枚",
     anheften: "📌 全員に固定",
     losloesen: "固定を解除",
     durchsage: "📌 お知らせ",
@@ -1346,6 +1479,25 @@ const TEXTE = {
     codeEingeben: "वापस जाएँ और कोड डालें",
     umbenennen: "इस चैट का नाम",
     chatNameBsp: "जैसे मारिया 💕",
+    lernenTitel: "सीखें",
+    lernenMerken: "⭐ सीखने के लिए सहेजें",
+    lernenGemerkt: "सहेज लिया – 🎓 में मिलेगा",
+    lernenSchon: "यह वाक्य पहले से सहेजा हुआ है।",
+    lernenNichtMoeglich: "इस वाक्य का अभी अनुवाद नहीं है।",
+    lernenKeinPartner: "जैसे ही कोई दूसरी भाषा में लिखेगा, आप यहाँ उसकी भाषा अपने ही वाक्यों से सीख सकते हैं।",
+    lernenGelernt: "{n} वाक्य सीखे",
+    lernenSerie: "लगातार {n} दिन",
+    lernenWie: "{lang} में इसे क्या कहते हैं?",
+    lernenAufdecken: "दिखाएँ",
+    lernenWusste: "मुझे पता था",
+    lernenNochmal: "फिर से",
+    lernenFertig: "आज का पूरा हुआ! कल फिर मिलते हैं।",
+    lernenLeer: "अभी कोई कार्ड नहीं। नीचे किसी सुझाव पर टैप करें या किसी संदेश को देर तक दबाएँ → “सीखने के लिए सहेजें”।",
+    lernenVorschlaege: "आपकी चैट से सुझाव",
+    lernenGratis: "आज {n} मुफ़्त कार्ड बाकी",
+    lernenPlus: "आज का हो गया! Diralo सदस्यता से बिना सीमा सीखें।",
+    lernenPlusKnopf: "प्लान देखें",
+    lernenKarten: "{n} कार्ड सहेजे",
     anheften: "📌 सबके लिए पिन करें",
     losloesen: "पिन हटाएँ",
     durchsage: "📌 घोषणा",
@@ -1522,6 +1674,25 @@ const TEXTE = {
     codeEingeben: "واپس جائیں اور کوڈ درج کریں",
     umbenennen: "اس چیٹ کا نام",
     chatNameBsp: "مثلاً ماریہ 💕",
+    lernenTitel: "سیکھیں",
+    lernenMerken: "⭐ سیکھنے کے لیے محفوظ کریں",
+    lernenGemerkt: "محفوظ ہو گیا – 🎓 میں ملے گا",
+    lernenSchon: "یہ جملہ پہلے سے محفوظ ہے۔",
+    lernenNichtMoeglich: "اس جملے کا ابھی ترجمہ نہیں ہے۔",
+    lernenKeinPartner: "جیسے ہی کوئی دوسری زبان میں لکھے گا، آپ یہاں اس کی زبان اپنے ہی جملوں سے سیکھ سکتے ہیں۔",
+    lernenGelernt: "{n} جملے سیکھے",
+    lernenSerie: "لگاتار {n} دن",
+    lernenWie: "{lang} میں اسے کیا کہتے ہیں؟",
+    lernenAufdecken: "دکھائیں",
+    lernenWusste: "مجھے معلوم تھا",
+    lernenNochmal: "دوبارہ",
+    lernenFertig: "آج کا مکمل! کل پھر ملتے ہیں۔",
+    lernenLeer: "ابھی کوئی کارڈ نہیں۔ نیچے کسی تجویز پر ٹیپ کریں یا کسی پیغام کو دیر تک دبائیں ← “سیکھنے کے لیے محفوظ کریں”۔",
+    lernenVorschlaege: "آپ کی چیٹ سے تجاویز",
+    lernenGratis: "آج {n} مفت کارڈ باقی",
+    lernenPlus: "آج کا ہو گیا! Diralo سبسکرپشن کے ساتھ بے حد سیکھیں۔",
+    lernenPlusKnopf: "پلان دیکھیں",
+    lernenKarten: "{n} کارڈ محفوظ",
     anheften: "📌 سب کے لیے پن کریں",
     losloesen: "پن ہٹائیں",
     durchsage: "📌 اعلان",
@@ -1698,6 +1869,25 @@ const TEXTE = {
     codeEingeben: "ফিরে গিয়ে কোডটি দিন",
     umbenennen: "এই চ্যাটের নাম",
     chatNameBsp: "যেমন মারিয়া 💕",
+    lernenTitel: "শিখুন",
+    lernenMerken: "⭐ শেখার জন্য সংরক্ষণ",
+    lernenGemerkt: "সংরক্ষিত – 🎓-এ পাবেন",
+    lernenSchon: "এই বাক্যটি আগেই সংরক্ষিত।",
+    lernenNichtMoeglich: "এই বাক্যের এখনো অনুবাদ নেই।",
+    lernenKeinPartner: "কেউ অন্য ভাষায় লিখলেই আপনি এখানে নিজেদের বাক্য দিয়ে তার ভাষা শিখতে পারবেন।",
+    lernenGelernt: "{n}টি বাক্য শেখা হয়েছে",
+    lernenSerie: "টানা {n} দিন",
+    lernenWie: "{lang}-তে এটা কী বলে?",
+    lernenAufdecken: "দেখান",
+    lernenWusste: "জানতাম",
+    lernenNochmal: "আবার",
+    lernenFertig: "আজকের সব শেষ! কাল আবার।",
+    lernenLeer: "এখনো কোনো কার্ড নেই। নিচের একটি পরামর্শে ট্যাপ করুন বা কোনো বার্তা চেপে ধরুন → “শেখার জন্য সংরক্ষণ”।",
+    lernenVorschlaege: "আপনাদের চ্যাট থেকে পরামর্শ",
+    lernenGratis: "আজ আর {n}টি ফ্রি কার্ড",
+    lernenPlus: "আজকের হয়ে গেছে! Diralo সাবস্ক্রিপশনে সীমাহীন শিখুন।",
+    lernenPlusKnopf: "প্ল্যান দেখুন",
+    lernenKarten: "{n}টি কার্ড সংরক্ষিত",
     anheften: "📌 সবার জন্য পিন করুন",
     losloesen: "পিন সরান",
     durchsage: "📌 ঘোষণা",
@@ -1874,6 +2064,25 @@ const TEXTE = {
     codeEingeben: "ਵਾਪਸ ਜਾਓ ਅਤੇ ਕੋਡ ਦਰਜ ਕਰੋ",
     umbenennen: "ਇਸ ਚੈਟ ਦਾ ਨਾਮ",
     chatNameBsp: "ਜਿਵੇਂ Maria 💕",
+    lernenTitel: "ਸਿੱਖੋ",
+    lernenMerken: "⭐ ਸਿੱਖਣ ਲਈ ਸੰਭਾਲੋ",
+    lernenGemerkt: "ਸੰਭਾਲ ਲਿਆ – 🎓 ਵਿੱਚ ਮਿਲੇਗਾ",
+    lernenSchon: "ਇਹ ਵਾਕ ਪਹਿਲਾਂ ਹੀ ਸੰਭਾਲਿਆ ਹੈ।",
+    lernenNichtMoeglich: "ਇਸ ਵਾਕ ਦਾ ਅਜੇ ਅਨੁਵਾਦ ਨਹੀਂ ਹੈ।",
+    lernenKeinPartner: "ਜਿਵੇਂ ਹੀ ਕੋਈ ਹੋਰ ਭਾਸ਼ਾ ਵਿੱਚ ਲਿਖੇਗਾ, ਤੁਸੀਂ ਇੱਥੇ ਆਪਣੇ ਹੀ ਵਾਕਾਂ ਨਾਲ ਉਸਦੀ ਭਾਸ਼ਾ ਸਿੱਖ ਸਕਦੇ ਹੋ।",
+    lernenGelernt: "{n} ਵਾਕ ਸਿੱਖੇ",
+    lernenSerie: "ਲਗਾਤਾਰ {n} ਦਿਨ",
+    lernenWie: "{lang} ਵਿੱਚ ਇਸਨੂੰ ਕੀ ਕਹਿੰਦੇ ਹਨ?",
+    lernenAufdecken: "ਦਿਖਾਓ",
+    lernenWusste: "ਮੈਨੂੰ ਪਤਾ ਸੀ",
+    lernenNochmal: "ਫਿਰ ਤੋਂ",
+    lernenFertig: "ਅੱਜ ਦਾ ਪੂਰਾ! ਕੱਲ੍ਹ ਫਿਰ।",
+    lernenLeer: "ਅਜੇ ਕੋਈ ਕਾਰਡ ਨਹੀਂ। ਹੇਠਾਂ ਕਿਸੇ ਸੁਝਾਅ 'ਤੇ ਟੈਪ ਕਰੋ ਜਾਂ ਕਿਸੇ ਸੁਨੇਹੇ ਨੂੰ ਦਬਾ ਕੇ ਰੱਖੋ → “ਸਿੱਖਣ ਲਈ ਸੰਭਾਲੋ”।",
+    lernenVorschlaege: "ਤੁਹਾਡੀ ਚੈਟ ਤੋਂ ਸੁਝਾਅ",
+    lernenGratis: "ਅੱਜ {n} ਮੁਫ਼ਤ ਕਾਰਡ ਬਾਕੀ",
+    lernenPlus: "ਅੱਜ ਦਾ ਹੋ ਗਿਆ! Diralo ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਨਾਲ ਬੇਅੰਤ ਸਿੱਖੋ।",
+    lernenPlusKnopf: "ਪਲਾਨ ਵੇਖੋ",
+    lernenKarten: "{n} ਕਾਰਡ ਸੰਭਾਲੇ",
     anheften: "📌 ਸਭ ਲਈ ਪਿੰਨ ਕਰੋ",
     losloesen: "ਪਿੰਨ ਹਟਾਓ",
     durchsage: "📌 ਘੋਸ਼ਣਾ",
@@ -2050,6 +2259,25 @@ const TEXTE = {
     codeEingeben: "फर्केर कोड हाल्नुहोस्",
     umbenennen: "यो च्याटको नाम",
     chatNameBsp: "जस्तै: मारिया 💕",
+    lernenTitel: "सिक्नुहोस्",
+    lernenMerken: "⭐ सिक्नका लागि सुरक्षित गर्नुहोस्",
+    lernenGemerkt: "सुरक्षित भयो – 🎓 मा भेटिन्छ",
+    lernenSchon: "यो वाक्य पहिले नै सुरक्षित छ।",
+    lernenNichtMoeglich: "यो वाक्यको अझै अनुवाद छैन।",
+    lernenKeinPartner: "कसैले अर्को भाषामा लेख्नेबित्तिकै तपाईं यहाँ आफ्नै वाक्यहरूबाट उसको भाषा सिक्न सक्नुहुन्छ।",
+    lernenGelernt: "{n} वाक्य सिकियो",
+    lernenSerie: "लगातार {n} दिन",
+    lernenWie: "{lang} मा यसलाई के भनिन्छ?",
+    lernenAufdecken: "देखाउनुहोस्",
+    lernenWusste: "मलाई थाहा थियो",
+    lernenNochmal: "फेरि",
+    lernenFertig: "आजको सबै सकियो! भोलि फेरि।",
+    lernenLeer: "अझै कुनै कार्ड छैन। तलको सुझावमा ट्याप गर्नुहोस् वा कुनै सन्देश थिचिराख्नुहोस् → “सिक्नका लागि सुरक्षित गर्नुहोस्”।",
+    lernenVorschlaege: "तपाईंहरूको च्याटबाट सुझाव",
+    lernenGratis: "आज {n} निःशुल्क कार्ड बाँकी",
+    lernenPlus: "आजको सकियो! Diralo सदस्यतासँग असीमित सिक्नुहोस्।",
+    lernenPlusKnopf: "योजना हेर्नुहोस्",
+    lernenKarten: "{n} कार्ड सुरक्षित",
     anheften: "📌 सबैका लागि पिन गर्नुहोस्",
     losloesen: "पिन हटाउनुहोस्",
     durchsage: "📌 सूचना",
@@ -3279,6 +3507,214 @@ const PLAN_NAME = { plus: "plusName", familie: "familieName", team: "teamName", 
 const PLAN_TEXT = { plus: "plusText", familie: "familieText", team: "teamText", teamplus: "teamplusText" };
 
 /* art: "privat" zeigt Plus/Family, "team" die Tarife fuer Betriebe. */
+/* ------------------------------ Diralo Lernen ------------------------------
+   Wie auf der Website (public/lernen.js): Die Sprache des anderen mit den
+   eigenen Chat-Saetzen lernen. Jede Nachricht liegt ja in beiden Sprachen
+   vor - daraus werden Lernkarten (vorne meine Sprache, hinten seine).
+   Faecherprinzip, Vorschlaege aus dem Chat, Vorlesen, Tage in Folge.
+   Gratis 5 Karten am Tag, mit Abo unbegrenzt. Nur auf diesem Geraet. */
+const LERNEN_KEY = "diralo_lernen";
+const LERN_STUFEN = [0, 1, 3, 7, 16, 35];
+const LERN_GRATIS = 5;
+const TAG_MS = 24 * 60 * 60 * 1000;
+const lernTag = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const lernBasis = (l) => String(l || "").slice(0, 2);
+
+async function lernenLaden() {
+  const d = (await jsonLaden(LERNEN_KEY, {})) || {};
+  d.karten = Array.isArray(d.karten) ? d.karten : [];
+  d.serie = d.serie || { tag: null, n: 0 };
+  d.heute = d.heute && d.heute.tag === lernTag() ? d.heute : { tag: lernTag(), n: 0 };
+  return d;
+}
+async function lernenSichern(d) {
+  try { await AsyncStorage.setItem(LERNEN_KEY, JSON.stringify(d)); } catch {}
+}
+
+function lernPartner(nachrichten, lang, device) {
+  const n = {};
+  for (const m of nachrichten) {
+    if (m.deleted || !m.lang || m.device === device || lernBasis(m.lang) === lernBasis(lang)) continue;
+    n[m.lang] = (n[m.lang] || 0) + 1;
+  }
+  const best = Object.entries(n).sort((a, b) => b[1] - a[1])[0];
+  if (best) return best[0];
+  for (const m of nachrichten) for (const l of Object.keys(m.tr || {})) if (lernBasis(l) !== lernBasis(lang)) return l;
+  return null;
+}
+
+function lernText(m, l) {
+  if (!m || m.deleted) return "";
+  if (m.lang === l || (lernBasis(m.lang) === lernBasis(l) && !(m.tr || {})[l])) return String(m.text || "").trim();
+  return String((m.tr || {})[l] || "").trim();
+}
+
+function lernKarte(m, zl, lang) {
+  if (!m || m.deleted || m.ort || m.datei || m.gif || m.bild || m.audioSeconds) return null;
+  const ziel = lernText(m, zl), mein = lernText(m, lang);
+  if (!ziel || !mein || ziel === mein || ziel.length > 220 || !/\p{L}/u.test(ziel)) return null;
+  return { id: m.id, ziel, mein, zl, ml: lang, fach: 0, faellig: 0, neu: Date.now() };
+}
+
+const lernSchonDa = (d, k) => d.karten.some((x) => x.id === k.id || (x.zl === k.zl && x.ziel.toLowerCase() === k.ziel.toLowerCase()));
+
+function lernVorschlaege(d, nachrichten, zl, lang) {
+  const zaehl = new Map();
+  for (const m of nachrichten) {
+    const k = lernKarte(m, zl, lang);
+    if (!k || k.ziel.length < 2 || k.ziel.length > 70 || k.ziel.split(/\s+/).length > 9 || lernSchonDa(d, k)) continue;
+    const key = k.ziel.toLowerCase().replace(/[!?.,…]+$/u, "").trim();
+    const alt = zaehl.get(key);
+    if (alt) alt.n += 1; else zaehl.set(key, { k, n: 1 });
+  }
+  return [...zaehl.values()]
+    .sort((a, b) => b.n - a.n || a.k.ziel.length - b.k.ziel.length || String(b.k.id).localeCompare(String(a.k.id)))
+    .slice(0, 6).map((x) => x.k);
+}
+
+/* Aus dem Nachrichten-Menue: eine Nachricht als Karte merken. */
+async function lernenMerken(m, nachrichten, lang, device) {
+  const zl = lernBasis(m.lang) !== lernBasis(lang) ? m.lang : lernPartner(nachrichten, lang, device);
+  const k = zl && lernKarte(m, zl, lang);
+  if (!k) return "lernenNichtMoeglich";
+  const d = await lernenLaden();
+  if (lernSchonDa(d, k)) return "lernenSchon";
+  d.karten.push(k);
+  await lernenSichern(d);
+  return "lernenGemerkt";
+}
+
+function LernenFenster({ offen, onZu, nachrichten, lang, device, raum, onAbo }) {
+  const [d, setD] = useState(null);
+  const [reihe, setReihe] = useState([]);
+  const [auf, setAuf] = useState(false);
+  const [abo, setAbo] = useState(false);
+  const zl = useMemo(() => lernPartner(nachrichten, lang, device), [nachrichten, lang, device]);
+
+  useEffect(() => {
+    if (!offen) return;
+    let weg = false;
+    (async () => {
+      const dd = await lernenLaden();
+      if (weg) return;
+      setD(dd);
+      setAuf(false);
+      setReihe(dd.karten.filter((k) => k.zl === zl && k.ml === lang && k.faellig <= Date.now())
+        .sort((a, b) => a.faellig - b.faellig).map((k) => k.id));
+      try {
+        const r = await fetch(`${SERVER_URL}/api/plan?room=${encodeURIComponent(raum)}`);
+        const p = r.ok ? await r.json() : null;
+        if (!weg) setAbo(!!(p && p.plan && p.plan !== "frei"));
+      } catch {}
+    })();
+    return () => { weg = true; };
+  }, [offen, zl, lang, raum]);
+
+  if (!offen) return null;
+  const n = (k, wert) => t(k).replace("{n}", String(wert));
+
+  const meine = d ? d.karten.filter((x) => x.zl === zl && x.ml === lang) : [];
+  const gelernt = d ? d.karten.filter((x) => x.fach >= 2).length : 0;
+  const serie = d && (d.serie.tag === lernTag() || d.serie.tag === lernTag(new Date(Date.now() - TAG_MS))) ? d.serie.n : 0;
+  const rest = d ? Math.max(0, LERN_GRATIS - d.heute.n) : LERN_GRATIS;
+  const karte = d && reihe.length ? d.karten.find((k) => k.id === reihe[0]) : null;
+  const vorschlaege = d && zl ? lernVorschlaege(d, nachrichten, zl, lang) : [];
+
+  const bewerten = async (gewusst) => {
+    const dd = await lernenLaden();
+    const k = dd.karten.find((x) => x.id === karte.id);
+    if (k) {
+      if (gewusst) { k.fach = Math.min(LERN_STUFEN.length - 1, k.fach + 1); k.faellig = Date.now() + LERN_STUFEN[k.fach] * TAG_MS; }
+      else { k.fach = 0; k.faellig = Date.now(); }
+      dd.heute.n += 1;
+      if (dd.serie.tag !== lernTag()) {
+        dd.serie = { tag: lernTag(), n: dd.serie.tag === lernTag(new Date(Date.now() - TAG_MS)) ? dd.serie.n + 1 : 1 };
+      }
+      await lernenSichern(dd);
+    }
+    const neu = reihe.slice(1);
+    if (!gewusst) neu.splice(Math.min(3, neu.length), 0, karte.id);
+    setD(dd); setReihe(neu); setAuf(false);
+  };
+
+  const hinzu = async (v) => {
+    const dd = await lernenLaden();
+    if (!lernSchonDa(dd, v)) { dd.karten.push({ ...v, neu: Date.now() }); await lernenSichern(dd); }
+    setD(dd); setReihe((r) => [...r, v.id]);
+  };
+
+  const aufdecken = () => { setAuf(true); vorlesen(karte.ziel, zl); };
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onZu}>
+      <Pressable style={s.modalHinten} onPress={onZu} />
+      <View style={s.lernBox}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 12 }}>
+          <Text style={s.lernTitel}>🎓 {t("lernenTitel")}{zl ? " · " + sprachName(zl) : ""}</Text>
+          {!zl ? (
+            <Text style={s.lernText}>{t("lernenKeinPartner")}</Text>
+          ) : (
+            <>
+              <Text style={s.lernStand}>{n("lernenGelernt", gelernt)}{serie ? " · 🔥 " + n("lernenSerie", serie) : ""}</Text>
+              {karte && !abo && rest === 0 ? (
+                <View style={s.lernKarte}>
+                  <Text style={s.lernText}>🎉 {t("lernenPlus")}</Text>
+                  <Pressable style={[s.btnPrimary, { backgroundColor: FARBE.gold }]} onPress={() => { onZu(); onAbo(); }}>
+                    <Text style={[s.btnPrimaryTxt, { color: FARBE.navy }]}>{t("lernenPlusKnopf")}</Text>
+                  </Pressable>
+                </View>
+              ) : karte ? (
+                <View style={s.lernKarte}>
+                  <Text style={s.lernFrage}>{t("lernenWie").replace("{lang}", sprachName(zl))}</Text>
+                  <Text style={s.lernVorne}>{karte.mein}</Text>
+                  {auf ? (
+                    <>
+                      <Text style={s.lernHinten}>{karte.ziel}</Text>
+                      <Pressable style={s.lernHoeren} onPress={() => vorlesen(karte.ziel, zl)}>
+                        <Text style={s.aktionTxt}>🔊</Text>
+                      </Pressable>
+                      <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
+                        <Pressable style={[s.lernWahl, { backgroundColor: FARBE.weiss, borderWidth: 1, borderColor: FARBE.grauHell }]} onPress={() => bewerten(false)}>
+                          <Text style={[s.lernWahlTxt, { color: FARBE.navy }]}>↺ {t("lernenNochmal")}</Text>
+                        </Pressable>
+                        <Pressable style={[s.lernWahl, { backgroundColor: "#2e9d5b" }]} onPress={() => bewerten(true)}>
+                          <Text style={s.lernWahlTxt}>✓ {t("lernenWusste")}</Text>
+                        </Pressable>
+                      </View>
+                    </>
+                  ) : (
+                    <Pressable style={s.btnPrimary} onPress={aufdecken}>
+                      <Text style={s.btnPrimaryTxt}>{t("lernenAufdecken")}</Text>
+                    </Pressable>
+                  )}
+                  {!abo ? <Text style={s.lernKlein}>{n("lernenGratis", rest)}</Text> : null}
+                </View>
+              ) : d ? (
+                <Text style={s.lernText}>{meine.length ? "🎉 " + t("lernenFertig") : t("lernenLeer")}</Text>
+              ) : null}
+
+              {vorschlaege.length ? <Text style={s.lernAbschnitt}>💡 {t("lernenVorschlaege")}</Text> : null}
+              {vorschlaege.map((v) => (
+                <Pressable key={String(v.id)} style={s.lernVorschlag} onPress={() => hinzu(v)}>
+                  <Text style={s.lernPlus}>+</Text>
+                  <View style={{ flexShrink: 1 }}>
+                    <Text style={s.lernVsZiel}>{v.ziel}</Text>
+                    <Text style={s.lernKlein2}>{v.mein}</Text>
+                  </View>
+                </Pressable>
+              ))}
+              <Text style={s.lernKlein}>{n("lernenKarten", meine.length)}</Text>
+            </>
+          )}
+          <Pressable onPress={onZu} style={{ alignSelf: "center", padding: 10 }} hitSlop={8}>
+            <Text style={{ color: FARBE.grau, fontSize: 15 }}>{t("abbrechen")}</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
 function AboFenster({ offen, raum, onZu, onHinweis, art = "privat" }) {
   const [produkte, setProdukte] = useState([]);
   const [plan, setPlan] = useState(null);
@@ -3479,6 +3915,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   const [gelesenBis, setGelesenBis] = useState(0);
   const [aboOffen, setAboOffen] = useState(false);
   const [aboArt, setAboArt] = useState("privat");
+  const [lernenOffen, setLernenOffen] = useState(false);
   const [anwesend, setAnwesend] = useState([]);
   /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
   const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [], angeheftet: null });
@@ -3979,6 +4416,9 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         <Pressable onPress={autoUmschalten} style={[s.plusKnopf, autoVorlesen && s.autoAn]} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>{autoVorlesen ? "🔊" : "🔈"}</Text>
         </Pressable>
+        <Pressable onPress={() => setLernenOffen(true)} style={s.plusKnopf} hitSlop={8}>
+          <Text style={s.plusKnopfTxt}>🎓</Text>
+        </Pressable>
         <Pressable onPress={() => { setAboArt("privat"); setAboOffen(true); }} style={s.plusKnopf} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>★</Text>
         </Pressable>
@@ -4172,6 +4612,17 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
               <Text style={s.aktionTxt}>{t("aussprache")}</Text>
             </Pressable>
           )}
+          {reagierenAuf.text && !reagierenAuf.deleted && !reagierenAuf.audioSeconds && (
+            <Pressable
+              style={s.aktion}
+              onPress={() => {
+                const m = reagierenAuf; setReagierenAuf(null);
+                lernenMerken(m, nachrichten, lang, device).then((k) => setHinweis((k === "lernenGemerkt" ? "⭐ " : "") + t(k)));
+              }}
+            >
+              <Text style={s.aktionTxt}>{t("lernenMerken")}</Text>
+            </Pressable>
+          )}
           <Pressable
             style={s.aktion}
             onPress={() => { const m = reagierenAuf; setReagierenAuf(null); fuerMichLoeschen(m); }}
@@ -4273,6 +4724,11 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         )}
       </View>
       <AboFenster offen={aboOffen} art={aboArt} raum={raum} onZu={() => setAboOffen(false)} onHinweis={setHinweis} />
+      <LernenFenster
+        offen={lernenOffen} onZu={() => setLernenOffen(false)}
+        nachrichten={nachrichten} lang={lang} device={device} raum={raum}
+        onAbo={() => { setAboArt("privat"); setAboOffen(true); }}
+      />
       <Modal visible={menueAuf} transparent animationType="slide" onRequestClose={() => setMenueAuf(false)}>
         <Pressable style={s.modalHinten} onPress={() => setMenueAuf(false)} />
         <View style={[s.modalBox, { paddingBottom: 16 + unten }]}>
@@ -4870,6 +5326,23 @@ const s = StyleSheet.create({
   einladenTxt: { color: FARBE.navy, fontWeight: "800", fontSize: 13 },
   aktionLeiste: { flexDirection: "row", flexWrap: "wrap", gap: 10, backgroundColor: FARBE.weiss, paddingHorizontal: 12, paddingBottom: 8 },
   aktion: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: FARBE.hell },
+  lernBox: { position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "88%", backgroundColor: FARBE.weiss, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 18 },
+  lernTitel: { fontSize: 18, fontWeight: "800", color: FARBE.navy },
+  lernStand: { color: FARBE.grau, fontSize: 14, marginTop: 2, marginBottom: 12 },
+  lernText: { fontSize: 15, color: FARBE.text, lineHeight: 21, marginVertical: 10 },
+  lernKarte: { backgroundColor: FARBE.hell, borderRadius: 16, padding: 16, marginBottom: 8, alignItems: "stretch" },
+  lernFrage: { color: FARBE.grau, fontSize: 13, textAlign: "center", marginBottom: 8 },
+  lernVorne: { fontSize: 19, fontWeight: "600", color: FARBE.text, textAlign: "center", marginBottom: 10 },
+  lernHinten: { fontSize: 23, fontWeight: "800", color: FARBE.navy, textAlign: "center", marginVertical: 6 },
+  lernHoeren: { alignSelf: "center", paddingVertical: 8, paddingHorizontal: 18, borderRadius: 12, backgroundColor: FARBE.weiss, marginVertical: 4 },
+  lernWahl: { flex: 1, borderRadius: 14, paddingVertical: 14, alignItems: "center" },
+  lernWahlTxt: { color: FARBE.weiss, fontWeight: "800", fontSize: 16 },
+  lernKlein: { color: FARBE.grau, fontSize: 12.5, textAlign: "center", marginTop: 8 },
+  lernKlein2: { color: FARBE.grau, fontSize: 13, marginTop: 2 },
+  lernAbschnitt: { fontWeight: "700", fontSize: 14, color: FARBE.navy, marginTop: 16, marginBottom: 6 },
+  lernVorschlag: { flexDirection: "row", gap: 10, borderWidth: 1, borderColor: FARBE.grauHell, borderRadius: 12, padding: 12, marginBottom: 6 },
+  lernPlus: { fontWeight: "800", fontSize: 18, color: FARBE.navy },
+  lernVsZiel: { fontWeight: "600", fontSize: 15, color: FARBE.text },
   aktionTxt: { color: FARBE.navy, fontWeight: "700" },
   aktionRot: { color: "#9B2C25" },
   antwortBar: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: FARBE.weiss, borderTopWidth: 1, borderTopColor: FARBE.grauHell, borderLeftWidth: 3, borderLeftColor: FARBE.gold, paddingHorizontal: 12, paddingVertical: 8 },
