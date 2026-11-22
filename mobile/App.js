@@ -20,6 +20,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Image as GifBild } from "expo-image";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { Video as VideoKompressor } from "react-native-compressor";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as Location from "expo-location";
@@ -4306,6 +4307,8 @@ function LinkText({ text, style, onLongPress }) {
    Langes Druecken oeffnet die Emoji-Leiste. */
 function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon, onKeineStimme }) {
   const meins = msg.device === device;
+  /* Foto oder Video direkt in der App zeigen (wie WhatsApp) statt im Browser. */
+  const [ansicht, setAnsicht] = useState(null);   // null | "bild" | "video"
   const hatLink = LINK_RE.test(msg.text || "");
   const uebersetzt = !meins && !hatLink && msg.tr && msg.tr[lang];
   const anzeige = meins ? msg.text : (uebersetzt || msg.text);
@@ -4335,7 +4338,7 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon,
     inhalt = (
       <>
         {msg.bild ? (
-          <Pressable onPress={() => Linking.openURL(medienUrl(msg.id))} onLongPress={onLangDruck}>
+          <Pressable onPress={() => setAnsicht("bild")} onLongPress={onLangDruck}>
             <Image source={{ uri: medienUrl(msg.id) }} style={s.foto} resizeMode="cover" />
           </Pressable>
         ) : null}
@@ -4349,7 +4352,11 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon,
           </Pressable>
         ) : null}
         {msg.datei ? (
-          <Pressable style={s.dateiKarte} onPress={() => Linking.openURL(medienUrl(msg.id))} onLongPress={onLangDruck}>
+          <Pressable
+            style={s.dateiKarte}
+            onPress={() => (String(msg.datei.mime || "").startsWith("video/") ? setAnsicht("video") : Linking.openURL(medienUrl(msg.id)))}
+            onLongPress={onLangDruck}
+          >
             <Text style={s.dateiSymbol}>{String(msg.datei.mime || "").startsWith("video/") ? "🎬" : "📄"}</Text>
             <View style={{ flexShrink: 1 }}>
               <Text style={txtStil} numberOfLines={2}>{msg.datei.name}</Text>
@@ -4373,6 +4380,7 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon,
 
   return (
     <View style={[s.bubbleWrap, meins ? s.wrapMeins : s.wrapFremd]}>
+      {ansicht ? <MedienAnsicht id={msg.id} art={ansicht} onZu={() => setAnsicht(null)} /> : null}
       <Pressable
         onLongPress={onLangDruck} delayLongPress={350}
         style={[s.bubble, meins ? s.bubbleMeins : s.bubbleFremd]}
@@ -4433,6 +4441,36 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon,
 
 /* Abspielen einer empfangenen (oder eigenen) Sprachnachricht. Der Text
    darunter ist die Mitschrift, uebersetzt wie jede andere Nachricht. */
+/* Vollbild fuer Foto oder Video, wie bei WhatsApp: schwarzer Hintergrund,
+   Video spielt sofort mit den Android-Steuerelementen (Pause, Spulen,
+   Vollbild). Zurueck-Taste oder ✕ schliesst; ⤓ oeffnet die Datei im
+   Browser, um sie zu speichern oder weiterzugeben. */
+function MedienAnsicht({ id, art, onZu }) {
+  const url = medienUrl(id);
+  return (
+    <Modal visible animationType="fade" onRequestClose={onZu} statusBarTranslucent>
+      <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center" }}>
+        {art === "video" ? <VideoVoll url={url} /> : (
+          <GifBild source={{ uri: url }} style={{ width: "100%", height: "100%" }} contentFit="contain" />
+        )}
+        <View style={{ position: "absolute", top: 40, left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 16 }}>
+          <Pressable onPress={onZu} hitSlop={12} style={s.medienKnopf}>
+            <Text style={s.medienKnopfTxt}>✕</Text>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL(url)} hitSlop={12} style={s.medienKnopf}>
+            <Text style={s.medienKnopfTxt}>⤓</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function VideoVoll({ url }) {
+  const player = useVideoPlayer(url, (p) => { p.loop = false; p.play(); });
+  return <VideoView player={player} style={{ width: "100%", height: "100%" }} contentFit="contain" nativeControls allowsFullscreen />;
+}
+
 /* onLangDruck: Der Abspielknopf fuellt fast die ganze Blase und faengt
    die Beruehrung ab - ohne eigenes onLongPress kaeme man bei einer
    Sprachnachricht nie ans Menue (Loeschen, Antworten). */
@@ -4804,6 +4842,8 @@ const s = StyleSheet.create({
   gifTabTxt: { fontSize: 13, fontWeight: "800", color: FARBE.navy, paddingVertical: 4 },
   gifQuelle: { textAlign: "center", color: FARBE.grau, fontSize: 11, paddingVertical: 6 },
   sprache: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4, marginBottom: 4 },
+  medienKnopf: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" },
+  medienKnopfTxt: { color: "#fff", fontSize: 22, fontWeight: "700" },
   spracheKnopf: { fontSize: 22, color: FARBE.navy, width: 24, textAlign: "center" },
   spracheZeit: { fontSize: 14, color: FARBE.text },
   reaktAnzeige: { flexDirection: "row", gap: 4, marginTop: -6, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: FARBE.weiss, borderRadius: 12, borderWidth: 1, borderColor: FARBE.grauHell },
