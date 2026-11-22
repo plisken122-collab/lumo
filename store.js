@@ -296,6 +296,13 @@ export async function init() {
         admin   TEXT NOT NULL,
         erstellt BIGINT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS lern_aus (
+        device TEXT PRIMARY KEY,
+        at     BIGINT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS lern_tage (
+        tag TEXT PRIMARY KEY
+      );
       CREATE TABLE IF NOT EXISTS geraete (
         device  TEXT PRIMARY KEY,
         abdruck TEXT NOT NULL,
@@ -737,6 +744,36 @@ export async function getSubscriptions(room) {
     endpoint: r.endpoint, room: r.room, device: r.device,
     name: r.name, lang: r.lang, data: r.data,
   }));
+}
+
+/* Alle Anmeldungen - fuer den taeglichen Lern-Satz (lernpush.js). */
+export async function alleSubscriptions() {
+  if (!usingDatabase) return [...mem.subs.values()];
+  const { rows } = await pool.query(`SELECT * FROM subscriptions ORDER BY at DESC`);
+  return rows.map((r) => ({
+    endpoint: r.endpoint, room: r.room, device: r.device,
+    name: r.name, lang: r.lang, data: r.data,
+  }));
+}
+
+/* Taeglicher Lern-Satz: wer ihn abgeschaltet hat, und an welchen Tagen
+   er schon rausging (damit ein Neustart um 9 Uhr nicht doppelt schickt). */
+const lernMem = { aus: new Set(), tage: new Set() };
+export async function lernAusSetzen(device, aus) {
+  if (!usingDatabase) { if (aus) lernMem.aus.add(device); else lernMem.aus.delete(device); return; }
+  if (aus) await pool.query(`INSERT INTO lern_aus (device, at) VALUES ($1, $2) ON CONFLICT (device) DO NOTHING`, [device, Date.now()]);
+  else await pool.query(`DELETE FROM lern_aus WHERE device = $1`, [device]);
+}
+export async function lernAusListe() {
+  if (!usingDatabase) return new Set(lernMem.aus);
+  const { rows } = await pool.query(`SELECT device FROM lern_aus`);
+  return new Set(rows.map((r) => r.device));
+}
+/* true nur beim ersten Aufruf je Tag. */
+export async function lernTagMerken(tag) {
+  if (!usingDatabase) { if (lernMem.tage.has(tag)) return false; lernMem.tage.add(tag); return true; }
+  const r = await pool.query(`INSERT INTO lern_tage (tag) VALUES ($1) ON CONFLICT (tag) DO NOTHING`, [tag]);
+  return r.rowCount > 0;
 }
 
 /* Ein toter Endpunkt ist fuer alle seine Chats tot. */

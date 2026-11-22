@@ -13,6 +13,7 @@ import * as geld from "./bezahlung.js";
 import * as play from "./playkasse.js";
 import * as anruf from "./anruf.js";
 import * as gruppe from "./gruppe.js";
+import * as lernpush from "./lernpush.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -1592,6 +1593,12 @@ async function expoPush(sub, { title, body, room, id, typ }) {
     }
   }
 }
+
+/* Diralo Lernen: Startpakete und taeglicher Satz (lernpush.js). */
+lernpush.einrichten({
+  app, store, claude, clean, take, expoPush, webpush, pushReady,
+  langName: (l) => LANG_NAMES[l] || l,
+});
 
 /* ------------------------------ HTTP API ------------------------------ */
 /* Anmeldung der nativen App. Wie die Glocke im Browser gilt sie fuer

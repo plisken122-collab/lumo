@@ -190,8 +190,50 @@
     b.title = T("lernenTitel");
     b.setAttribute("aria-label", T("lernenTitel"));
     const zl = partnerSprache();
+    /* Gleiche Sprache: nichts zu lernen - Knopf weg. */
+    b.style.display = zl ? "" : "none";
     const n = zl ? faellige(laden(), zl).length : 0;
     b.dataset.n = n > 0 ? String(Math.min(n, 99)) : "";
+  }
+
+  /* ---------------- Startpakete ---------------- */
+  const PAKETE = [
+    { id: "paar", symbol: "❤️", text: "lernenPaketPaar" },
+    { id: "arbeit", symbol: "👷", text: "lernenPaketArbeit" },
+    { id: "alltag", symbol: "🏥", text: "lernenPaketAlltag" },
+  ];
+  async function paketHolen(paket, lang) {
+    const a = await fetch(`/api/lernpaket?paket=${encodeURIComponent(paket)}&lang=${encodeURIComponent(lang)}`);
+    if (!a.ok) throw new Error();
+    return (await a.json()).saetze || [];
+  }
+  /* Beide Sprachen holen und Satz fuer Satz zu Karten paaren. */
+  async function paketLaden(paket, zl) {
+    try {
+      const [ziel, mein] = await Promise.all([paketHolen(paket, zl), paketHolen(paket, me.lang)]);
+      if (!ziel.length || ziel.length !== mein.length) return 0;
+      const d = laden();
+      let n = 0;
+      ziel.forEach((z, i) => {
+        const k = { id: `p:${paket}:${zl}:${i}`, ziel: z, mein: mein[i], zl, ml: me.lang, fach: 0, faellig: 0, neu: Date.now() };
+        if (!schonDa(d, k)) { d.karten.push(k); n++; if (sitzung) sitzung.reihe.push(k.id); }
+      });
+      sichern(d);
+      return n;
+    } catch { return 0; }
+  }
+
+  /* ---------------- Taeglicher Satz an/aus ---------------- */
+  const PUSH_KEY = "diralo-lernen-push";
+  function taeglichAn() {
+    try { return localStorage.getItem(PUSH_KEY) !== "0"; } catch { return true; }
+  }
+  function taeglichSetzen(an) {
+    try { localStorage.setItem(PUSH_KEY, an ? "1" : "0"); } catch {}
+    fetch("/api/lernen-push", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device: deviceId, an }),
+    }).catch(() => {});
   }
 
   /* ---------------- Die Lern-Ansicht ---------------- */
@@ -302,6 +344,34 @@
       }
       box.appendChild(liste);
     }
+
+    /* Startpakete: je ~30 wichtige Saetze fuer eine Situation. */
+    const offenePakete = PAKETE.filter((pk) => !d.karten.some((k) => k.zl === zl && String(k.id).startsWith(`p:${pk.id}:`)));
+    if (offenePakete.length) {
+      box.appendChild(el("p", "lern-abschnitt", "📦 " + T("lernenPakete")));
+      const reihePk = el("div", "lern-pakete");
+      for (const pk of offenePakete) {
+        const b = knopf(pk.symbol + " " + T(pk.text), "lern-paket", async () => {
+          b.disabled = true;
+          b.textContent = T("lernenPaketLaedt");
+          const n = await paketLaden(pk.id, zl);
+          if (n) { hinweis("📦 " + T("lernenPaketDazu", { n })); zeichnen(box, abo); }
+          else { b.disabled = false; b.textContent = pk.symbol + " " + T(pk.text); hinweis(T("errTranslate")); }
+        });
+        reihePk.appendChild(b);
+      }
+      box.appendChild(reihePk);
+    }
+
+    /* Taeglicher Satz als Benachrichtigung - abschaltbar. */
+    const schalter = el("label", "lern-schalter");
+    const kasten = document.createElement("input");
+    kasten.type = "checkbox";
+    kasten.checked = taeglichAn();
+    kasten.onchange = () => taeglichSetzen(kasten.checked);
+    schalter.appendChild(kasten);
+    schalter.appendChild(el("span", null, "🔔 " + T("lernenTaeglich")));
+    box.appendChild(schalter);
 
     const anzahl = d.karten.filter((x) => x.zl === zl && x.ml === me.lang).length;
     box.appendChild(el("p", "lern-anzahl", T("lernenKarten", { n: anzahl })));

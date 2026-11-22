@@ -133,6 +133,13 @@ const TEXTE = {
     lernenPlus: "Für heute geschafft! Unbegrenzt lernen mit einem Diralo-Abo.",
     lernenPlusKnopf: "Abos ansehen",
     lernenKarten: "{n} Karten gesammelt",
+    lernenPakete: "Startpakete",
+    lernenPaketPaar: "Paar & Familie",
+    lernenPaketArbeit: "Arbeit (Bau, Feld, Gewächshaus)",
+    lernenPaketAlltag: "Alltag, Arzt & Ämter",
+    lernenPaketDazu: "{n} Karten hinzugefügt",
+    lernenPaketLaedt: "Wird vorbereitet …",
+    lernenTaeglich: "Täglicher Satz um 9 Uhr",
     anheften: "📌 Für alle anheften",
     losloesen: "Nicht mehr anheften",
     durchsage: "📌 Durchsage",
@@ -328,6 +335,13 @@ const TEXTE = {
     lernenPlus: "Feito por hoje! Aprenda sem limites com uma assinatura Diralo.",
     lernenPlusKnopf: "Ver planos",
     lernenKarten: "{n} cartões guardados",
+    lernenPakete: "Pacotes iniciais",
+    lernenPaketPaar: "Casal e família",
+    lernenPaketArbeit: "Trabalho (obras, campo, estufa)",
+    lernenPaketAlltag: "Dia a dia, médico e serviços",
+    lernenPaketDazu: "{n} cartões adicionados",
+    lernenPaketLaedt: "A preparar …",
+    lernenTaeglich: "Frase diária às 9h",
     anheften: "📌 Fixar para todos",
     losloesen: "Desafixar",
     durchsage: "📌 Aviso",
@@ -523,6 +537,13 @@ const TEXTE = {
     lernenPlus: "Done for today! Learn without limits with a Diralo subscription.",
     lernenPlusKnopf: "See plans",
     lernenKarten: "{n} cards saved",
+    lernenPakete: "Starter packs",
+    lernenPaketPaar: "Couple & family",
+    lernenPaketArbeit: "Work (building, farm, greenhouse)",
+    lernenPaketAlltag: "Daily life, doctor & offices",
+    lernenPaketDazu: "{n} cards added",
+    lernenPaketLaedt: "Preparing …",
+    lernenTaeglich: "Daily sentence at 9 am",
     anheften: "📌 Pin for everyone",
     losloesen: "Unpin",
     durchsage: "📌 Announcement",
@@ -718,6 +739,13 @@ const TEXTE = {
     lernenPlus: "¡Hecho por hoy! Aprende sin límites con una suscripción Diralo.",
     lernenPlusKnopf: "Ver planes",
     lernenKarten: "{n} tarjetas guardadas",
+    lernenPakete: "Paquetes iniciales",
+    lernenPaketPaar: "Pareja y familia",
+    lernenPaketArbeit: "Trabajo (obra, campo, invernadero)",
+    lernenPaketAlltag: "Día a día, médico y trámites",
+    lernenPaketDazu: "{n} tarjetas añadidas",
+    lernenPaketLaedt: "Preparando …",
+    lernenTaeglich: "Frase diaria a las 9",
     anheften: "📌 Fijar para todos",
     losloesen: "Dejar de fijar",
     durchsage: "📌 Aviso",
@@ -913,6 +941,13 @@ const TEXTE = {
     lernenPlus: "C'est fait pour aujourd'hui ! Apprends sans limite avec un abonnement Diralo.",
     lernenPlusKnopf: "Voir les offres",
     lernenKarten: "{n} cartes gardées",
+    lernenPakete: "Packs de départ",
+    lernenPaketPaar: "Couple et famille",
+    lernenPaketArbeit: "Travail (chantier, champs, serre)",
+    lernenPaketAlltag: "Quotidien, médecin et administrations",
+    lernenPaketDazu: "{n} cartes ajoutées",
+    lernenPaketLaedt: "Préparation …",
+    lernenTaeglich: "Phrase du jour à 9 h",
     anheften: "📌 Épingler pour tous",
     losloesen: "Désépingler",
     durchsage: "📌 Annonce",
@@ -1108,6 +1143,13 @@ const TEXTE = {
     lernenPlus: "Fatto per oggi! Impara senza limiti con un abbonamento Diralo.",
     lernenPlusKnopf: "Vedi i piani",
     lernenKarten: "{n} schede salvate",
+    lernenPakete: "Pacchetti iniziali",
+    lernenPaketPaar: "Coppia e famiglia",
+    lernenPaketArbeit: "Lavoro (cantiere, campi, serra)",
+    lernenPaketAlltag: "Vita quotidiana, medico e uffici",
+    lernenPaketDazu: "{n} schede aggiunte",
+    lernenPaketLaedt: "Preparazione …",
+    lernenTaeglich: "Frase del giorno alle 9",
     anheften: "📌 Fissa per tutti",
     losloesen: "Non fissare più",
     durchsage: "📌 Avviso",
@@ -1303,6 +1345,13 @@ const TEXTE = {
     lernenPlus: "今日の分は完了！Diralo のプランなら無制限に学べます。",
     lernenPlusKnopf: "プランを見る",
     lernenKarten: "保存したカード {n} 枚",
+    lernenPakete: "スターターパック",
+    lernenPaketPaar: "カップル・家族",
+    lernenPaketArbeit: "仕事（建設・畑・温室）",
+    lernenPaketAlltag: "日常・病院・役所",
+    lernenPaketDazu: "{n} 枚のカードを追加しました",
+    lernenPaketLaedt: "準備中…",
+    lernenTaeglich: "毎朝9時にひとこと",
     anheften: "📌 全員に固定",
     losloesen: "固定を解除",
     durchsage: "📌 お知らせ",
@@ -1498,6 +1547,13 @@ const TEXTE = {
     lernenPlus: "आज का हो गया! Diralo सदस्यता से बिना सीमा सीखें।",
     lernenPlusKnopf: "प्लान देखें",
     lernenKarten: "{n} कार्ड सहेजे",
+    lernenPakete: "शुरुआती पैक",
+    lernenPaketPaar: "जोड़ा और परिवार",
+    lernenPaketArbeit: "काम (निर्माण, खेत, ग्रीनहाउस)",
+    lernenPaketAlltag: "रोज़मर्रा, डॉक्टर और दफ़्तर",
+    lernenPaketDazu: "{n} कार्ड जोड़े गए",
+    lernenPaketLaedt: "तैयार हो रहा है …",
+    lernenTaeglich: "रोज़ सुबह 9 बजे एक वाक्य",
     anheften: "📌 सबके लिए पिन करें",
     losloesen: "पिन हटाएँ",
     durchsage: "📌 घोषणा",
@@ -1693,6 +1749,13 @@ const TEXTE = {
     lernenPlus: "آج کا ہو گیا! Diralo سبسکرپشن کے ساتھ بے حد سیکھیں۔",
     lernenPlusKnopf: "پلان دیکھیں",
     lernenKarten: "{n} کارڈ محفوظ",
+    lernenPakete: "ابتدائی پیک",
+    lernenPaketPaar: "جوڑا اور خاندان",
+    lernenPaketArbeit: "کام (تعمیر، کھیت، گرین ہاؤس)",
+    lernenPaketAlltag: "روزمرہ، ڈاکٹر اور دفاتر",
+    lernenPaketDazu: "{n} کارڈ شامل کیے گئے",
+    lernenPaketLaedt: "تیار ہو رہا ہے …",
+    lernenTaeglich: "روزانہ صبح 9 بجے ایک جملہ",
     anheften: "📌 سب کے لیے پن کریں",
     losloesen: "پن ہٹائیں",
     durchsage: "📌 اعلان",
@@ -1888,6 +1951,13 @@ const TEXTE = {
     lernenPlus: "আজকের হয়ে গেছে! Diralo সাবস্ক্রিপশনে সীমাহীন শিখুন।",
     lernenPlusKnopf: "প্ল্যান দেখুন",
     lernenKarten: "{n}টি কার্ড সংরক্ষিত",
+    lernenPakete: "শুরুর প্যাক",
+    lernenPaketPaar: "দম্পতি ও পরিবার",
+    lernenPaketArbeit: "কাজ (নির্মাণ, মাঠ, গ্রিনহাউস)",
+    lernenPaketAlltag: "দৈনন্দিন, ডাক্তার ও অফিস",
+    lernenPaketDazu: "{n}টি কার্ড যোগ হয়েছে",
+    lernenPaketLaedt: "তৈরি হচ্ছে …",
+    lernenTaeglich: "প্রতিদিন সকাল ৯টায় একটি বাক্য",
     anheften: "📌 সবার জন্য পিন করুন",
     losloesen: "পিন সরান",
     durchsage: "📌 ঘোষণা",
@@ -2083,6 +2153,13 @@ const TEXTE = {
     lernenPlus: "ਅੱਜ ਦਾ ਹੋ ਗਿਆ! Diralo ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਨਾਲ ਬੇਅੰਤ ਸਿੱਖੋ।",
     lernenPlusKnopf: "ਪਲਾਨ ਵੇਖੋ",
     lernenKarten: "{n} ਕਾਰਡ ਸੰਭਾਲੇ",
+    lernenPakete: "ਸ਼ੁਰੂਆਤੀ ਪੈਕ",
+    lernenPaketPaar: "ਜੋੜਾ ਅਤੇ ਪਰਿਵਾਰ",
+    lernenPaketArbeit: "ਕੰਮ (ਉਸਾਰੀ, ਖੇਤ, ਗ੍ਰੀਨਹਾਊਸ)",
+    lernenPaketAlltag: "ਰੋਜ਼ਾਨਾ, ਡਾਕਟਰ ਅਤੇ ਦਫ਼ਤਰ",
+    lernenPaketDazu: "{n} ਕਾਰਡ ਜੋੜੇ ਗਏ",
+    lernenPaketLaedt: "ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ …",
+    lernenTaeglich: "ਰੋਜ਼ ਸਵੇਰੇ 9 ਵਜੇ ਇੱਕ ਵਾਕ",
     anheften: "📌 ਸਭ ਲਈ ਪਿੰਨ ਕਰੋ",
     losloesen: "ਪਿੰਨ ਹਟਾਓ",
     durchsage: "📌 ਘੋਸ਼ਣਾ",
@@ -2278,6 +2355,13 @@ const TEXTE = {
     lernenPlus: "आजको सकियो! Diralo सदस्यतासँग असीमित सिक्नुहोस्।",
     lernenPlusKnopf: "योजना हेर्नुहोस्",
     lernenKarten: "{n} कार्ड सुरक्षित",
+    lernenPakete: "सुरुवाती प्याक",
+    lernenPaketPaar: "जोडी र परिवार",
+    lernenPaketArbeit: "काम (निर्माण, खेत, ग्रिनहाउस)",
+    lernenPaketAlltag: "दैनिक जीवन, डाक्टर र कार्यालय",
+    lernenPaketDazu: "{n} कार्ड थपियो",
+    lernenPaketLaedt: "तयार हुँदैछ …",
+    lernenTaeglich: "हरेक बिहान ९ बजे एउटा वाक्य",
     anheften: "📌 सबैका लागि पिन गर्नुहोस्",
     losloesen: "पिन हटाउनुहोस्",
     durchsage: "📌 सूचना",
@@ -3584,11 +3668,26 @@ async function lernenMerken(m, nachrichten, lang, device) {
   return "lernenGemerkt";
 }
 
+const LERN_PAKETE = [
+  { id: "paar", symbol: "❤️", text: "lernenPaketPaar" },
+  { id: "arbeit", symbol: "👷", text: "lernenPaketArbeit" },
+  { id: "alltag", symbol: "🏥", text: "lernenPaketAlltag" },
+];
+async function lernPaketHolen(paket, l) {
+  const r = await fetch(`${SERVER_URL}/api/lernpaket?paket=${encodeURIComponent(paket)}&lang=${encodeURIComponent(l)}`);
+  if (!r.ok) throw new Error("http " + r.status);
+  return (await r.json()).saetze || [];
+}
+const LERN_PUSH_KEY = "diralo_lernen_push";
+
 function LernenFenster({ offen, onZu, nachrichten, lang, device, raum, onAbo }) {
   const [d, setD] = useState(null);
   const [reihe, setReihe] = useState([]);
   const [auf, setAuf] = useState(false);
   const [abo, setAbo] = useState(false);
+  const [paketLaedt, setPaketLaedt] = useState(null);
+  const [taeglich, setTaeglich] = useState(true);
+  useEffect(() => { AsyncStorage.getItem(LERN_PUSH_KEY).then((v) => setTaeglich(v !== "0")).catch(() => {}); }, []);
   const zl = useMemo(() => lernPartner(nachrichten, lang, device), [nachrichten, lang, device]);
 
   useEffect(() => {
@@ -3644,6 +3743,35 @@ function LernenFenster({ offen, onZu, nachrichten, lang, device, raum, onAbo }) 
   };
 
   const aufdecken = () => { setAuf(true); vorlesen(karte.ziel, zl); };
+
+  /* Startpaket in beiden Sprachen holen und zu Karten paaren. */
+  const paketLaden = async (pk) => {
+    setPaketLaedt(pk.id);
+    try {
+      const [ziel, mein] = await Promise.all([lernPaketHolen(pk.id, zl), lernPaketHolen(pk.id, lang)]);
+      if (!ziel.length || ziel.length !== mein.length) throw new Error("leer");
+      const dd = await lernenLaden();
+      const neu = [];
+      ziel.forEach((z, i) => {
+        const k = { id: `p:${pk.id}:${zl}:${i}`, ziel: z, mein: mein[i], zl, ml: lang, fach: 0, faellig: 0, neu: Date.now() };
+        if (!lernSchonDa(dd, k)) { dd.karten.push(k); neu.push(k.id); }
+      });
+      await lernenSichern(dd);
+      setD(dd); setReihe((r) => [...r, ...neu]);
+    } catch {}
+    setPaketLaedt(null);
+  };
+
+  const taeglichUmschalten = () => {
+    const an = !taeglich;
+    setTaeglich(an);
+    AsyncStorage.setItem(LERN_PUSH_KEY, an ? "1" : "0").catch(() => {});
+    fetch(`${SERVER_URL}/api/lernen-push`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, an }),
+    }).catch(() => {});
+  };
+  const offenePakete = d && zl ? LERN_PAKETE.filter((pk) => !d.karten.some((k) => k.zl === zl && String(k.id).startsWith(`p:${pk.id}:`))) : [];
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onZu}>
@@ -3703,6 +3831,18 @@ function LernenFenster({ offen, onZu, nachrichten, lang, device, raum, onAbo }) 
                   </View>
                 </Pressable>
               ))}
+              {offenePakete.length ? <Text style={s.lernAbschnitt}>📦 {t("lernenPakete")}</Text> : null}
+              {offenePakete.map((pk) => (
+                <Pressable key={pk.id} style={s.lernVorschlag} onPress={() => !paketLaedt && paketLaden(pk)}>
+                  <Text style={s.lernVsZiel}>{paketLaedt === pk.id ? t("lernenPaketLaedt") : `${pk.symbol} ${t(pk.text)}`}</Text>
+                </Pressable>
+              ))}
+              <Pressable style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14 }} onPress={taeglichUmschalten}>
+                <View style={[s.lernHaken, taeglich && { backgroundColor: "#2e9d5b", borderColor: "#2e9d5b" }]}>
+                  {taeglich ? <Text style={{ color: FARBE.weiss, fontWeight: "800" }}>✓</Text> : null}
+                </View>
+                <Text style={{ color: FARBE.text, fontSize: 14, flexShrink: 1 }}>🔔 {t("lernenTaeglich")}</Text>
+              </Pressable>
               <Text style={s.lernKlein}>{n("lernenKarten", meine.length)}</Text>
             </>
           )}
@@ -3916,6 +4056,8 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   const [aboOffen, setAboOffen] = useState(false);
   const [aboArt, setAboArt] = useState("privat");
   const [lernenOffen, setLernenOffen] = useState(false);
+  /* Gleiche Sprache: nichts zu lernen - dann kein 🎓 und kein "Merken". */
+  const lernZiel = useMemo(() => lernPartner(nachrichten, lang, device), [nachrichten, lang, device]);
   const [anwesend, setAnwesend] = useState([]);
   /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
   const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [], angeheftet: null });
@@ -4416,9 +4558,11 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         <Pressable onPress={autoUmschalten} style={[s.plusKnopf, autoVorlesen && s.autoAn]} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>{autoVorlesen ? "🔊" : "🔈"}</Text>
         </Pressable>
-        <Pressable onPress={() => setLernenOffen(true)} style={s.plusKnopf} hitSlop={8}>
-          <Text style={s.plusKnopfTxt}>🎓</Text>
-        </Pressable>
+        {lernZiel ? (
+          <Pressable onPress={() => setLernenOffen(true)} style={s.plusKnopf} hitSlop={8}>
+            <Text style={s.plusKnopfTxt}>🎓</Text>
+          </Pressable>
+        ) : null}
         <Pressable onPress={() => { setAboArt("privat"); setAboOffen(true); }} style={s.plusKnopf} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>★</Text>
         </Pressable>
@@ -4612,7 +4756,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
               <Text style={s.aktionTxt}>{t("aussprache")}</Text>
             </Pressable>
           )}
-          {reagierenAuf.text && !reagierenAuf.deleted && !reagierenAuf.audioSeconds && (
+          {lernZiel && reagierenAuf.text && !reagierenAuf.deleted && !reagierenAuf.audioSeconds && (
             <Pressable
               style={s.aktion}
               onPress={() => {
@@ -5342,6 +5486,7 @@ const s = StyleSheet.create({
   lernAbschnitt: { fontWeight: "700", fontSize: 14, color: FARBE.navy, marginTop: 16, marginBottom: 6 },
   lernVorschlag: { flexDirection: "row", gap: 10, borderWidth: 1, borderColor: FARBE.grauHell, borderRadius: 12, padding: 12, marginBottom: 6 },
   lernPlus: { fontWeight: "800", fontSize: 18, color: FARBE.navy },
+  lernHaken: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: FARBE.grau, alignItems: "center", justifyContent: "center" },
   lernVsZiel: { fontWeight: "600", fontSize: 15, color: FARBE.text },
   aktionTxt: { color: FARBE.navy, fontWeight: "700" },
   aktionRot: { color: "#9B2C25" },

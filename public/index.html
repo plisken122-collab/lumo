@@ -335,6 +335,10 @@
   .lv-text { display:flex; flex-direction:column; gap:2px; }
   .lv-ziel { font-weight:600; }
   .lv-mein { color:var(--muted); font-size:13px; }
+  .lern-pakete { display:flex; flex-direction:column; gap:6px; }
+  .sheet-inner.lernen .lern-paket { border:1px solid var(--line); font-weight:600; }
+  .lern-schalter { display:flex; align-items:center; gap:10px; margin:14px 4px 4px; font-size:14px; cursor:pointer; }
+  .lern-schalter input { width:20px; height:20px; accent-color:#2e9d5b; }
   .sheet-inner.lernen .lern-zu { text-align:center; color:var(--muted); margin-top:4px; }
   .lern-hinweis { position:fixed; left:50%; bottom:90px; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none;
     background:#14213D; color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; z-index:40; transition:all .2s; max-width:86vw; text-align:center; }
@@ -698,7 +702,7 @@
       </span>
       <button class="room" id="roomLabel" type="button"></button>
       <button id="gruppeBtn" class="bell" type="button" aria-label="">👥</button>
-      <button id="lernenBtn" class="bell lernen-btn" type="button" aria-label="">🎓</button>
+      <button id="lernenBtn" class="bell lernen-btn" type="button" aria-label="" style="display:none">🎓</button>
       <button id="inviteBtn" class="bell"></button>
       <button id="bell" class="bell" type="button"></button>
       <span class="langwrap" id="langwrap">🌐<select id="langSwitch" aria-label=""></select></span>
@@ -942,7 +946,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v91";
+const BUILD = "v92";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1220,6 +1224,7 @@ function start() {
     versteckeTippt();
     add(m, true);
     if (document.visibilityState === "visible") { gelesenSetzen(me.room); gelesenMelden(); }
+    if (window.DiraloLernen) DiraloLernen.knopfAktualisieren();
   });
   /* Das Gegenueber tippt gerade - kurz "... schreibt" zeigen. */
   socket.on("tippt", ({ name }) => { zeigeTippt(name); });
@@ -3413,6 +3418,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-<script src="/lernen.js?v=1"></script>
+<script src="/lernen.js?v=2"></script>
 </body>
 </html>
