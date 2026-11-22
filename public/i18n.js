@@ -12,6 +12,8 @@ window.LUMO_T = (function () {
   const S = {
     de: {
       keineApp: "✅ Die andere Person öffnet nur einen Link – nichts installieren.",
+      reiseCode: "15 % Rabatt mit Code",
+      reiseKnopf: "eSIM ansehen",
       einlVon: "{name} lädt dich zu Diralo ein",
       einlTitel: "Du wurdest zu Diralo eingeladen",
       einlInfo: "Jeder schreibt in seiner Sprache – du liest alles auf {lang}.",
@@ -166,6 +168,8 @@ window.LUMO_T = (function () {
     },
     en: {
       keineApp: "✅ The other person just opens a link – nothing to install.",
+      reiseCode: "15% off with code",
+      reiseKnopf: "See eSIMs",
       einlVon: "{name} invites you to Diralo",
       einlTitel: "You've been invited to Diralo",
       einlInfo: "Everyone writes in their own language – you read everything in {lang}.",
@@ -320,6 +324,8 @@ window.LUMO_T = (function () {
     },
     "pt-PT": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa de instalar nada.",
+      reiseCode: "15% de desconto com o código",
+      reiseKnopf: "Ver eSIMs",
       einlVon: "{name} convida-o para o Diralo",
       einlTitel: "Foi convidado para o Diralo",
       einlInfo: "Cada um escreve na sua língua – você lê tudo em {lang}.",
@@ -474,6 +480,8 @@ window.LUMO_T = (function () {
     },
     "pt-BR": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa instalar nada.",
+      reiseCode: "15% de desconto com o código",
+      reiseKnopf: "Ver eSIMs",
       einlVon: "{name} convidou você para o Diralo",
       einlTitel: "Você foi convidado para o Diralo",
       einlInfo: "Cada um escreve na sua língua – você lê tudo em {lang}.",
@@ -628,6 +636,8 @@ window.LUMO_T = (function () {
     },
     es: {
       keineApp: "✅ La otra persona solo abre un enlace, sin instalar nada.",
+      reiseCode: "15 % de descuento con el código",
+      reiseKnopf: "Ver eSIMs",
       einlVon: "{name} te invita a Diralo",
       einlTitel: "Te han invitado a Diralo",
       einlInfo: "Cada uno escribe en su idioma – tú lo lees todo en {lang}.",
@@ -769,6 +779,8 @@ window.LUMO_T = (function () {
     },
     fr: {
       keineApp: "✅ L'autre personne ouvre simplement un lien – rien à installer.",
+      reiseCode: "-15 % avec le code",
+      reiseKnopf: "Voir les eSIM",
       einlVon: "{name} t'invite sur Diralo",
       einlTitel: "Tu as été invité sur Diralo",
       einlInfo: "Chacun écrit dans sa langue – tu lis tout en {lang}.",
@@ -910,6 +922,8 @@ window.LUMO_T = (function () {
     },
     it: {
       keineApp: "✅ L'altra persona apre solo un link – niente da installare.",
+      reiseCode: "15% di sconto con il codice",
+      reiseKnopf: "Vedi le eSIM",
       einlVon: "{name} ti invita su Diralo",
       einlTitel: "Sei stato invitato su Diralo",
       einlInfo: "Ognuno scrive nella sua lingua – tu leggi tutto in {lang}.",
@@ -1051,6 +1065,8 @@ window.LUMO_T = (function () {
     },
     nl: {
       keineApp: "✅ De ander opent alleen een link – niets installeren.",
+      reiseCode: "15% korting met code",
+      reiseKnopf: "Bekijk eSIMs",
       einlVon: "{name} nodigt je uit voor Diralo",
       einlTitel: "Je bent uitgenodigd voor Diralo",
       einlInfo: "Iedereen schrijft in zijn eigen taal – jij leest alles in het {lang}.",
@@ -1165,6 +1181,8 @@ window.LUMO_T = (function () {
     },
     pl: {
       keineApp: "✅ Druga osoba otwiera tylko link – nic nie trzeba instalować.",
+      reiseCode: "15% zniżki z kodem",
+      reiseKnopf: "Zobacz eSIM",
       einlVon: "{name} zaprasza cię do Diralo",
       einlTitel: "Zaproszono cię do Diralo",
       einlInfo: "Każdy pisze w swoim języku – ty czytasz wszystko po {lang}.",
@@ -1279,6 +1297,8 @@ window.LUMO_T = (function () {
     },
     ru: {
       keineApp: "✅ Собеседник просто открывает ссылку – ничего устанавливать не нужно.",
+      reiseCode: "Скидка 15% по коду",
+      reiseKnopf: "Смотреть eSIM",
       einlVon: "{name} приглашает вас в Diralo",
       einlTitel: "Вас пригласили в Diralo",
       einlInfo: "Каждый пишет на своём языке – вы читаете всё на языке: {lang}.",
@@ -1393,6 +1413,8 @@ window.LUMO_T = (function () {
     },
     uk: {
       keineApp: "✅ Співрозмовник просто відкриває посилання – нічого не треба встановлювати.",
+      reiseCode: "Знижка 15% з кодом",
+      reiseKnopf: "Переглянути eSIM",
       einlVon: "{name} запрошує вас у Diralo",
       einlTitel: "Вас запросили в Diralo",
       einlInfo: "Кожен пише своєю мовою – ви читаєте все мовою: {lang}.",
@@ -1507,6 +1529,8 @@ window.LUMO_T = (function () {
     },
     tr: {
       keineApp: "✅ Karşı taraf sadece bir bağlantı açar – hiçbir şey yüklemez.",
+      reiseCode: "Kodla %15 indirim",
+      reiseKnopf: "eSIM'lere bak",
       einlVon: "{name} seni Diralo'ya davet ediyor",
       einlTitel: "Diralo'ya davet edildin",
       einlInfo: "Herkes kendi dilinde yazar – sen her şeyi {lang} okursun.",
@@ -1621,6 +1645,8 @@ window.LUMO_T = (function () {
     },
     ar: {
       keineApp: "✅ الطرف الآخر يفتح رابطًا فقط – دون تثبيت أي شيء.",
+      reiseCode: "خصم 15% بالرمز",
+      reiseKnopf: "عرض شرائح eSIM",
       einlVon: "{name} يدعوك إلى Diralo",
       einlTitel: "تمت دعوتك إلى Diralo",
       einlInfo: "كل شخص يكتب بلغته – وأنت تقرأ كل شيء بـ {lang}.",
@@ -1735,6 +1761,8 @@ window.LUMO_T = (function () {
     },
     ja: {
       keineApp: "✅ 相手はリンクを開くだけ。インストール不要です。",
+      reiseCode: "コード入力で15%オフ",
+      reiseKnopf: "eSIMを見る",
       einlVon: "{name} さんが Diralo に招待しています",
       einlTitel: "Diralo に招待されました",
       einlInfo: "それぞれ自分の言語で書き、あなたはすべて{lang}で読めます。",
@@ -1923,6 +1951,8 @@ window.LUMO_T = (function () {
     },
     hi: {
       keineApp: "✅ सामने वाला बस एक लिंक खोलता है – कुछ इंस्टॉल नहीं करना।",
+      reiseCode: "कोड से 15% छूट",
+      reiseKnopf: "eSIM देखें",
       einlVon: "{name} आपको Diralo पर बुला रहे हैं",
       einlTitel: "आपको Diralo पर बुलाया गया है",
       einlInfo: "हर कोई अपनी भाषा में लिखता है – आप सब कुछ {lang} में पढ़ते हैं।",
@@ -2111,6 +2141,8 @@ window.LUMO_T = (function () {
     },
     ur: {
       keineApp: "✅ دوسرا شخص صرف ایک لنک کھولتا ہے – کچھ انسٹال نہیں کرنا۔",
+      reiseCode: "کوڈ سے 15% رعایت",
+      reiseKnopf: "eSIM دیکھیں",
       einlVon: "{name} آپ کو Diralo پر بلا رہے ہیں",
       einlTitel: "آپ کو Diralo پر بلایا گیا ہے",
       einlInfo: "ہر کوئی اپنی زبان میں لکھتا ہے – آپ سب کچھ {lang} میں پڑھتے ہیں۔",
@@ -2299,6 +2331,8 @@ window.LUMO_T = (function () {
     },
     bn: {
       keineApp: "✅ অন্যজন শুধু একটি লিঙ্ক খোলেন – কিছু ইনস্টল করতে হয় না।",
+      reiseCode: "কোড দিয়ে ১৫% ছাড়",
+      reiseKnopf: "eSIM দেখুন",
       einlVon: "{name} আপনাকে Diralo-তে আমন্ত্রণ জানাচ্ছেন",
       einlTitel: "আপনাকে Diralo-তে আমন্ত্রণ জানানো হয়েছে",
       einlInfo: "সবাই নিজের ভাষায় লেখে – আপনি সবকিছু {lang}-তে পড়বেন।",
@@ -2487,6 +2521,8 @@ window.LUMO_T = (function () {
     },
     pa: {
       keineApp: "✅ ਦੂਜਾ ਵਿਅਕਤੀ ਬੱਸ ਇੱਕ ਲਿੰਕ ਖੋਲ੍ਹਦਾ ਹੈ – ਕੁਝ ਇੰਸਟਾਲ ਨਹੀਂ ਕਰਨਾ।",
+      reiseCode: "ਕੋਡ ਨਾਲ 15% ਛੋਟ",
+      reiseKnopf: "eSIM ਵੇਖੋ",
       einlVon: "{name} ਤੁਹਾਨੂੰ Diralo 'ਤੇ ਸੱਦ ਰਹੇ ਹਨ",
       einlTitel: "ਤੁਹਾਨੂੰ Diralo 'ਤੇ ਸੱਦਿਆ ਗਿਆ ਹੈ",
       einlInfo: "ਹਰ ਕੋਈ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਲਿਖਦਾ ਹੈ – ਤੁਸੀਂ ਸਭ ਕੁਝ {lang} ਵਿੱਚ ਪੜ੍ਹਦੇ ਹੋ।",
@@ -2675,6 +2711,8 @@ window.LUMO_T = (function () {
     },
     ne: {
       keineApp: "✅ अर्को व्यक्तिले लिङ्क मात्र खोल्छ – केही इन्स्टल गर्नु पर्दैन।",
+      reiseCode: "कोडबाट १५% छुट",
+      reiseKnopf: "eSIM हेर्नुहोस्",
       einlVon: "{name} ले तपाईंलाई Diralo मा बोलाउनुभयो",
       einlTitel: "तपाईंलाई Diralo मा बोलाइएको छ",
       einlInfo: "सबैले आफ्नै भाषामा लेख्छन् – तपाईं सबै {lang} मा पढ्नुहुन्छ।",
