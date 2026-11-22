@@ -976,6 +976,21 @@ app.get("/api/admin/play-statistik", async (req, res) => {
   }
 });
 
+/* Trichter: Was wird aus neuen Besuchern und Chats? (28 Tage)
+   Eigene Chats (RAEUME_OHNE_GRENZE) und Testchats zaehlen nicht mit. */
+app.get("/api/admin/chat-trichter", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
+  try {
+    const [chats, zaehler] = await Promise.all([
+      store.chatTrichter(28, [...OHNE_GRENZE]),
+      store.trichter(28),
+    ]);
+    res.json({ ...chats, besuch: zaehler.summe.besuch || 0, eingetreten: zaehler.summe.eingetreten || 0 });
+  } catch (err) {
+    res.status(500).json({ error: err.message.slice(0, 200) });
+  }
+});
+
 app.get("/api/admin/daten", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   try {

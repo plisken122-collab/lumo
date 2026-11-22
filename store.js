@@ -903,6 +903,51 @@ export async function trichter(tage = 14) {
   return { tage, summe, proTag };
 }
 
+/* Trichter je Chat (Admin): Was wird aus neuen Chats? Gezaehlt werden
+   Chats, deren erste Nachricht in den letzten `tage` Tagen kam - ohne
+   Probe-Chats (demo-...) und ohne die Chats in `auslassen` (eigene).
+   Stufen: geschrieben -> zweite Person dabei -> beide schreiben ->
+   an mehr als einem Tag benutzt. Nur Zahlen, keine Inhalte. */
+export async function chatTrichter(tage = 28, auslassen = []) {
+  const seit = Date.now() - tage * 24 * 60 * 60 * 1000;
+  const weg = new Set(auslassen.map((r) => String(r).toLowerCase()));
+  let raeume = [];   // { room, erst, schreiber, tage }
+  const mitDabei = new Map();   // room -> Anzahl Geraete in mitglieder
+  if (!usingDatabase) {
+    const je = new Map();
+    for (const m of mem.messages.values()) {
+      if (!m || m.deleted) continue;
+      const r = je.get(m.room) || { room: m.room, erst: Infinity, geraete: new Set(), tage: new Set() };
+      r.erst = Math.min(r.erst, m.at); r.geraete.add(m.device); r.tage.add(new Date(m.at).toISOString().slice(0, 10));
+      je.set(m.room, r);
+    }
+    raeume = [...je.values()].map((r) => ({ room: r.room, erst: r.erst, schreiber: r.geraete.size, tage: r.tage.size }));
+    for (const v of (mem.mitglieder || new Map()).values()) {
+      if (v && v.room) mitDabei.set(v.room, (mitDabei.get(v.room) || 0) + 1);
+    }
+  } else {
+    const { rows } = await pool.query(
+      `SELECT room, MIN(at) AS erst, COUNT(DISTINCT device) AS schreiber,
+              COUNT(DISTINCT to_char(to_timestamp(at / 1000.0), 'YYYY-MM-DD')) AS tage
+         FROM messages WHERE room NOT LIKE 'demo-%' GROUP BY room HAVING MIN(at) >= $1`, [seit]);
+    raeume = rows.map((r) => ({ room: r.room, erst: Number(r.erst), schreiber: Number(r.schreiber), tage: Number(r.tage) }));
+    try {
+      const m = await pool.query(`SELECT room, COUNT(*) AS n FROM mitglieder GROUP BY room`);
+      for (const r of m.rows) mitDabei.set(r.room, Number(r.n));
+    } catch {}
+  }
+  raeume = raeume.filter((r) => r.erst >= seit && !String(r.room).startsWith("demo-") && !weg.has(String(r.room).toLowerCase()));
+  const z = { tage, chats: raeume.length, zweitePerson: 0, beideSchreiben: 0, mehrereTage: 0, gruppen3: 0 };
+  for (const r of raeume) {
+    const personen = Math.max(r.schreiber, mitDabei.get(r.room) || 0);
+    if (personen >= 2) z.zweitePerson++;
+    if (r.schreiber >= 2) z.beideSchreiben++;
+    if (r.schreiber >= 2 && r.tage >= 2) z.mehrereTage++;
+    if (personen >= 3) z.gruppen3++;
+  }
+  return z;
+}
+
 /* ------------------------------- Abos -------------------------------
    Ein Abo gehoert dem Zahler. Welche Chats es freischaltet, steht in
    abo_raeume - ein Chat immer nur in einem Abo.

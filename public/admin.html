@@ -89,6 +89,13 @@
       <div class="tage" id="tage"></div>
     </div>
 
+    <div class="card" id="trichterCard">
+      <h2>Wo springen die Leute ab? (28 Tage)</h2>
+      <div id="trichter2" class="small">Lädt …</div>
+      <p class="small" style="margin-top:10px">Ohne eure eigenen Chats und ohne Probe-Chats. „Chats“ = neue Chats mit
+      mindestens einer Nachricht. Die Prozentzahl ist der Anteil der Stufe davor.</p>
+    </div>
+
     <div class="card" id="playCard">
       <h2>Google Play (letzte 28 Tage)</h2>
       <div id="play" class="small">Lädt …</div>
@@ -231,6 +238,33 @@ function zeichneQuellen(summe) {
   }).join("");
 }
 
+async function trichterLaden() {
+  try {
+    const a = await fetch("/api/admin/chat-trichter");
+    const d = await a.json();
+    if (!a.ok) { $("trichter2").textContent = "Fehler: " + (d.error || a.status); return; }
+    const stufen = [
+      ["Website-Besuche", d.besuch],
+      ["Chat betreten", d.eingetreten],
+      ["Neue Chats mit Nachricht", d.chats],
+      ["Zweite Person ist dabei", d.zweitePerson],
+      ["Beide schreiben", d.beideSchreiben],
+      ["An mehr als einem Tag benutzt", d.mehrereTage],
+    ];
+    const max = Math.max(1, ...stufen.map((x) => x[1] || 0));
+    $("trichter2").innerHTML = stufen.map(([name, n], i) => {
+      const vorher = i ? stufen[i - 1][1] : null;
+      const anteil = vorher ? Math.round((n / vorher) * 100) + " %" : "";
+      const breite = Math.max(2, Math.round(((n || 0) / max) * 100));
+      return `<div class="reihe"><div class="name">${name}</div><div style="flex:1">` +
+        `<div style="background:var(--ink);opacity:.8;height:10px;border-radius:5px;width:${breite}%"></div></div>` +
+        `<div style="min-width:90px;text-align:right"><b>${nf.format(n || 0)}</b> <span class="small">${anteil}</span></div></div>`;
+    }).join("") + `<div class="small" style="margin-top:6px">Gruppen mit 3+ Personen: <b>${nf.format(d.gruppen3 || 0)}</b></div>`;
+  } catch {
+    $("trichter2").textContent = "Der Trichter ließ sich nicht laden.";
+  }
+}
+
 async function playLaden() {
   try {
     const a = await fetch("/api/admin/play-statistik");
@@ -252,6 +286,7 @@ async function playLaden() {
 
 async function laden() {
   playLaden();
+  trichterLaden();
   try {
     const a = await fetch("/api/admin/daten");
     if (a.status === 401) { location.reload(); return; }
