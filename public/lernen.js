@@ -91,6 +91,7 @@
   }
 
   function kannMerken(m) {
+    if (istAus()) return false;
     if (!m || m.deleted || m.ort || m.datei || m.gif || m.bild || !(m.text || "").trim()) return false;
     return !!partnerSprache() || basis(m.lang) !== basis(me.lang);
   }
@@ -191,7 +192,7 @@
     b.setAttribute("aria-label", T("lernenTitel"));
     const zl = partnerSprache();
     /* Gleiche Sprache: nichts zu lernen - Knopf weg. */
-    b.style.display = zl ? "" : "none";
+    b.style.display = zl && !istAus() ? "" : "none";
     const n = zl ? faellige(laden(), zl).length : 0;
     b.dataset.n = n > 0 ? String(Math.min(n, 99)) : "";
   }
@@ -222,6 +223,24 @@
       return n;
     } catch { return 0; }
   }
+
+  /* ---------------- Lernen ganz ausblenden ----------------
+     Nicht jeder will lernen. Ausgeblendet: kein 🎓, kein "Merken",
+     kein taeglicher Satz. Wieder einblenden im 👥-Fenster des Chats. */
+  const AUS_KEY = "diralo-lernen-aus";
+  function istAus() {
+    try { return localStorage.getItem(AUS_KEY) === "1"; } catch { return false; }
+  }
+  function ausSetzen(aus) {
+    try { localStorage.setItem(AUS_KEY, aus ? "1" : "0"); } catch {}
+    fetch("/api/lernen-push", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device: deviceId, an: aus ? false : taeglichAn() }),
+    }).catch(() => {});
+    knopfAktualisieren();
+  }
+  /* Fuer das 👥-Fenster: nur zeigen, wenn ausgeblendet und es etwas zu lernen gaebe. */
+  function einblendenAnbieten() { return istAus() && !!partnerSprache(); }
 
   /* ---------------- Taeglicher Satz an/aus ---------------- */
   const PUSH_KEY = "diralo-lernen-push";
@@ -375,6 +394,11 @@
 
     const anzahl = d.karten.filter((x) => x.zl === zl && x.ml === me.lang).length;
     box.appendChild(el("p", "lern-anzahl", T("lernenKarten", { n: anzahl })));
+    box.appendChild(knopf("🙈 " + T("lernenAusblenden"), "lern-aus", () => {
+      ausSetzen(true);
+      schliessen();
+      hinweis(T("lernenAusgeblendet"));
+    }));
     box.appendChild(knopf(T("cancel"), "lern-zu", schliessen));
   }
 
@@ -399,5 +423,8 @@
     zeichnen(box, abo);
   }
 
-  window.DiraloLernen = { merken, kannMerken, oeffnen, knopfAktualisieren };
+  window.DiraloLernen = {
+    merken, kannMerken, oeffnen, knopfAktualisieren, einblendenAnbieten,
+    einblenden: () => { ausSetzen(false); hinweis("🎓 " + T("lernenEingeblendet")); },
+  };
 })();

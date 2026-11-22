@@ -140,6 +140,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} Karten hinzugefügt",
     lernenPaketLaedt: "Wird vorbereitet …",
     lernenTaeglich: "Täglicher Satz um 9 Uhr",
+    lernenAusblenden: "Lernen ausblenden",
+    lernenAusgeblendet: "Lernen ist ausgeblendet. Wieder einschalten: 👥 oben im Chat.",
+    lernenEinblenden: "Lernen wieder einblenden",
+    lernenEingeblendet: "Lernen ist wieder da",
     anheften: "📌 Für alle anheften",
     losloesen: "Nicht mehr anheften",
     durchsage: "📌 Durchsage",
@@ -342,6 +346,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} cartões adicionados",
     lernenPaketLaedt: "A preparar …",
     lernenTaeglich: "Frase diária às 9h",
+    lernenAusblenden: "Ocultar aprender",
+    lernenAusgeblendet: "Aprender está oculto. Para voltar a ligar: 👥 no topo da conversa.",
+    lernenEinblenden: "Mostrar aprender outra vez",
+    lernenEingeblendet: "Aprender voltou",
     anheften: "📌 Fixar para todos",
     losloesen: "Desafixar",
     durchsage: "📌 Aviso",
@@ -544,6 +552,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} cards added",
     lernenPaketLaedt: "Preparing …",
     lernenTaeglich: "Daily sentence at 9 am",
+    lernenAusblenden: "Hide learning",
+    lernenAusgeblendet: "Learning is hidden. To turn it back on: 👥 at the top of the chat.",
+    lernenEinblenden: "Show learning again",
+    lernenEingeblendet: "Learning is back",
     anheften: "📌 Pin for everyone",
     losloesen: "Unpin",
     durchsage: "📌 Announcement",
@@ -746,6 +758,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} tarjetas añadidas",
     lernenPaketLaedt: "Preparando …",
     lernenTaeglich: "Frase diaria a las 9",
+    lernenAusblenden: "Ocultar aprender",
+    lernenAusgeblendet: "Aprender está oculto. Para volver a activarlo: 👥 arriba en el chat.",
+    lernenEinblenden: "Volver a mostrar aprender",
+    lernenEingeblendet: "Aprender ha vuelto",
     anheften: "📌 Fijar para todos",
     losloesen: "Dejar de fijar",
     durchsage: "📌 Aviso",
@@ -948,6 +964,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} cartes ajoutées",
     lernenPaketLaedt: "Préparation …",
     lernenTaeglich: "Phrase du jour à 9 h",
+    lernenAusblenden: "Masquer l'apprentissage",
+    lernenAusgeblendet: "L'apprentissage est masqué. Pour le réactiver : 👥 en haut du chat.",
+    lernenEinblenden: "Réafficher l'apprentissage",
+    lernenEingeblendet: "L'apprentissage est de retour",
     anheften: "📌 Épingler pour tous",
     losloesen: "Désépingler",
     durchsage: "📌 Annonce",
@@ -1150,6 +1170,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} schede aggiunte",
     lernenPaketLaedt: "Preparazione …",
     lernenTaeglich: "Frase del giorno alle 9",
+    lernenAusblenden: "Nascondi impara",
+    lernenAusgeblendet: "Impara è nascosto. Per riattivarlo: 👥 in alto nella chat.",
+    lernenEinblenden: "Mostra di nuovo impara",
+    lernenEingeblendet: "Impara è tornato",
     anheften: "📌 Fissa per tutti",
     losloesen: "Non fissare più",
     durchsage: "📌 Avviso",
@@ -1352,6 +1376,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} 枚のカードを追加しました",
     lernenPaketLaedt: "準備中…",
     lernenTaeglich: "毎朝9時にひとこと",
+    lernenAusblenden: "学習を非表示",
+    lernenAusgeblendet: "学習を非表示にしました。戻すには：チャット上部の 👥",
+    lernenEinblenden: "学習を再表示",
+    lernenEingeblendet: "学習が戻りました",
     anheften: "📌 全員に固定",
     losloesen: "固定を解除",
     durchsage: "📌 お知らせ",
@@ -1554,6 +1582,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} कार्ड जोड़े गए",
     lernenPaketLaedt: "तैयार हो रहा है …",
     lernenTaeglich: "रोज़ सुबह 9 बजे एक वाक्य",
+    lernenAusblenden: "सीखना छिपाएँ",
+    lernenAusgeblendet: "सीखना छिपा दिया गया। फिर से चालू करें: चैट में ऊपर 👥।",
+    lernenEinblenden: "सीखना फिर दिखाएँ",
+    lernenEingeblendet: "सीखना वापस आ गया",
     anheften: "📌 सबके लिए पिन करें",
     losloesen: "पिन हटाएँ",
     durchsage: "📌 घोषणा",
@@ -1756,6 +1788,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} کارڈ شامل کیے گئے",
     lernenPaketLaedt: "تیار ہو رہا ہے …",
     lernenTaeglich: "روزانہ صبح 9 بجے ایک جملہ",
+    lernenAusblenden: "سیکھنا چھپائیں",
+    lernenAusgeblendet: "سیکھنا چھپا دیا گیا۔ دوبارہ آن کریں: چیٹ میں اوپر 👥۔",
+    lernenEinblenden: "سیکھنا دوبارہ دکھائیں",
+    lernenEingeblendet: "سیکھنا واپس آ گیا",
     anheften: "📌 سب کے لیے پن کریں",
     losloesen: "پن ہٹائیں",
     durchsage: "📌 اعلان",
@@ -1958,6 +1994,10 @@ const TEXTE = {
     lernenPaketDazu: "{n}টি কার্ড যোগ হয়েছে",
     lernenPaketLaedt: "তৈরি হচ্ছে …",
     lernenTaeglich: "প্রতিদিন সকাল ৯টায় একটি বাক্য",
+    lernenAusblenden: "শেখা লুকান",
+    lernenAusgeblendet: "শেখা লুকানো হয়েছে। আবার চালু করতে: চ্যাটের উপরে 👥।",
+    lernenEinblenden: "শেখা আবার দেখান",
+    lernenEingeblendet: "শেখা ফিরে এসেছে",
     anheften: "📌 সবার জন্য পিন করুন",
     losloesen: "পিন সরান",
     durchsage: "📌 ঘোষণা",
@@ -2160,6 +2200,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} ਕਾਰਡ ਜੋੜੇ ਗਏ",
     lernenPaketLaedt: "ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ …",
     lernenTaeglich: "ਰੋਜ਼ ਸਵੇਰੇ 9 ਵਜੇ ਇੱਕ ਵਾਕ",
+    lernenAusblenden: "ਸਿੱਖਣਾ ਲੁਕਾਓ",
+    lernenAusgeblendet: "ਸਿੱਖਣਾ ਲੁਕਾ ਦਿੱਤਾ। ਮੁੜ ਚਾਲੂ ਕਰੋ: ਚੈਟ ਵਿੱਚ ਉੱਪਰ 👥।",
+    lernenEinblenden: "ਸਿੱਖਣਾ ਮੁੜ ਦਿਖਾਓ",
+    lernenEingeblendet: "ਸਿੱਖਣਾ ਵਾਪਸ ਆ ਗਿਆ",
     anheften: "📌 ਸਭ ਲਈ ਪਿੰਨ ਕਰੋ",
     losloesen: "ਪਿੰਨ ਹਟਾਓ",
     durchsage: "📌 ਘੋਸ਼ਣਾ",
@@ -2362,6 +2406,10 @@ const TEXTE = {
     lernenPaketDazu: "{n} कार्ड थपियो",
     lernenPaketLaedt: "तयार हुँदैछ …",
     lernenTaeglich: "हरेक बिहान ९ बजे एउटा वाक्य",
+    lernenAusblenden: "सिक्ने लुकाउनुहोस्",
+    lernenAusgeblendet: "सिक्ने लुकाइयो। फेरि खोल्न: च्याटको माथि 👥।",
+    lernenEinblenden: "सिक्ने फेरि देखाउनुहोस्",
+    lernenEingeblendet: "सिक्ने फर्कियो",
     anheften: "📌 सबैका लागि पिन गर्नुहोस्",
     losloesen: "पिन हटाउनुहोस्",
     durchsage: "📌 सूचना",
@@ -3679,8 +3727,9 @@ async function lernPaketHolen(paket, l) {
   return (await r.json()).saetze || [];
 }
 const LERN_PUSH_KEY = "diralo_lernen_push";
+const LERN_AUS_KEY = "diralo_lernen_aus";
 
-function LernenFenster({ offen, onZu, nachrichten, lang, device, raum, onAbo }) {
+function LernenFenster({ offen, onZu, nachrichten, lang, device, raum, onAbo, onAusblenden }) {
   const [d, setD] = useState(null);
   const [reihe, setReihe] = useState([]);
   const [auf, setAuf] = useState(false);
@@ -3844,6 +3893,9 @@ function LernenFenster({ offen, onZu, nachrichten, lang, device, raum, onAbo }) 
                 <Text style={{ color: FARBE.text, fontSize: 14, flexShrink: 1 }}>🔔 {t("lernenTaeglich")}</Text>
               </Pressable>
               <Text style={s.lernKlein}>{n("lernenKarten", meine.length)}</Text>
+              <Pressable onPress={() => { onZu(); onAusblenden(); }} style={{ alignSelf: "center", padding: 8, marginTop: 6 }} hitSlop={8}>
+                <Text style={{ color: FARBE.grau, fontSize: 13.5 }}>🙈 {t("lernenAusblenden")}</Text>
+              </Pressable>
             </>
           )}
           <Pressable onPress={onZu} style={{ alignSelf: "center", padding: 10 }} hitSlop={8}>
@@ -4057,7 +4109,21 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   const [aboArt, setAboArt] = useState("privat");
   const [lernenOffen, setLernenOffen] = useState(false);
   /* Gleiche Sprache: nichts zu lernen - dann kein 🎓 und kein "Merken". */
-  const lernZiel = useMemo(() => lernPartner(nachrichten, lang, device), [nachrichten, lang, device]);
+  const lernZielRoh = useMemo(() => lernPartner(nachrichten, lang, device), [nachrichten, lang, device]);
+  /* "Lernen ausblenden" (nicht jeder will lernen): gilt fuer dieses Geraet. */
+  const [lernAus, setLernAus] = useState(false);
+  useEffect(() => { AsyncStorage.getItem(LERN_AUS_KEY).then((v) => setLernAus(v === "1")).catch(() => {}); }, []);
+  const lernZiel = lernAus ? null : lernZielRoh;
+  const lernAusSetzen = async (aus) => {
+    setLernAus(aus);
+    AsyncStorage.setItem(LERN_AUS_KEY, aus ? "1" : "0").catch(() => {});
+    const taeglichAn = (await AsyncStorage.getItem(LERN_PUSH_KEY).catch(() => null)) !== "0";
+    fetch(`${SERVER_URL}/api/lernen-push`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, an: aus ? false : taeglichAn }),
+    }).catch(() => {});
+    setHinweis(aus ? t("lernenAusgeblendet") : "🎓 " + t("lernenEingeblendet"));
+  };
   const [anwesend, setAnwesend] = useState([]);
   /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
   const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [], angeheftet: null });
@@ -4656,6 +4722,11 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
                 ) : null}
               </View>
             ))}
+            {lernAus && lernZielRoh ? (
+              <Pressable style={[s.lernVorschlag, { marginTop: 12 }]} onPress={() => { setGruppeOffen(false); lernAusSetzen(false); }}>
+                <Text style={s.lernVsZiel}>🎓 {t("lernenEinblenden")}</Text>
+              </Pressable>
+            ) : null}
           </ScrollView>
         </View>
       </Modal>
@@ -4872,6 +4943,7 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         offen={lernenOffen} onZu={() => setLernenOffen(false)}
         nachrichten={nachrichten} lang={lang} device={device} raum={raum}
         onAbo={() => { setAboArt("privat"); setAboOffen(true); }}
+        onAusblenden={() => lernAusSetzen(true)}
       />
       <Modal visible={menueAuf} transparent animationType="slide" onRequestClose={() => setMenueAuf(false)}>
         <Pressable style={s.modalHinten} onPress={() => setMenueAuf(false)} />

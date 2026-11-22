@@ -339,6 +339,8 @@
   .sheet-inner.lernen .lern-paket { border:1px solid var(--line); font-weight:600; }
   .lern-schalter { display:flex; align-items:center; gap:10px; margin:14px 4px 4px; font-size:14px; cursor:pointer; }
   .lern-schalter input { width:20px; height:20px; accent-color:#2e9d5b; }
+  .sheet-inner.lernen .lern-aus { text-align:center; color:var(--muted); font-size:13.5px; margin-top:8px; }
+  .sheet-inner .lern-wieder { margin-top:10px; border:1px solid var(--line); font-weight:600; }
   .sheet-inner.lernen .lern-zu { text-align:center; color:var(--muted); margin-top:4px; }
   .lern-hinweis { position:fixed; left:50%; bottom:90px; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none;
     background:#14213D; color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; z-index:40; transition:all .2s; max-width:86vw; text-align:center; }
@@ -946,7 +948,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v92";
+const BUILD = "v93";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -2951,6 +2953,16 @@ function zeigeGruppe() {
     box.appendChild(z);
   }
 
+  /* Lernen wurde ausgeblendet: hier wieder einschalten (lernen.js). */
+  if (window.DiraloLernen && DiraloLernen.einblendenAnbieten()) {
+    const ein = document.createElement("button");
+    ein.type = "button";
+    ein.className = "lern-wieder";
+    ein.textContent = "🎓 " + T("lernenEinblenden");
+    ein.onclick = () => { DiraloLernen.einblenden(); schliesseSheet(); };
+    box.appendChild(ein);
+  }
+
   sheet.appendChild(box);
   sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
   document.body.appendChild(sheet);
@@ -3418,6 +3430,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-<script src="/lernen.js?v=2"></script>
+<script src="/lernen.js?v=3"></script>
 </body>
 </html>
