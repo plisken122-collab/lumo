@@ -110,6 +110,10 @@
   .demo-row.you .demo-bubble { background:var(--surface); border:1px solid var(--line); color:var(--ink); border-bottom-left-radius:5px; }
   .demo-row.them .demo-bubble { background:var(--mine); color:#fff; border-bottom-right-radius:5px; }
   .demo-flag { font-size:18px; line-height:1; padding-bottom:4px; }
+  .reise-tipp { display:block; margin:18px 0 6px; padding:12px 14px; border:1px solid var(--line); border-radius:14px;
+    color:var(--ink); text-decoration:none; font-size:13.5px; line-height:1.4; background:var(--surface); }
+  .reise-tipp .anzeige { display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:1px 6px; margin-right:6px; }
   .keine-app { text-align:center; font-size:14px; color:var(--ink); margin:10px 0 0; font-weight:600; }
   .demo-cap { margin:3px 0 0; text-align:center; font-size:11.5px; color:var(--muted); }
   /* Der eine Knopf, der einen kalten Besucher die Uebersetzung sofort
@@ -670,6 +674,14 @@
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 2.5v19l10-9.5L4 2.5zm11.4 10.8 2.6 2.5-11 6.2 8.4-8.7zm0-2.6L7 2l11 6.2-2.6 2.5zM19.3 9l2.7 1.5c.8.5.8 1.6 0 2.1L19.3 15l-2.9-3 2.9-3z"/></svg>
         <span>Google Play</span>
       </a>
+      <!-- Reise-Tipp (Partner-Link ueber Awin, Simbye). Klar als Anzeige
+           gekennzeichnet, rel="sponsored nofollow", nur hier unten - kein
+           Banner im Chat. Bei Kauf erhaelt Diralo eine Provision. -->
+      <a class="reise-tipp" id="reiseTipp" target="_blank" rel="sponsored nofollow noopener"
+         href="https://www.awin1.com/cread.php?awinmid=107814&amp;awinaffid=3141339&amp;clickref=diralo-web">
+        <span class="anzeige" id="t-anzeige"></span>
+        <span class="rt-text" id="t-reiseTipp"></span>
+      </a>
       <p class="fuss"><a href="/impressum" id="f-impressum">Impressum</a> &middot; <a href="/datenschutz" id="f-daten">Datenschutz</a> &middot; <a href="/agb" id="f-agb">AGB</a> &middot; <a href="/widerruf" id="f-widerruf">Widerruf</a> &middot; <a href="/preise" id="f-preise">Preise</a></p>
     </div>
   </section>
@@ -949,7 +961,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v94";
+const BUILD = "v95";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1004,7 +1016,7 @@ function applyLanguage(code) {
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
   zeigeBeispiel(code);
-  for (const key of ["keineApp", "normalMessenger", "tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
+  for (const key of ["keineApp", "normalMessenger", "anzeige", "reiseTipp", "tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText", "leerFalsch"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);

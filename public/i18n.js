@@ -12,6 +12,8 @@ window.LUMO_T = (function () {
   const S = {
     de: {
       keineApp: "✅ Die andere Person öffnet nur einen Link – nichts installieren.",
+      anzeige: "Anzeige",
+      reiseTipp: "Heimreise oder Urlaub geplant? Reise-eSIM von Simbye: mobiles Internet in über 190 Ländern – direkt aufs Handy, ohne SIM-Karte zu tauschen.",
       lernenTitel: "Lernen",
       lernenMerken: "⭐ Zum Lernen merken",
       lernenGemerkt: "Gemerkt – du findest es unter 🎓",
@@ -153,6 +155,8 @@ window.LUMO_T = (function () {
     },
     en: {
       keineApp: "✅ The other person just opens a link – nothing to install.",
+      anzeige: "Ad",
+      reiseTipp: "Going home or travelling? Simbye travel eSIM: mobile data in 190+ countries – straight onto your phone, no SIM swap needed.",
       lernenTitel: "Learn",
       lernenMerken: "⭐ Save to learn",
       lernenGemerkt: "Saved – find it under 🎓",
@@ -294,6 +298,8 @@ window.LUMO_T = (function () {
     },
     "pt-PT": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa de instalar nada.",
+      anzeige: "Anúncio",
+      reiseTipp: "Vai a casa ou de férias? eSIM de viagem Simbye: internet móvel em mais de 190 países – direto no telemóvel, sem trocar de cartão SIM.",
       lernenTitel: "Aprender",
       lernenMerken: "⭐ Guardar para aprender",
       lernenGemerkt: "Guardado – encontra em 🎓",
@@ -435,6 +441,8 @@ window.LUMO_T = (function () {
     },
     "pt-BR": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa instalar nada.",
+      anzeige: "Anúncio",
+      reiseTipp: "Vai viajar ou visitar a família? eSIM de viagem Simbye: internet móvel em mais de 190 países – direto no celular, sem trocar o chip.",
       lernenTitel: "Aprender",
       lernenMerken: "⭐ Salvar para aprender",
       lernenGemerkt: "Salvo – encontre em 🎓",
@@ -576,6 +584,8 @@ window.LUMO_T = (function () {
     },
     es: {
       keineApp: "✅ La otra persona solo abre un enlace, sin instalar nada.",
+      anzeige: "Anuncio",
+      reiseTipp: "¿Vuelves a casa o te vas de viaje? eSIM de viaje Simbye: datos móviles en más de 190 países, directo al móvil, sin cambiar la SIM.",
       lernenTitel: "Aprender",
       lernenMerken: "⭐ Guardar para aprender",
       lernenGemerkt: "Guardado – lo encuentras en 🎓",
@@ -704,6 +714,8 @@ window.LUMO_T = (function () {
     },
     fr: {
       keineApp: "✅ L'autre personne ouvre simplement un lien – rien à installer.",
+      anzeige: "Annonce",
+      reiseTipp: "Retour au pays ou voyage ? eSIM de voyage Simbye : internet mobile dans plus de 190 pays – directement sur ton téléphone, sans changer de carte SIM.",
       lernenTitel: "Apprendre",
       lernenMerken: "⭐ Garder pour apprendre",
       lernenGemerkt: "Gardé – à retrouver sous 🎓",
@@ -832,6 +844,8 @@ window.LUMO_T = (function () {
     },
     it: {
       keineApp: "✅ L'altra persona apre solo un link – niente da installare.",
+      anzeige: "Annuncio",
+      reiseTipp: "Torni a casa o parti in viaggio? eSIM da viaggio Simbye: internet mobile in oltre 190 Paesi – direttamente sul telefono, senza cambiare SIM.",
       lernenTitel: "Impara",
       lernenMerken: "⭐ Salva per imparare",
       lernenGemerkt: "Salvato – lo trovi sotto 🎓",
@@ -960,6 +974,8 @@ window.LUMO_T = (function () {
     },
     nl: {
       keineApp: "✅ De ander opent alleen een link – niets installeren.",
+      anzeige: "Advertentie",
+      reiseTipp: "Naar huis of op reis? Simbye reis-eSIM: mobiel internet in 190+ landen – direct op je telefoon, zonder simkaart te wisselen.",
       lernenTitel: "Leren",
       lernenMerken: "⭐ Bewaren om te leren",
       lernenGemerkt: "Bewaard – je vindt het onder 🎓",
@@ -1061,6 +1077,8 @@ window.LUMO_T = (function () {
     },
     pl: {
       keineApp: "✅ Druga osoba otwiera tylko link – nic nie trzeba instalować.",
+      anzeige: "Reklama",
+      reiseTipp: "Lecisz do domu albo w podróż? eSIM podróżny Simbye: mobilny internet w ponad 190 krajach – prosto na telefon, bez wymiany karty SIM.",
       lernenTitel: "Nauka",
       lernenMerken: "⭐ Zapisz do nauki",
       lernenGemerkt: "Zapisano – znajdziesz pod 🎓",
@@ -1162,6 +1180,8 @@ window.LUMO_T = (function () {
     },
     ru: {
       keineApp: "✅ Собеседник просто открывает ссылку – ничего устанавливать не нужно.",
+      anzeige: "Реклама",
+      reiseTipp: "Летите домой или в поездку? Туристическая eSIM от Simbye: мобильный интернет в 190+ странах – прямо на телефон, без замены SIM-карты.",
       lernenTitel: "Учить",
       lernenMerken: "⭐ Сохранить для изучения",
       lernenGemerkt: "Сохранено – ищите в 🎓",
@@ -1263,6 +1283,8 @@ window.LUMO_T = (function () {
     },
     uk: {
       keineApp: "✅ Співрозмовник просто відкриває посилання – нічого не треба встановлювати.",
+      anzeige: "Реклама",
+      reiseTipp: "Їдете додому чи в подорож? Туристична eSIM від Simbye: мобільний інтернет у 190+ країнах – одразу на телефон, без заміни SIM-картки.",
       lernenTitel: "Вчити",
       lernenMerken: "⭐ Зберегти для навчання",
       lernenGemerkt: "Збережено – шукайте в 🎓",
@@ -1364,6 +1386,8 @@ window.LUMO_T = (function () {
     },
     tr: {
       keineApp: "✅ Karşı taraf sadece bir bağlantı açar – hiçbir şey yüklemez.",
+      anzeige: "Reklam",
+      reiseTipp: "Memlekete ya da tatile mi gidiyorsun? Simbye seyahat eSIM'i: 190'dan fazla ülkede mobil internet – doğrudan telefonuna, SIM kart değiştirmeden.",
       lernenTitel: "Öğren",
       lernenMerken: "⭐ Öğrenmek için kaydet",
       lernenGemerkt: "Kaydedildi – 🎓 altında bulabilirsin",
@@ -1465,6 +1489,8 @@ window.LUMO_T = (function () {
     },
     ar: {
       keineApp: "✅ الطرف الآخر يفتح رابطًا فقط – دون تثبيت أي شيء.",
+      anzeige: "إعلان",
+      reiseTipp: "مسافر إلى بلدك أو في عطلة؟ شريحة eSIM للسفر من Simbye: إنترنت جوال في أكثر من 190 دولة – مباشرة على هاتفك، دون تغيير الشريحة.",
       lernenTitel: "تعلّم",
       lernenMerken: "⭐ احفظ للتعلّم",
       lernenGemerkt: "تم الحفظ – تجده تحت 🎓",
@@ -1566,6 +1592,8 @@ window.LUMO_T = (function () {
     },
     ja: {
       keineApp: "✅ 相手はリンクを開くだけ。インストール不要です。",
+      anzeige: "広告",
+      reiseTipp: "帰省や旅行の予定は？ Simbye の旅行用eSIM：190以上の国でモバイルデータ。SIMカードを入れ替えずにスマホへ直接。",
       lernenTitel: "学ぶ",
       lernenMerken: "⭐ 学習用に保存",
       lernenGemerkt: "保存しました – 🎓 から見られます",
@@ -1741,6 +1769,8 @@ window.LUMO_T = (function () {
     },
     hi: {
       keineApp: "✅ सामने वाला बस एक लिंक खोलता है – कुछ इंस्टॉल नहीं करना।",
+      anzeige: "विज्ञापन",
+      reiseTipp: "घर या सफ़र पर जा रहे हैं? Simbye ट्रैवल eSIM: 190+ देशों में मोबाइल इंटरनेट – सीधे फ़ोन पर, सिम बदले बिना।",
       lernenTitel: "सीखें",
       lernenMerken: "⭐ सीखने के लिए सहेजें",
       lernenGemerkt: "सहेज लिया – 🎓 में मिलेगा",
@@ -1916,6 +1946,8 @@ window.LUMO_T = (function () {
     },
     ur: {
       keineApp: "✅ دوسرا شخص صرف ایک لنک کھولتا ہے – کچھ انسٹال نہیں کرنا۔",
+      anzeige: "اشتہار",
+      reiseTipp: "گھر یا سفر پر جا رہے ہیں؟ Simbye ٹریول eSIM: 190 سے زیادہ ممالک میں موبائل انٹرنیٹ – سیدھا فون پر، سم بدلے بغیر۔",
       lernenTitel: "سیکھیں",
       lernenMerken: "⭐ سیکھنے کے لیے محفوظ کریں",
       lernenGemerkt: "محفوظ ہو گیا – 🎓 میں ملے گا",
@@ -2091,6 +2123,8 @@ window.LUMO_T = (function () {
     },
     bn: {
       keineApp: "✅ অন্যজন শুধু একটি লিঙ্ক খোলেন – কিছু ইনস্টল করতে হয় না।",
+      anzeige: "বিজ্ঞাপন",
+      reiseTipp: "বাড়ি যাচ্ছেন বা ভ্রমণে? Simbye ট্রাভেল eSIM: ১৯০টিরও বেশি দেশে মোবাইল ইন্টারনেট – সরাসরি ফোনে, সিম না বদলেই।",
       lernenTitel: "শিখুন",
       lernenMerken: "⭐ শেখার জন্য সংরক্ষণ",
       lernenGemerkt: "সংরক্ষিত – 🎓-এ পাবেন",
@@ -2266,6 +2300,8 @@ window.LUMO_T = (function () {
     },
     pa: {
       keineApp: "✅ ਦੂਜਾ ਵਿਅਕਤੀ ਬੱਸ ਇੱਕ ਲਿੰਕ ਖੋਲ੍ਹਦਾ ਹੈ – ਕੁਝ ਇੰਸਟਾਲ ਨਹੀਂ ਕਰਨਾ।",
+      anzeige: "ਇਸ਼ਤਿਹਾਰ",
+      reiseTipp: "ਘਰ ਜਾਂ ਸਫ਼ਰ 'ਤੇ ਜਾ ਰਹੇ ਹੋ? Simbye ਟ੍ਰੈਵਲ eSIM: 190+ ਦੇਸ਼ਾਂ ਵਿੱਚ ਮੋਬਾਈਲ ਇੰਟਰਨੈੱਟ – ਸਿੱਧਾ ਫ਼ੋਨ 'ਤੇ, ਸਿਮ ਬਦਲੇ ਬਿਨਾਂ।",
       lernenTitel: "ਸਿੱਖੋ",
       lernenMerken: "⭐ ਸਿੱਖਣ ਲਈ ਸੰਭਾਲੋ",
       lernenGemerkt: "ਸੰਭਾਲ ਲਿਆ – 🎓 ਵਿੱਚ ਮਿਲੇਗਾ",
@@ -2441,6 +2477,8 @@ window.LUMO_T = (function () {
     },
     ne: {
       keineApp: "✅ अर्को व्यक्तिले लिङ्क मात्र खोल्छ – केही इन्स्टल गर्नु पर्दैन।",
+      anzeige: "विज्ञापन",
+      reiseTipp: "घर वा यात्रामा जाँदै हुनुहुन्छ? Simbye ट्राभल eSIM: १९० भन्दा बढी देशमा मोबाइल इन्टरनेट – सिधै फोनमा, सिम नफेरी।",
       lernenTitel: "सिक्नुहोस्",
       lernenMerken: "⭐ सिक्नका लागि सुरक्षित गर्नुहोस्",
       lernenGemerkt: "सुरक्षित भयो – 🎓 मा भेटिन्छ",
