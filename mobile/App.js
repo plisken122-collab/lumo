@@ -4643,7 +4643,21 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   };
 
   /* "Gelesen von 3/5" - nur in Gruppen (Name gesetzt oder mehr als zwei Leute). */
-  const andereMitglieder = gruppe.mitglieder.filter((m) => m.device !== device);
+  /* Andere PERSONEN: eigene weitere Geraete (gleicher Name) zaehlen nicht,
+     mehrere Geraete einer Person werden zusammengefasst. Sonst wird ein
+     Zweier-Chat zur "Gruppe" und die Haken werden nie blau. */
+  const andereMitglieder = (() => {
+    const ich = String(name || "").trim().toLowerCase();
+    const leute = new Map();
+    for (const m of gruppe.mitglieder) {
+      if (m.device === device) continue;
+      const n = String(m.name || "").trim().toLowerCase() || m.device;
+      if (n === ich) continue;
+      const alt = leute.get(n);
+      leute.set(n, alt ? { ...alt, bis: Math.max(alt.bis || 0, m.bis || 0) } : { ...m });
+    }
+    return [...leute.values()];
+  })();
   const istGruppe = Boolean(gruppe.name) || andereMitglieder.length >= 2;
   const lesestand = (m) => ({
     ja: andereMitglieder.filter((x) => (x.bis || 0) >= m.at),

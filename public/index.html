@@ -1028,7 +1028,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v97";
+const BUILD = "v98";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -3012,7 +3012,22 @@ function zeigeDurchsage() {
   };
   el.classList.remove("hide");
 }
-const andereMitglieder = () => gruppe.mitglieder.filter((x) => x.device !== deviceId);
+/* Die anderen PERSONEN im Chat: eigene weitere Geraete (gleicher Name, z. B.
+   Handy + PC) zaehlen nicht mit, und mehrere Geraete einer Person werden zu
+   einer zusammengefasst (gelesen = auf irgendeinem ihrer Geraete). Sonst
+   wird ein Zweier-Chat faelschlich zur "Gruppe" und die Haken nie blau. */
+const andereMitglieder = () => {
+  const ich = String((me && me.name) || "").trim().toLowerCase();
+  const leute = new Map();
+  for (const x of gruppe.mitglieder) {
+    if (x.device === deviceId) continue;
+    const n = String(x.name || "").trim().toLowerCase() || x.device;
+    if (n === ich) continue;
+    const alt = leute.get(n);
+    leute.set(n, alt ? { ...alt, bis: Math.max(alt.bis || 0, x.bis || 0) } : { ...x });
+  }
+  return [...leute.values()];
+};
 const istGruppe = () => Boolean(gruppe.name) || andereMitglieder().length >= 2;
 function lesestand(m) {
   const andere = andereMitglieder();
