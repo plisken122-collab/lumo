@@ -4316,7 +4316,7 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon,
             <Image source={{ uri: medienUrl(msg.id) }} style={s.foto} resizeMode="cover" />
           </Pressable>
         ) : null}
-        {msg.audioSeconds ? <Sprachnachricht id={msg.id} sekunden={msg.audioSeconds} meins={meins} /> : null}
+        {msg.audioSeconds ? <Sprachnachricht id={msg.id} sekunden={msg.audioSeconds} meins={meins} onLangDruck={onLangDruck} /> : null}
         {msg.gif ? (
           <Pressable onLongPress={onLangDruck}>
             <GifBild
@@ -4410,7 +4410,10 @@ function Bubble({ msg, lang, device, zitat, onLangDruck, gelesenBis, gelesenVon,
 
 /* Abspielen einer empfangenen (oder eigenen) Sprachnachricht. Der Text
    darunter ist die Mitschrift, uebersetzt wie jede andere Nachricht. */
-function Sprachnachricht({ id, sekunden, meins }) {
+/* onLangDruck: Der Abspielknopf fuellt fast die ganze Blase und faengt
+   die Beruehrung ab - ohne eigenes onLongPress kaeme man bei einer
+   Sprachnachricht nie ans Menue (Loeschen, Antworten). */
+function Sprachnachricht({ id, sekunden, meins, onLangDruck }) {
   const player = useAudioPlayer(medienUrl(id));
   const status = useAudioPlayerStatus(player);
   const laeuft = status.playing;
@@ -4427,7 +4430,7 @@ function Sprachnachricht({ id, sekunden, meins }) {
   const zeit = `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, "0")}`;
 
   return (
-    <Pressable onPress={umschalten} style={s.sprache} hitSlop={6}>
+    <Pressable onPress={umschalten} onLongPress={onLangDruck} delayLongPress={350} style={s.sprache} hitSlop={6}>
       <Text style={[s.spracheKnopf, meins && s.bubbleTxtMeins]}>{laeuft ? "⏸" : "▶"}</Text>
       <Text style={[s.spracheZeit, meins && s.bubbleTxtMeins]}>{t("sprachnachricht")} · {zeit}</Text>
     </Pressable>
