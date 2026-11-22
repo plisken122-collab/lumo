@@ -573,6 +573,7 @@
       <p class="demo-cap" id="t-demoCap">One writes — the other reads in their own language</p>
     </div>
     <p class="keine-app" id="t-keineApp"></p>
+    <p class="keine-app" id="t-normalMessenger"></p>
 
     <!-- Der wichtigste Knopf der Startseite: ein kalter Besucher tippt hier
          einmal und sieht die Uebersetzung sofort - ohne Namen, ohne Code,
@@ -905,7 +906,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v89";
+const BUILD = "v90";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -960,7 +961,7 @@ function applyLanguage(code) {
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
   zeigeBeispiel(code);
-  for (const key of ["keineApp", "tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
+  for (const key of ["keineApp", "normalMessenger", "tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText", "leerFalsch"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);

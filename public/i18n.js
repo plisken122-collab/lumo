@@ -12,6 +12,7 @@ window.LUMO_T = (function () {
   const S = {
     de: {
       keineApp: "✅ Die andere Person öffnet nur einen Link – nichts installieren.",
+      normalMessenger: "💬 Gleiche Sprache? Dann ist Diralo einfach ein ganz normaler Messenger – kostenlos, auch in Gruppen.",
       anheften: "📌 Für alle anheften",
       losloesen: "Nicht mehr anheften",
       durchsage: "📌 Durchsage",
@@ -122,6 +123,7 @@ window.LUMO_T = (function () {
     },
     en: {
       keineApp: "✅ The other person just opens a link – nothing to install.",
+      normalMessenger: "💬 Same language? Then Diralo is simply a normal messenger – free, groups included.",
       anheften: "📌 Pin for everyone",
       losloesen: "Unpin",
       durchsage: "📌 Announcement",
@@ -232,6 +234,7 @@ window.LUMO_T = (function () {
     },
     "pt-PT": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa de instalar nada.",
+      normalMessenger: "💬 Mesma língua? Então o Diralo é simplesmente um messenger normal – grátis, também em grupo.",
       anheften: "📌 Fixar para todos",
       losloesen: "Desafixar",
       durchsage: "📌 Aviso",
@@ -342,6 +345,7 @@ window.LUMO_T = (function () {
     },
     "pt-BR": {
       keineApp: "✅ A outra pessoa só abre um link – não precisa instalar nada.",
+      normalMessenger: "💬 Mesma língua? Então o Diralo é simplesmente um mensageiro normal – grátis, também em grupo.",
       anheften: "📌 Fixar para todos",
       losloesen: "Desafixar",
       durchsage: "📌 Aviso",
@@ -452,6 +456,7 @@ window.LUMO_T = (function () {
     },
     es: {
       keineApp: "✅ La otra persona solo abre un enlace, sin instalar nada.",
+      normalMessenger: "💬 ¿Mismo idioma? Entonces Diralo es simplemente una mensajería normal: gratis, también en grupos.",
       anheften: "📌 Fijar para todos",
       losloesen: "Dejar de fijar",
       durchsage: "📌 Aviso",
@@ -549,6 +554,7 @@ window.LUMO_T = (function () {
     },
     fr: {
       keineApp: "✅ L'autre personne ouvre simplement un lien – rien à installer.",
+      normalMessenger: "💬 Même langue ? Alors Diralo est tout simplement une messagerie normale – gratuite, aussi en groupe.",
       anheften: "📌 Épingler pour tous",
       losloesen: "Désépingler",
       durchsage: "📌 Annonce",
@@ -646,6 +652,7 @@ window.LUMO_T = (function () {
     },
     it: {
       keineApp: "✅ L'altra persona apre solo un link – niente da installare.",
+      normalMessenger: "💬 Stessa lingua? Allora Diralo è semplicemente un messenger normale – gratis, anche nei gruppi.",
       anheften: "📌 Fissa per tutti",
       losloesen: "Non fissare più",
       durchsage: "📌 Avviso",
@@ -743,6 +750,7 @@ window.LUMO_T = (function () {
     },
     nl: {
       keineApp: "✅ De ander opent alleen een link – niets installeren.",
+      normalMessenger: "💬 Dezelfde taal? Dan is Diralo gewoon een normale messenger – gratis, ook in groepen.",
       tagline: "Iedereen schrijft in zijn eigen taal. Iedereen leest in de zijne.",
       freeStart: "Gratis beginnen", back: "Terug",
       nameLabel: "Je naam", namePlaceholder: "Naam",
@@ -813,6 +821,7 @@ window.LUMO_T = (function () {
     },
     pl: {
       keineApp: "✅ Druga osoba otwiera tylko link – nic nie trzeba instalować.",
+      normalMessenger: "💬 Ten sam język? Wtedy Diralo to po prostu zwykły komunikator – za darmo, także w grupach.",
       tagline: "Każdy pisze w swoim języku. Każdy czyta w swoim.",
       freeStart: "Zacznij za darmo", back: "Wstecz",
       nameLabel: "Twoje imię", namePlaceholder: "Imię",
@@ -883,6 +892,7 @@ window.LUMO_T = (function () {
     },
     ru: {
       keineApp: "✅ Собеседник просто открывает ссылку – ничего устанавливать не нужно.",
+      normalMessenger: "💬 Один язык? Тогда Diralo — просто обычный мессенджер: бесплатно, и в группах тоже.",
       tagline: "Каждый пишет на своём языке. Каждый читает на своём.",
       freeStart: "Начать бесплатно", back: "Назад",
       nameLabel: "Ваше имя", namePlaceholder: "Имя",
@@ -953,6 +963,7 @@ window.LUMO_T = (function () {
     },
     uk: {
       keineApp: "✅ Співрозмовник просто відкриває посилання – нічого не треба встановлювати.",
+      normalMessenger: "💬 Одна мова? Тоді Diralo — просто звичайний месенджер: безкоштовно, і в групах теж.",
       tagline: "Кожен пише своєю мовою. Кожен читає своєю.",
       freeStart: "Почати безкоштовно", back: "Назад",
       nameLabel: "Ваше ім'я", namePlaceholder: "Ім'я",
@@ -1023,6 +1034,7 @@ window.LUMO_T = (function () {
     },
     tr: {
       keineApp: "✅ Karşı taraf sadece bir bağlantı açar – hiçbir şey yüklemez.",
+      normalMessenger: "💬 Aynı dil mi? O zaman Diralo sıradan bir mesajlaşma uygulaması – ücretsiz, gruplarda da.",
       tagline: "Herkes kendi dilinde yazar. Herkes kendi dilinde okur.",
       freeStart: "Ücretsiz başla", back: "Geri",
       nameLabel: "Adın", namePlaceholder: "Ad",
@@ -1093,6 +1105,7 @@ window.LUMO_T = (function () {
     },
     ar: {
       keineApp: "✅ الطرف الآخر يفتح رابطًا فقط – دون تثبيت أي شيء.",
+      normalMessenger: "💬 نفس اللغة؟ إذن Diralo مجرد تطبيق مراسلة عادي – مجاني، وفي المجموعات أيضًا.",
       tagline: "كل واحد يكتب بلغته. وكل واحد يقرأ بلغته.",
       freeStart: "ابدأ مجانًا", back: "رجوع",
       nameLabel: "اسمك", namePlaceholder: "الاسم",
@@ -1163,6 +1176,7 @@ window.LUMO_T = (function () {
     },
     ja: {
       keineApp: "✅ 相手はリンクを開くだけ。インストール不要です。",
+      normalMessenger: "💬 同じ言語なら、Diralo は普通のメッセンジャーとして無料で使えます。グループも OK。",
       anheften: "📌 全員に固定",
       losloesen: "固定を解除",
       durchsage: "📌 お知らせ",
@@ -1307,6 +1321,7 @@ window.LUMO_T = (function () {
     },
     hi: {
       keineApp: "✅ सामने वाला बस एक लिंक खोलता है – कुछ इंस्टॉल नहीं करना।",
+      normalMessenger: "💬 एक ही भाषा? तब Diralo बस एक आम मैसेंजर है – मुफ़्त, ग्रुप में भी।",
       anheften: "📌 सबके लिए पिन करें",
       losloesen: "पिन हटाएँ",
       durchsage: "📌 घोषणा",
@@ -1451,6 +1466,7 @@ window.LUMO_T = (function () {
     },
     ur: {
       keineApp: "✅ دوسرا شخص صرف ایک لنک کھولتا ہے – کچھ انسٹال نہیں کرنا۔",
+      normalMessenger: "💬 ایک ہی زبان؟ تو Diralo بس ایک عام میسنجر ہے – مفت، گروپ میں بھی۔",
       anheften: "📌 سب کے لیے پن کریں",
       losloesen: "پن ہٹائیں",
       durchsage: "📌 اعلان",
@@ -1595,6 +1611,7 @@ window.LUMO_T = (function () {
     },
     bn: {
       keineApp: "✅ অন্যজন শুধু একটি লিঙ্ক খোলেন – কিছু ইনস্টল করতে হয় না।",
+      normalMessenger: "💬 একই ভাষা? তাহলে Diralo একটি সাধারণ মেসেঞ্জার – বিনামূল্যে, গ্রুপেও।",
       anheften: "📌 সবার জন্য পিন করুন",
       losloesen: "পিন সরান",
       durchsage: "📌 ঘোষণা",
@@ -1739,6 +1756,7 @@ window.LUMO_T = (function () {
     },
     pa: {
       keineApp: "✅ ਦੂਜਾ ਵਿਅਕਤੀ ਬੱਸ ਇੱਕ ਲਿੰਕ ਖੋਲ੍ਹਦਾ ਹੈ – ਕੁਝ ਇੰਸਟਾਲ ਨਹੀਂ ਕਰਨਾ।",
+      normalMessenger: "💬 ਇੱਕੋ ਭਾਸ਼ਾ? ਤਾਂ Diralo ਬੱਸ ਇੱਕ ਆਮ ਮੈਸੇਂਜਰ ਹੈ – ਮੁਫ਼ਤ, ਗਰੁੱਪ ਵਿੱਚ ਵੀ।",
       anheften: "📌 ਸਭ ਲਈ ਪਿੰਨ ਕਰੋ",
       losloesen: "ਪਿੰਨ ਹਟਾਓ",
       durchsage: "📌 ਘੋਸ਼ਣਾ",
@@ -1883,6 +1901,7 @@ window.LUMO_T = (function () {
     },
     ne: {
       keineApp: "✅ अर्को व्यक्तिले लिङ्क मात्र खोल्छ – केही इन्स्टल गर्नु पर्दैन।",
+      normalMessenger: "💬 एउटै भाषा? त्यसो भए Diralo एउटा सामान्य मेसेन्जर हो – निःशुल्क, समूहमा पनि।",
       anheften: "📌 सबैका लागि पिन गर्नुहोस्",
       losloesen: "पिन हटाउनुहोस्",
       durchsage: "📌 सूचना",
