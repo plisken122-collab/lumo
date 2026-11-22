@@ -210,6 +210,28 @@
   .sheet-kopf { margin:6px 12px 8px; font-size:13px; color:var(--muted); }
   .sheet-hinweis { margin:8px 14px 4px; font-size:12px; color:var(--muted); line-height:1.4; }
   .sheet-trenner { height:1px; background:var(--line); margin:8px 12px; }
+  .playbadge { display:flex; align-items:center; gap:10px; margin:14px auto 4px; width:max-content;
+    background:#000; color:#fff; border-radius:12px; padding:9px 20px 9px 14px; text-decoration:none;
+    box-shadow:0 4px 14px rgba(0,0,0,.18); }
+  .playbadge.hide { display:none; }
+  .playbadge .pb-text { display:flex; flex-direction:column; line-height:1.1; }
+  .playbadge small { font-size:11px; letter-spacing:.02em; opacity:.9; }
+  .playbadge b { font-size:21px; font-weight:600; }
+  .einl-karte { position:fixed; inset:0; z-index:50; background:rgba(18,32,54,.55); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .einl-karte.hide { display:none; }
+  .einl-inner { background:var(--surface); color:var(--ink); border-radius:20px; padding:22px 20px; width:100%; max-width:420px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3); text-align:center; }
+  .einl-logo { width:56px; }
+  .einl-titel { font-size:21px; font-weight:800; margin:10px 0 6px; line-height:1.3; }
+  .einl-info { font-size:15px; color:var(--muted); margin:0 0 16px; line-height:1.45; }
+  .einl-label { display:block; text-align:left; font-size:13px; color:var(--muted); margin:0 0 4px; }
+  .einl-select, .einl-name { width:100%; font-size:16px; padding:11px 12px; border-radius:12px; border:1px solid var(--line); background:var(--canvas); color:var(--ink); margin-bottom:10px; }
+  .einl-knopf { width:100%; font-size:18px; padding:14px; margin-top:4px; }
+  .einl-mehr { background:none; border:none; color:var(--muted); font-size:13.5px; margin-top:10px; text-decoration:underline; cursor:pointer; }
+  .einl-sprachen { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 10px; }
+  .sheet-inner .einl-sprachen button { width:auto; display:inline-block; border:1px solid var(--line); border-radius:999px; padding:9px 14px; font-size:14.5px; }
+  .allein.pulsiert { animation:alleinPuls 1.2s ease-in-out 3; border-color:#25D366; }
+  @keyframes alleinPuls { 0%,100% { box-shadow:0 0 0 0 rgba(37,211,102,0); } 50% { box-shadow:0 0 0 6px rgba(37,211,102,.35); } }
   .playlink { display:flex; align-items:center; justify-content:center; gap:8px; margin:12px auto 0;
     width:max-content; padding:8px 16px; border-radius:999px; border:1px solid var(--line, #d8dde6);
     color:inherit; text-decoration:none; font-size:14px; font-weight:500; }
@@ -596,6 +618,21 @@
 
   <!-- Start -->
   <section id="setup">
+    <!-- Einladung mit einem Tipp: Wer ueber einen Link kommt, muss weder
+         Namen tippen noch aus 37 Sprachen waehlen. Die Sprache kommt aus
+         dem Link (vom Einladenden gewaehlt) oder vom Handy; aendern geht. -->
+    <div id="einlKarte" class="einl-karte hide" role="dialog" aria-modal="true">
+      <div class="einl-inner">
+        <img src="/brand/logo-mark.svg" alt="" class="einl-logo">
+        <p class="einl-titel" id="einlTitel"></p>
+        <p class="einl-info" id="einlInfo"></p>
+        <label class="einl-label" id="t-einlDuLiest" for="einlLang"></label>
+        <select id="einlLang" class="einl-select"></select>
+        <input id="einlName" class="einl-name" maxlength="40" autocomplete="given-name">
+        <button id="einlOeffnen" class="primary einl-knopf" type="button"></button>
+        <button id="einlMehr" class="einl-mehr" type="button"></button>
+      </div>
+    </div>
     <div class="brandline"><img src="/brand/logo-mark.svg" alt=""><span class="wort">Diralo</span></div>
     <p class="sub" id="t-tagline"></p>
 
@@ -603,6 +640,13 @@
          Preistabelle vor die Nase zu setzen. Der Preis kommt spaeter, wenn
          das Kontingent erreicht ist. -->
     <p class="freebadge" id="t-freeStart"></p>
+
+    <!-- Auffaelliger Play-Store-Knopf oben (nur Android, nicht in der
+         installierten Web-App) - wie das offizielle Abzeichen. -->
+    <a id="playTop" class="playbadge hide" target="_blank" rel="noopener" href="https://play.google.com/store/apps/details?id=app.diralo.twa">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M4 2.5v19l10-9.5L4 2.5zm11.4 10.8 2.6 2.5-11 6.2 8.4-8.7zm0-2.6L7 2l11 6.2-2.6 2.5zM19.3 9l2.7 1.5c.8.5.8 1.6 0 2.1L19.3 15l-2.9-3 2.9-3z"/></svg>
+      <span class="pb-text"><small id="t-playKlein"></small><b>Google Play</b></span>
+    </a>
 
     <!-- Kleines Beispiel, das die Uebersetzung sofort zeigt - bewusst auf
          Englisch, weil der meiste Zulauf ueber englische Videos kommt. So
@@ -892,6 +936,7 @@ if (eingeladen) {
   $("room").value = eingeladen;
   $("invitedNote").classList.remove("hide");
   melde("ueber_link");
+  einladungsKarte();
 } else {
   /* Ohne Einladungslink bleibt das Code-Feld leer: Neue Besucher nehmen
      "Neuen Chat starten", wer einen Code hat, tippt ihn ein. */
@@ -961,7 +1006,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v95";
+const BUILD = "v96";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1016,7 +1061,7 @@ function applyLanguage(code) {
   document.documentElement.dir = RTL.has(code.slice(0, 2)) ? "rtl" : "ltr";
 
   zeigeBeispiel(code);
-  for (const key of ["keineApp", "normalMessenger", "anzeige", "reiseTipp", "tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
+  for (const key of ["keineApp", "normalMessenger", "playKlein", "anzeige", "reiseTipp", "tagline", "freeStart", "demoCap", "demoLandingSub", "nameLabel", "langLabel", "privacy",
                       "howTitle", "howStep1", "howStep2", "howStep3", "leerTitel", "leerText", "leerFalsch"]) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
@@ -1156,8 +1201,9 @@ function zeigeInstallBalken() {
 $("installLater").onclick = () => installBalkenWeg(true);
 /* Google-Play-Knopf auf der Startseite: nicht auf iPhones und nicht in
    der schon installierten Web-App. */
-if (!istIos() && !schonInstalliert()) $("playLink").classList.remove("hide");
+if (!istIos() && !schonInstalliert()) { $("playLink").classList.remove("hide"); $("playTop").classList.remove("hide"); }
 $("playLink").href = playMitQuelle();
+$("playTop").href = playMitQuelle();
 $("installGo").onclick = async () => {
   if (istAndroid()) {
     installBalkenWeg(true);
@@ -1176,7 +1222,26 @@ $("installGo").onclick = async () => {
   } catch { /* Browser hat es verweigert - dann eben nicht. */ }
 };
 
+/* Erinnerung: Wer nach 3 Minuten noch allein im Chat sitzt, bekommt die
+   Einladeleiste erneut - auch wenn er sie weggeklickt hat - mit dem
+   Hinweis, dass die Person noch nicht da ist. */
+let alleinUhr = null;
+function alleinErinnern() {
+  clearTimeout(alleinUhr);
+  const raum = me.room;
+  alleinUhr = setTimeout(() => {
+    if (!me || me.room !== raum || demoAktiv || raum.startsWith("demo-")) return;
+    for (const m of msgs.values()) if (m.device !== deviceId && m.device !== "demo") return;
+    const b = $("allein");
+    if (!b) return;
+    $("t-alleinText").textContent = "⏳ " + T("erinnerungAllein");
+    b.classList.remove("hide");
+    b.classList.add("pulsiert");
+  }, 3 * 60 * 1000);
+}
+
 function start() {
+  alleinErinnern();
   $("setup").classList.add("hide");
   $("chat").classList.remove("hide");
   demoAus();
@@ -3115,8 +3180,75 @@ function neuerCode() {
   return [...feld].map((n) => zeichen[n % zeichen.length]).join("");
 }
 
-function einladungsLink(code) {
-  return location.origin + "/#c=" + encodeURIComponent(code);
+function einladungsLink(code, ziel) {
+  let l = location.origin + "/#c=" + encodeURIComponent(code);
+  if (ziel) l += "&l=" + encodeURIComponent(ziel);
+  if (ziel && me && me.name && me.name !== "Gast") l += "&v=" + encodeURIComponent(me.name.slice(0, 30));
+  return l;
+}
+
+/* Einladungstext in der Sprache der anderen Person (plus Englisch, falls
+   sie kein Englisch ist) - der Empfaenger soll sofort verstehen. */
+function einladungsTextFuer(ziel) {
+  const L2 = window.LUMO_T;
+  const t = L2.inSprache(ziel, "inviteText");
+  return ziel.slice(0, 2) === "en" ? t : t + "\n" + L2.en("inviteText");
+}
+
+/* Vor dem Teilen: In welcher Sprache spricht deine Person? Die Wahl geht
+   in den Link (&l=) - dort ist die Sprache dann schon eingestellt. */
+const EINL_SCHNELL = ["pt-PT", "pt-BR", "en", "es", "fr", "de", "ne", "hi", "bn", "pa", "ur", "uk", "ro"];
+function frageZielSprache(weiter) {
+  schliesseSheet();
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  const box = document.createElement("div");
+  box.className = "sheet-inner";
+  const titel = document.createElement("p");
+  titel.style.cssText = "font-weight:800;font-size:16px;margin:6px 6px 2px";
+  titel.textContent = T("einlSpracheFrage");
+  box.appendChild(titel);
+  const reihe = document.createElement("div");
+  reihe.className = "einl-sprachen";
+  let zuletzt = "";
+  try { zuletzt = localStorage.getItem("diralo-einl-ziel") || ""; } catch {}
+  const waehlen = (c) => {
+    try { localStorage.setItem("diralo-einl-ziel", c); } catch {}
+    schliesseSheet();
+    weiter(c);
+  };
+  const liste = [...new Set([zuletzt, ...EINL_SCHNELL].filter(Boolean))].filter((c) => c !== me.lang);
+  for (const c of liste) {
+    const name = (LANGS.find(([x]) => x === c) || [])[1];
+    if (!name) continue;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = name;
+    if (c === zuletzt) b.style.fontWeight = "800";
+    b.onclick = () => waehlen(c);
+    reihe.appendChild(b);
+  }
+  box.appendChild(reihe);
+  const andere = document.createElement("select");
+  andere.className = "einl-select";
+  const leer = document.createElement("option");
+  leer.value = ""; leer.textContent = T("einlAndere");
+  andere.appendChild(leer);
+  for (const [c, n] of LANGS) {
+    const o = document.createElement("option");
+    o.value = c; o.textContent = n;
+    andere.appendChild(o);
+  }
+  andere.onchange = () => { if (andere.value) waehlen(andere.value); };
+  box.appendChild(andere);
+  const zu = document.createElement("button");
+  zu.type = "button";
+  zu.textContent = T("cancel");
+  zu.onclick = schliesseSheet;
+  box.appendChild(zu);
+  sheet.appendChild(box);
+  sheet.onclick = (e) => { if (e.target === sheet) schliesseSheet(); };
+  document.body.appendChild(sheet);
 }
 
 /* Einladungstext: Englisch + Portugiesisch, siehe einladen(). */
@@ -3129,19 +3261,26 @@ function einladungsText() {
    Ein Tippen weniger als ueber das Teilen-Menue. */
 function einladenWhatsApp() {
   if (demoAktiv) { demoAus(); aktualisiereLeer(); }
-  melde("einladung");
-  const text = einladungsText() + "\n" + einladungsLink(me.room);
-  window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  frageZielSprache((ziel) => {
+    melde("einladung");
+    const text = einladungsTextFuer(ziel) + "\n" + einladungsLink(me.room, ziel);
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  });
 }
 
-async function einladen() {
+function einladen() {
+  if (demoAktiv) { demoAus(); aktualisiereLeer(); }
+  frageZielSprache((ziel) => einladenTeilen(ziel));
+}
+
+async function einladenTeilen(ziel) {
   /* Aus dem Probe-Chat heraus eingeladen? Dann die Demo beenden, damit die
      naechsten Nachrichten in den echten Raum gehen und nicht mehr an die KI -
      sonst schriebe der Einladende weiter mit dem Demo-Partner, waehrend die
      echte Person schon beigetreten ist. Der Raum ("demo-...") ist ohnehin
      ein echter, teilbarer Chat. */
   if (demoAktiv) { demoAus(); aktualisiereLeer(); }
-  const link = einladungsLink(me.room);
+  const link = einladungsLink(me.room, ziel);
   /* Zweisprachig und bewusst fest: Die Einladung geht an jemanden, der
      eine andere Sprache spricht - sonst braeuchte er Diralo nicht. Der
      Text in *deiner* Sprache waere fuer ihn genau das Hindernis, das die
@@ -3150,8 +3289,7 @@ async function einladen() {
      Englisch versteht fast jeder wenigstens so weit, dass er den Link
      anklickt; Portugiesisch steht dabei, weil hier die meisten
      Eingeladenen sitzen. */
-  const L2 = window.LUMO_T;
-  const text = L2.en("inviteText") + "\n" + L2.inSprache("pt-PT", "inviteText");
+  const text = einladungsTextFuer(ziel || "pt-PT");
   melde("einladung");
   if (navigator.share) {
     try { await navigator.share({ text: text + " " + link }); return; } catch { /* abgebrochen */ }
@@ -3165,6 +3303,58 @@ async function einladen() {
     /* Letzte Rettung: zum Abschreiben anzeigen. */
     prompt(text, link);
   }
+}
+
+/* Weitere Angaben im Einladungslink (#c=code&l=pt-BR&v=Carsten): welche
+   Sprache der Einladende fuer die andere Person gewaehlt hat und wie er
+   heisst. Steht hinter dem #, geht also nie an den Server. */
+function linkWert(k) {
+  const treffer = new RegExp("[#&]" + k + "=([^&]+)").exec(location.hash || "");
+  if (!treffer) return "";
+  try { return decodeURIComponent(treffer[1]).trim().slice(0, 40); } catch { return ""; }
+}
+
+/* Einladung mit einem Tipp. Sprache: aus dem Link, sonst die schon
+   gemerkte, sonst die des Handys. Name freiwillig ("Gast"). */
+function einladungsKarte() {
+  const L = window.LUMO_T;
+  const ausLink = linkWert("l");
+  const lang = LANGS.some(([c]) => c === ausLink) ? ausLink : (saved.lang || guessLang());
+  const von = linkWert("v").replace(/[<>]/g, "");
+  L.set(lang);
+  const sel = $("einlLang");
+  sel.textContent = "";
+  for (const [c, n] of LANGS) {
+    const o = document.createElement("option");
+    o.value = c; o.textContent = n;
+    sel.appendChild(o);
+  }
+  sel.value = lang;
+  const texte = () => {
+    L.set(sel.value);
+    $("einlTitel").textContent = von ? L.t("einlVon", { name: von }) : L.t("einlTitel");
+    $("einlInfo").textContent = L.t("einlInfo", { lang: (LANGS.find(([c]) => c === sel.value) || [])[1] || sel.value });
+    $("t-einlDuLiest").textContent = L.t("einlDuLiest");
+    $("einlName").placeholder = L.t("einlNameOpt");
+    $("einlOeffnen").textContent = L.t("einlOeffnen");
+    $("einlMehr").textContent = L.t("einlMehr");
+  };
+  texte();
+  sel.onchange = texte;
+  $("einlName").value = saved.name || "";
+  $("einlOeffnen").onclick = () => {
+    $("name").value = $("einlName").value.trim() || saved.name || "Gast";
+    $("lang").value = sel.value;
+    $("lang").dispatchEvent(new Event("change"));
+    $("einlKarte").classList.add("hide");
+    $("enter").click();
+  };
+  $("einlMehr").onclick = () => {
+    $("lang").value = sel.value;
+    $("lang").dispatchEvent(new Event("change"));
+    $("einlKarte").classList.add("hide");
+  };
+  $("einlKarte").classList.remove("hide");
 }
 
 /* Kommt jemand ueber einen Link, steht der Code schon fest - dann muss
