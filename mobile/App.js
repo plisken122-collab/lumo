@@ -144,6 +144,9 @@ const TEXTE = {
     lernenAusgeblendet: "Lernen ist ausgeblendet. Wieder einschalten: 👥 oben im Chat.",
     lernenEinblenden: "Lernen wieder einblenden",
     lernenEingeblendet: "Lernen ist wieder da",
+    gruppeErstellen: "Gruppe für mein Team erstellen",
+    gruppeTipp: "Lade dein Team mit dem Link ein – jeder schreibt und liest in seiner Sprache.",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 Für alle anheften",
     losloesen: "Nicht mehr anheften",
     durchsage: "📌 Durchsage",
@@ -350,6 +353,9 @@ const TEXTE = {
     lernenAusgeblendet: "Aprender está oculto. Para voltar a ligar: 👥 no topo da conversa.",
     lernenEinblenden: "Mostrar aprender outra vez",
     lernenEingeblendet: "Aprender voltou",
+    gruppeErstellen: "Criar grupo para a minha equipa",
+    gruppeTipp: "Convide a sua equipa com o link – cada um escreve e lê na sua língua.",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 Fixar para todos",
     losloesen: "Desafixar",
     durchsage: "📌 Aviso",
@@ -556,6 +562,9 @@ const TEXTE = {
     lernenAusgeblendet: "Learning is hidden. To turn it back on: 👥 at the top of the chat.",
     lernenEinblenden: "Show learning again",
     lernenEingeblendet: "Learning is back",
+    gruppeErstellen: "Create a group for my team",
+    gruppeTipp: "Invite your team with the link – everyone writes and reads in their own language.",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 Pin for everyone",
     losloesen: "Unpin",
     durchsage: "📌 Announcement",
@@ -762,6 +771,9 @@ const TEXTE = {
     lernenAusgeblendet: "Aprender está oculto. Para volver a activarlo: 👥 arriba en el chat.",
     lernenEinblenden: "Volver a mostrar aprender",
     lernenEingeblendet: "Aprender ha vuelto",
+    gruppeErstellen: "Crear grupo para mi equipo",
+    gruppeTipp: "Invita a tu equipo con el enlace: cada uno escribe y lee en su idioma.",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 Fijar para todos",
     losloesen: "Dejar de fijar",
     durchsage: "📌 Aviso",
@@ -968,6 +980,9 @@ const TEXTE = {
     lernenAusgeblendet: "L'apprentissage est masqué. Pour le réactiver : 👥 en haut du chat.",
     lernenEinblenden: "Réafficher l'apprentissage",
     lernenEingeblendet: "L'apprentissage est de retour",
+    gruppeErstellen: "Créer un groupe pour mon équipe",
+    gruppeTipp: "Invite ton équipe avec le lien – chacun écrit et lit dans sa langue.",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 Épingler pour tous",
     losloesen: "Désépingler",
     durchsage: "📌 Annonce",
@@ -1174,6 +1189,9 @@ const TEXTE = {
     lernenAusgeblendet: "Impara è nascosto. Per riattivarlo: 👥 in alto nella chat.",
     lernenEinblenden: "Mostra di nuovo impara",
     lernenEingeblendet: "Impara è tornato",
+    gruppeErstellen: "Crea un gruppo per il mio team",
+    gruppeTipp: "Invita il tuo team con il link: ognuno scrive e legge nella sua lingua.",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 Fissa per tutti",
     losloesen: "Non fissare più",
     durchsage: "📌 Avviso",
@@ -1380,6 +1398,9 @@ const TEXTE = {
     lernenAusgeblendet: "学習を非表示にしました。戻すには：チャット上部の 👥",
     lernenEinblenden: "学習を再表示",
     lernenEingeblendet: "学習が戻りました",
+    gruppeErstellen: "チーム用のグループを作成",
+    gruppeTipp: "リンクでチームを招待 — それぞれ自分の言語で書いて読めます。",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 全員に固定",
     losloesen: "固定を解除",
     durchsage: "📌 お知らせ",
@@ -1586,6 +1607,9 @@ const TEXTE = {
     lernenAusgeblendet: "सीखना छिपा दिया गया। फिर से चालू करें: चैट में ऊपर 👥।",
     lernenEinblenden: "सीखना फिर दिखाएँ",
     lernenEingeblendet: "सीखना वापस आ गया",
+    gruppeErstellen: "अपनी टीम के लिए ग्रुप बनाएँ",
+    gruppeTipp: "लिंक से अपनी टीम को बुलाएँ – हर कोई अपनी भाषा में लिखता और पढ़ता है।",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 सबके लिए पिन करें",
     losloesen: "पिन हटाएँ",
     durchsage: "📌 घोषणा",
@@ -1792,6 +1816,9 @@ const TEXTE = {
     lernenAusgeblendet: "سیکھنا چھپا دیا گیا۔ دوبارہ آن کریں: چیٹ میں اوپر 👥۔",
     lernenEinblenden: "سیکھنا دوبارہ دکھائیں",
     lernenEingeblendet: "سیکھنا واپس آ گیا",
+    gruppeErstellen: "اپنی ٹیم کے لیے گروپ بنائیں",
+    gruppeTipp: "لنک سے اپنی ٹیم کو بلائیں – ہر کوئی اپنی زبان میں لکھتا اور پڑھتا ہے۔",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 سب کے لیے پن کریں",
     losloesen: "پن ہٹائیں",
     durchsage: "📌 اعلان",
@@ -1998,6 +2025,9 @@ const TEXTE = {
     lernenAusgeblendet: "শেখা লুকানো হয়েছে। আবার চালু করতে: চ্যাটের উপরে 👥।",
     lernenEinblenden: "শেখা আবার দেখান",
     lernenEingeblendet: "শেখা ফিরে এসেছে",
+    gruppeErstellen: "আমার দলের জন্য গ্রুপ তৈরি করুন",
+    gruppeTipp: "লিংক দিয়ে আপনার দলকে আমন্ত্রণ জানান – সবাই নিজের ভাষায় লেখে ও পড়ে।",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 সবার জন্য পিন করুন",
     losloesen: "পিন সরান",
     durchsage: "📌 ঘোষণা",
@@ -2204,6 +2234,9 @@ const TEXTE = {
     lernenAusgeblendet: "ਸਿੱਖਣਾ ਲੁਕਾ ਦਿੱਤਾ। ਮੁੜ ਚਾਲੂ ਕਰੋ: ਚੈਟ ਵਿੱਚ ਉੱਪਰ 👥।",
     lernenEinblenden: "ਸਿੱਖਣਾ ਮੁੜ ਦਿਖਾਓ",
     lernenEingeblendet: "ਸਿੱਖਣਾ ਵਾਪਸ ਆ ਗਿਆ",
+    gruppeErstellen: "ਆਪਣੀ ਟੀਮ ਲਈ ਗਰੁੱਪ ਬਣਾਓ",
+    gruppeTipp: "ਲਿੰਕ ਨਾਲ ਆਪਣੀ ਟੀਮ ਨੂੰ ਸੱਦੋ – ਹਰ ਕੋਈ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਲਿਖਦਾ ਅਤੇ ਪੜ੍ਹਦਾ ਹੈ।",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 ਸਭ ਲਈ ਪਿੰਨ ਕਰੋ",
     losloesen: "ਪਿੰਨ ਹਟਾਓ",
     durchsage: "📌 ਘੋਸ਼ਣਾ",
@@ -2410,6 +2443,9 @@ const TEXTE = {
     lernenAusgeblendet: "सिक्ने लुकाइयो। फेरि खोल्न: च्याटको माथि 👥।",
     lernenEinblenden: "सिक्ने फेरि देखाउनुहोस्",
     lernenEingeblendet: "सिक्ने फर्कियो",
+    gruppeErstellen: "मेरो टोलीका लागि समूह बनाउनुहोस्",
+    gruppeTipp: "लिङ्कबाट आफ्नो टोलीलाई बोलाउनुहोस् – सबैले आफ्नै भाषामा लेख्छन् र पढ्छन्।",
+    aboKnopf: "Diralo Plus & Family",
     anheften: "📌 सबैका लागि पिन गर्नुहोस्",
     losloesen: "पिन हटाउनुहोस्",
     durchsage: "📌 सूचना",
@@ -2833,6 +2869,7 @@ function Haupt() {
   const [name, setName] = useState("");
   const [lang, setLang] = useState(geraeteSprache);
   const [raum, setRaum] = useState(null);     // null = Startseite, sonst Chat
+  const [gruppeNeu, setGruppeNeu] = useState(false);   // neuer Chat soll gleich als Gruppe benannt werden
   const [ansicht, setAnsicht] = useState(null); // "dolmetsch" | "foto" | "geteilt" | null
   /* Teilen-Menue von Android: Text oder Bild aus einer anderen App. */
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent({ resetOnBackground: true });
@@ -2980,7 +3017,8 @@ function Haupt() {
             unten={insets.bottom} oben={insets.top}
             entwurf={entwurf} onEntwurfWeg={() => setEntwurf("")}
             dateiEntwurf={dateiEntwurf} onDateiWeg={() => setDateiEntwurf(null)}
-            onBack={verlassen}
+            onBack={() => { setGruppeNeu(false); verlassen(); }}
+            gruppeStart={gruppeNeu} onGruppeStartWeg={() => setGruppeNeu(false)}
           />
         ) : (
           <Home
@@ -2989,6 +3027,7 @@ function Haupt() {
             device={device}
             unten={insets.bottom}
             onStart={() => betreten(neuerCode())}
+            onGruppe={() => { setGruppeNeu(true); betreten(neuerCode()); }}
             onJoin={betreten}
             vorCode={linkCode}
             onHilfe={setAnsicht}
@@ -3049,7 +3088,7 @@ function UpdateHinweis() {
   );
 }
 
-function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, onHilfe, vorCode = null }) {
+function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, onJoin, onHilfe, vorCode = null }) {
   const [code, setCode] = useState("");
   /* Code aus einem Einladungs-Link schon eintragen (Name fehlt noch). */
   useEffect(() => { if (vorCode) setCode(vorCode); }, [vorCode]);
@@ -3132,6 +3171,13 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onJoin, on
           disabled={!kannLos} onPress={onStart}
         >
           <Text style={s.btnPrimaryTxt}>{t("neuerChat")}</Text>
+        </Pressable>
+        {/* Fuer Chefs: Gruppe anlegen, gleich benennen, dann einladen. */}
+        <Pressable
+          style={[s.btnGruppe, !kannLos && s.btnAus]}
+          disabled={!kannLos} onPress={onGruppe}
+        >
+          <Text style={s.btnGruppeTxt}>👥 {t("gruppeErstellen")}</Text>
         </Pressable>
       </View>
 
@@ -4045,7 +4091,7 @@ function AboFenster({ offen, raum, onZu, onHinweis, art = "privat" }) {
 }
 
 /* ------------------------------- Chat ----------------------------- */
-function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwurfWeg, dateiEntwurf = null, onDateiWeg, onBack }) {
+function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwurfWeg, dateiEntwurf = null, onDateiWeg, onBack, gruppeStart = false, onGruppeStartWeg }) {
   /* Offene Tastatur deckt die Navigationsleiste ab - dann braucht die
      Eingabezeile unten keinen eigenen Abstand mehr. */
   const tastatur = useTastaturOffen();
@@ -4128,6 +4174,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
   /* Gruppe: Name, Chef, Mitglieder mit Lesestand (Server: gruppe.js) */
   const [gruppe, setGruppe] = useState({ name: "", admin: "", mitglieder: [], angeheftet: null });
   const [gruppeOffen, setGruppeOffen] = useState(false);
+  /* Von "Gruppe fuer mein Team erstellen": gleich das Gruppen-Fenster zum Benennen. */
+  useEffect(() => {
+    if (!gruppeStart) return;
+    setGruppeOffen(true);
+    onGruppeStartWeg?.();
+  }, [gruppeStart]);
   const [gruppeEntwurf, setGruppeEntwurf] = useState("");
   /* Anrufe: offen = ich bin im Anruf; klingelt = jemand ruft mich an. */
   const [anrufOffen, setAnrufOffen] = useState(false);
@@ -4623,6 +4675,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
               : `${t("verbunden")} · ${t("du")}: ${name}`}
           </Text>
         </Pressable>
+        <Pressable
+          onPress={() => { setGruppeEntwurf(gruppe.name || chatName || ""); setGruppeOffen(true); sockRef.current?.emit("gruppeInfo"); }}
+          style={s.plusKnopf} hitSlop={8}
+        >
+          <Text style={s.plusKnopfTxt}>👥</Text>
+        </Pressable>
         <Pressable onPress={anrufWaehlen} style={s.plusKnopf} hitSlop={8}>
           <Text style={s.plusKnopfTxt}>📞</Text>
         </Pressable>
@@ -4634,9 +4692,6 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
             <Text style={s.plusKnopfTxt}>🎓</Text>
           </Pressable>
         ) : null}
-        <Pressable onPress={() => { setAboArt("privat"); setAboOffen(true); }} style={s.plusKnopf} hitSlop={8}>
-          <Text style={s.plusKnopfTxt}>★</Text>
-        </Pressable>
         <Pressable onPress={einladen} style={s.einladen} hitSlop={8}>
           <Text style={s.einladenTxt}>{t("einladen")}</Text>
         </Pressable>
@@ -4688,6 +4743,10 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
                 <Text style={s.btnPrimaryTxt}>{t("speichern")}</Text>
               </Pressable>
               <Text style={s.gruppeHinweis}>{gruppe.admin ? t("gruppeDuChef") : t("gruppeHinweis")}</Text>
+              <Text style={s.gruppeHinweis}>{t("gruppeTipp")}</Text>
+              <Pressable style={[s.btnGruppe, { marginTop: 8 }]} onPress={() => { setGruppeOffen(false); einladen(); }}>
+                <Text style={s.btnGruppeTxt}>{t("einladen")}</Text>
+              </Pressable>
               {gruppe.admin === device ? (
                 <Pressable
                   style={[s.btnPrimary, { marginTop: 10, backgroundColor: FARBE.gold }]}
@@ -4727,6 +4786,9 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
                 ) : null}
               </View>
             ))}
+            <Pressable style={[s.lernVorschlag, { marginTop: 12 }]} onPress={() => { setGruppeOffen(false); setAboArt("privat"); setAboOffen(true); }}>
+              <Text style={s.lernVsZiel}>★ {t("aboKnopf")}</Text>
+            </Pressable>
             {lernAus && lernZielRoh ? (
               <Pressable style={[s.lernVorschlag, { marginTop: 12 }]} onPress={() => { setGruppeOffen(false); lernAusSetzen(false); }}>
                 <Text style={s.lernVsZiel}>🎓 {t("lernenEinblenden")}</Text>
@@ -5571,6 +5633,8 @@ const s = StyleSheet.create({
   lernPlus: { fontWeight: "800", fontSize: 18, color: FARBE.navy },
   uebHoeren: { alignSelf: "flex-start", backgroundColor: FARBE.hell, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5, marginBottom: 6 },
   uebHoerenTxt: { color: FARBE.navy, fontWeight: "700", fontSize: 13 },
+  btnGruppe: { borderWidth: 2, borderColor: FARBE.navy, borderRadius: 14, paddingVertical: 13, alignItems: "center", marginTop: 10 },
+  btnGruppeTxt: { color: FARBE.navy, fontSize: 16, fontWeight: "800" },
   lernHaken: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: FARBE.grau, alignItems: "center", justifyContent: "center" },
   lernVsZiel: { fontWeight: "600", fontSize: 15, color: FARBE.text },
   aktionTxt: { color: FARBE.navy, fontWeight: "700" },
