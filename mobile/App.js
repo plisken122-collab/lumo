@@ -2358,12 +2358,31 @@ async function dateiHochladen(datei, { raum, device, name, lang }) {
 /* Videos vor dem Senden verkleinern, wie WhatsApp: Handyvideos sind
    sonst nach wenigen Sekunden groesser als die 25 MB, die der Server
    annimmt. Klappt das Verkleinern nicht, geht das Original. */
-async function videoKlein(uri) {
+/* Auf manchen Handys bleibt das Verkleinern ohne Fehler einfach stehen -
+   dann hing "Video wird vorbereitet" fuer immer und nichts kam an. Nach
+   spaetestens 2 Minuten (bzw. 25 s ohne jeden Fortschritt) geht deshalb
+   das Original raus; ist es zu gross, sagt das der Hochladen-Schritt. */
+async function videoKlein(uri, beiFortschritt) {
+  let abbruch = null;
   try {
-    const neu = await VideoKompressor.compress(uri, { compressionMethod: "auto" });
+    const zeitUm = new Promise((fertig) => {
+      const start = Date.now();
+      let zuletzt = Date.now();
+      const uhr = setInterval(() => {
+        if (Date.now() - start > 120_000 || Date.now() - zuletzt > 25_000) { clearInterval(uhr); fertig(null); }
+      }, 1000);
+      abbruch = { uhr, weiter: () => { zuletzt = Date.now(); } };
+    });
+    const klein = VideoKompressor.compress(uri, { compressionMethod: "auto" }, (p) => {
+      abbruch?.weiter();
+      beiFortschritt?.(Math.round(Number(p || 0) * 100));
+    }).catch(() => null);
+    const neu = await Promise.race([klein, zeitUm]);
     return neu || uri;
   } catch {
     return uri;
+  } finally {
+    if (abbruch) clearInterval(abbruch.uhr);
   }
 }
 
@@ -3875,8 +3894,12 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     setLaedt(true);
     setHinweis(t("videoVorbereiten"));
     let uri = a.uri;
-    try { uri = await videoKlein(a.uri); } finally { setLaedt(false); }
+    try {
+      uri = await videoKlein(a.uri, (pz) => setHinweis(`${t("videoVorbereiten")} ${pz} %`));
+    } finally { setLaedt(false); }
     const name = (a.fileName || "video.mp4").replace(/\.[^.]+$/, "") + ".mp4";
+    /* Hinweis weg - sonst stand "wird vorbereitet" auch nach dem Senden noch da. */
+    setHinweis(null);
     await dateiSenden({ uri, name, mime: "video/mp4" });
   };
 
