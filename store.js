@@ -552,6 +552,16 @@ export async function setTranslation(id, lang, body) {
   );
 }
 
+/* Nachtraegliche Mitschrift einer Sprachnachricht (mitschrift.js). */
+export async function setMessageText(id, text) {
+  if (!usingDatabase) {
+    const m = mem.messages.get(id);
+    if (m) m.text = text;
+    return;
+  }
+  await pool.query(`UPDATE messages SET body = $2 WHERE id = $1`, [id, text]);
+}
+
 export async function setDetectedLang(id, lang) {
   if (!usingDatabase) {
     const m = mem.messages.get(id);

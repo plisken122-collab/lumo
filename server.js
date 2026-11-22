@@ -14,6 +14,7 @@ import * as play from "./playkasse.js";
 import * as anruf from "./anruf.js";
 import * as gruppe from "./gruppe.js";
 import * as lernpush from "./lernpush.js";
+import * as mitschrift from "./mitschrift.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -2060,6 +2061,9 @@ app.post("/api/voice", express.json({ limit: "6mb" }), entfernteSperren, async (
   if (!bytes.length || bytes.length > grenze) {
     return res.status(413).json({ error: "Aufnahme zu gross" });
   }
+  /* Zu leise Aufnahmen (WAV aus der App) lauter machen - sonst hoert der
+     andere "nichts" und die Spracherkennung versteht nichts. */
+  try { bytes = mitschrift.lauterMachen(bytes, type); } catch {}
 
   const raum = String(room).trim().toLowerCase().slice(0, 60);
   const geraet = String(device).slice(0, 60);
@@ -2094,7 +2098,26 @@ app.post("/api/voice", express.json({ limit: "6mb" }), entfernteSperren, async (
   io.to(raum).emit("message", msg);
   pushToRoom(raum, msg).catch((e) => console.error("Push-Lauf:", e.message));
   res.json({ ok: true, id: msg.id });
+  /* Ohne Mitschrift vom Handy: auf dem Server nachholen und uebersetzen. */
+  if (!msg.text) mitschriftNachholen(raum, msg, bytes, type).catch((e) => console.error("Mitschrift:", e.message?.slice(0, 160)));
 });
+
+/* Sprachnachricht ohne Text: mit Google mitschreiben, Text speichern und
+   in alle Sprachen des Chats uebersetzen. Die Empfaenger haben vorher
+   eine leere Uebersetzung bekommen - "translated" ersetzt sie jetzt. */
+async function mitschriftNachholen(raum, msg, bytes, type) {
+  const text = await mitschrift.transkribieren(bytes, type, msg.lang, stimme.dienstkonto(), msg.audioSeconds);
+  if (!text) return;
+  await store.setMessageText(msg.id, text.slice(0, 4000));
+  io.to(raum).emit("translated", { id: msg.id, lang: msg.lang, text });
+  const sprachen = new Set();
+  for (const m of await store.getHistory(raum, 80).catch(() => [])) {
+    if (m.lang) sprachen.add(m.lang);
+    for (const l of Object.keys(m.tr || {})) sprachen.add(l);
+  }
+  sprachen.delete(msg.lang);
+  for (const l of sprachen) await ensure(raum, msg.id, clean(l)).catch(() => {});
+}
 
 /* ------------------------------ Bilder ------------------------------
    Wie die Sprachnachricht kommt das Bild als base64 in JSON. Verkleinert
