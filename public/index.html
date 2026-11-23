@@ -1028,7 +1028,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v98";
+const BUILD = "v99";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1368,6 +1368,12 @@ function start() {
   });
   /* Das Gegenueber hat den Chat offen und alles bis "bis" gesehen - meine
      eigenen Nachrichten bis dahin bekommen die Lese-Haken. */
+  /* Der Server erkennt eines unserer eigenen Geraete: Besuche dieses
+     Browsers ab jetzt nicht mehr mitzaehlen (setzt das intern-Cookie). */
+  socket.on("eigen", () => {
+    try { if (localStorage.getItem("diralo-intern")) return; localStorage.setItem("diralo-intern", "1"); } catch {}
+    fetch("/?intern=1", { credentials: "same-origin", redirect: "manual" }).catch(() => {});
+  });
   socket.on("gelesen", ({ device, bis }) => {
     const t = Number(bis); if (!t) return;
     if (device) {

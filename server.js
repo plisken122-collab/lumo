@@ -982,7 +982,7 @@ app.get("/api/admin/chat-trichter", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   try {
     const [chats, zaehler] = await Promise.all([
-      store.chatTrichter(28, [...OHNE_GRENZE]),
+      store.chatTrichter(28, req.query.alle === "1" ? [...OHNE_GRENZE] : [...OHNE_GRENZE, ...EIGEN.raeume]),
       store.trichter(28),
     ]);
     res.json({ ...chats, besuch: zaehler.summe.besuch || 0, eingetreten: zaehler.summe.eingetreten || 0 });
@@ -994,16 +994,19 @@ app.get("/api/admin/chat-trichter", async (req, res) => {
 app.get("/api/admin/daten", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: "Nur fuer Admin" });
   try {
+    /* ?alle=1 zeigt die Zahlen MIT den eigenen Chats. */
+    const mitEigenen = req.query.alle === "1";
+    const ohne = mitEigenen ? [] : [...EIGEN.raeume];
     const [trichter, aktiv7, aktiv30, abos, push, monat, gesamt, demo, gespraeche7, google] = await Promise.all([
       store.trichter(14),
-      store.aktiveChats(7),
-      store.aktiveChats(30),
+      store.aktiveChats(7, ohne),
+      store.aktiveChats(30, ohne),
       store.aboZaehlung(),
       store.pushZaehlung(),
       store.getUsage(30),
       store.getUsage(365),
       store.getDemoUsage(30),
-      store.personenGruppen(7).catch(() => null),
+      store.personenGruppen(7, ohne).catch(() => null),
       googleKosten().catch(() => null),
     ]);
     const kostenMonat = costOf(monat.total);
@@ -1011,6 +1014,7 @@ app.get("/api/admin/daten", async (req, res) => {
     res.json({
       trichter,
       chats: { aktiv7, aktiv30, gruppen7: gespraeche7 },
+      eigen: { ausgeblendet: !mitEigenen, chats: EIGEN.raeume.size, geraete: EIGEN.geraete.size },
       google,
       abos,
       push,
@@ -1286,6 +1290,24 @@ const OHNE_GRENZE = new Set(
   String(process.env.RAEUME_OHNE_GRENZE ?? "algarve")
     .split(",").map((r) => r.trim().toLowerCase()).filter(Boolean)
 );
+
+/* Eigene Chats und Geraete (Betreiber + Familie) aus den Admin-Zahlen
+   herausrechnen. Grundlage: die Raeume in RAEUME_OHNE_GRENZE. Wer dort
+   schreibt, zaehlt ab sofort weder bei "Chat betreten" noch bei
+   "Nachricht" mit; eigene Chats fehlen in Gespraechen und Trichter.
+   Alle 15 Minuten neu ermittelt. */
+const EIGEN = { geraete: new Set(), raeume: new Set() };
+async function eigeneLaden() {
+  try {
+    const e = await store.eigeneRaeumeUndGeraete([...OHNE_GRENZE]);
+    EIGEN.geraete = new Set(e.geraete);
+    EIGEN.raeume = new Set(e.raeume);
+  } catch (err) {
+    console.error("Eigene Geraete nicht ladbar:", err.message);
+  }
+}
+setTimeout(eigeneLaden, 5000);
+setInterval(eigeneLaden, 15 * 60 * 1000);
 
 /* Welcher Tarif und welche Grenze zuletzt fuer einen Chat galten - damit
    die Meldung "aufgebraucht" dem Nutzer das Richtige sagt. */
@@ -2599,7 +2621,7 @@ io.on("connection", (socket) => {
     /* Der Probe-Chat von der Startseite (Raum "demo-...") ist kein echter
        Eintritt - sonst blaeht er die Trichterzahl "Chat betreten" auf.
        Die Demo selbst wird ueber "first" im demo-Ereignis eigens gezaehlt. */
-    if (vorher !== room && !internSock && !room.startsWith("demo-")) {
+    if (vorher !== room && !internSock && !EIGEN.geraete.has(String(device || "")) && !room.startsWith("demo-")) {
       zaehle("eingetreten");
       zaehleQuelle(vonSock, "eingetreten");
     }
@@ -2614,6 +2636,7 @@ io.on("connection", (socket) => {
       device: String(device || socket.id).slice(0, 60),
     };
     socket.join(room);
+    if (EIGEN.geraete.has(me.device)) socket.emit("eigen");
     try {
       socket.emit("history", await store.getHistory(room));
       /* Dauerhafte Lese-Haken: dem Beitretenden sagen, wie weit die anderen
@@ -2676,7 +2699,7 @@ io.on("connection", (socket) => {
       socket.emit("tooFast");
       return;
     }
-    if (!internSock) { zaehle("nachricht"); zaehleQuelle(vonSock, "nachricht"); }
+    if (!internSock && !EIGEN.geraete.has(me.device)) { zaehle("nachricht"); zaehleQuelle(vonSock, "nachricht"); }
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       room,
@@ -2712,7 +2735,7 @@ io.on("connection", (socket) => {
         la < -90 || la > 90 || lo < -180 || lo > 180) return;
     if (!take(`msg:${me.device}`, MSG_PER_MIN, 60 * 1000)) { socket.emit("tooFast"); return; }
     if (!take(`msgtag:${ip}`, MSG_PER_DAY_IP, 24 * 60 * 60 * 1000)) { socket.emit("tooFast"); return; }
-    if (!internSock) { zaehle("nachricht"); zaehleQuelle(vonSock, "nachricht"); }
+    if (!internSock && !EIGEN.geraete.has(me.device)) { zaehle("nachricht"); zaehleQuelle(vonSock, "nachricht"); }
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       room, device: me.device, name: me.name,

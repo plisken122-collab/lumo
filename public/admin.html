@@ -73,6 +73,10 @@
 
   <!-- Übersicht -->
   <div id="dash" class="hide">
+    <label class="small" style="display:flex;align-items:center;gap:8px;margin:0 0 10px;cursor:pointer">
+      <input type="checkbox" id="ohneEigene" checked style="width:auto;margin:0">
+      <span>Eigene Chats herausrechnen (Carsten &amp; Familie) <span id="eigenInfo"></span></span>
+    </label>
     <div class="kacheln" id="kacheln"></div>
 
     <div class="card hide" id="gespraecheCard">
@@ -238,9 +242,14 @@ function zeichneQuellen(summe) {
   }).join("");
 }
 
+/* Schalter: eigene Chats und Geraete herausrechnen (Standard: an). */
+let ohneEigene = true;
+try { ohneEigene = localStorage.getItem("diralo-admin-alle") !== "1"; } catch {}
+const alleParam = () => (ohneEigene ? "" : "?alle=1");
+
 async function trichterLaden() {
   try {
-    const a = await fetch("/api/admin/chat-trichter");
+    const a = await fetch("/api/admin/chat-trichter" + alleParam());
     const d = await a.json();
     if (!a.ok) { $("trichter2").textContent = "Fehler: " + (d.error || a.status); return; }
     const stufen = [
@@ -288,9 +297,12 @@ async function laden() {
   playLaden();
   trichterLaden();
   try {
-    const a = await fetch("/api/admin/daten");
+    const a = await fetch("/api/admin/daten" + alleParam());
     if (a.status === 401) { location.reload(); return; }
     const d = await a.json();
+    if (d.eigen) $("eigenInfo").textContent = d.eigen.ausgeblendet
+      ? `– ${d.eigen.chats} Chats, ${d.eigen.geraete} Geräte ausgeblendet; Besuche/Nachrichten ab 23.11. ohne euch`
+      : "– aus: alle Zahlen inklusive euch";
 
     const demo = d.demo || { monat: 0, kostenUsd: 0 };
     const g = d.chats.gruppen7;
@@ -320,6 +332,13 @@ async function laden() {
     $("stand").textContent = "Die Zahlen ließen sich nicht laden.";
   }
 }
+
+$("ohneEigene").checked = ohneEigene;
+$("ohneEigene").addEventListener("change", (e) => {
+  ohneEigene = e.target.checked;
+  try { localStorage.setItem("diralo-admin-alle", ohneEigene ? "0" : "1"); } catch {}
+  laden();
+});
 
 /* Falls das Cookie schon steht, direkt die Übersicht versuchen. */
 fetch("/api/admin/daten").then((a) => {

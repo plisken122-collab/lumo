@@ -1189,7 +1189,7 @@ export async function gespraeche(days = 7) {
    Gruppe mit einem Geraet ist jemand, der allein ausprobiert hat.
    Testgeraete ("test_...") zaehlen nicht. Nur Summen, keine Codes,
    keine Namen. */
-export async function personenGruppen(days = 7) {
+export async function personenGruppen(days = 7, ohne = []) {
   const seit = Date.now() - days * 24 * 60 * 60 * 1000;
   let zeilen;
   if (!usingDatabase) {
@@ -1207,7 +1207,8 @@ export async function personenGruppen(days = 7) {
          FROM messages WHERE at >= $1 AND device IS NOT NULL GROUP BY room, device`, [seit]
     ));
   }
-  zeilen = zeilen.filter((z) => z.device && !String(z.device).startsWith("test_"));
+  const ohneSet = new Set(ohne);
+  zeilen = zeilen.filter((z) => z.device && !String(z.device).startsWith("test_") && !ohneSet.has(z.room));
 
   /* Vereinigen: Raum und Geraet sind Knoten, jede Zeile verbindet beide. */
   const eltern = new Map();
@@ -1241,15 +1242,46 @@ export async function personenGruppen(days = 7) {
   };
 }
 
-export async function aktiveChats(days = 7) {
+export async function aktiveChats(days = 7, ohne = []) {
   const seit = Date.now() - days * 24 * 60 * 60 * 1000;
   if (!usingDatabase) {
-    return new Set([...mem.messages.values()].filter((m) => m.at >= seit).map((m) => m.room)).size;
+    const weg = new Set(ohne);
+    return new Set([...mem.messages.values()].filter((m) => m.at >= seit && !weg.has(m.room)).map((m) => m.room)).size;
   }
   const { rows } = await pool.query(
-    `SELECT COUNT(DISTINCT room)::int AS n FROM messages WHERE at >= $1`, [seit]
+    `SELECT COUNT(DISTINCT room)::int AS n FROM messages WHERE at >= $1 AND NOT (room = ANY($2::text[]))`, [seit, ohne]
   );
   return rows[0]?.n || 0;
+}
+
+/* Eigene Chats und Geraete (Betreiber + Familie), damit die Admin-Zahlen
+   nur echte Nutzer zeigen. Ausgangspunkt sind die Raeume in `basis`
+   (RAEUME_OHNE_GRENZE): Wer dort schreibt, ist ein eigenes Geraet. Ein
+   Chat gilt als eigener, wenn ALLE seine Schreiber eigene Geraete sind -
+   holt jemand von uns einen Fremden dazu, bleibt der Chat in den Zahlen. */
+export async function eigeneRaeumeUndGeraete(basis = []) {
+  const b = basis.map((r) => String(r).toLowerCase());
+  if (!b.length) return { geraete: [], raeume: [] };
+  if (!usingDatabase) {
+    const geraete = new Set();
+    for (const m of mem.messages.values()) if (m.device && b.includes(String(m.room).toLowerCase())) geraete.add(m.device);
+    const je = new Map();
+    for (const m of mem.messages.values()) {
+      if (!m.device) continue;
+      const alle = je.get(m.room) ?? true;
+      je.set(m.room, alle && geraete.has(m.device));
+    }
+    return { geraete: [...geraete], raeume: [...je].filter(([, alle]) => alle).map(([r]) => r) };
+  }
+  const g = await pool.query(
+    `SELECT DISTINCT device FROM messages WHERE lower(room) = ANY($1::text[]) AND device IS NOT NULL AND device <> 'demo'`, [b]
+  );
+  const geraete = g.rows.map((r) => r.device);
+  if (!geraete.length) return { geraete, raeume: [] };
+  const r = await pool.query(
+    `SELECT room FROM messages WHERE device IS NOT NULL GROUP BY room HAVING bool_and(device = ANY($1::text[]))`, [geraete]
+  );
+  return { geraete, raeume: r.rows.map((x) => x.room) };
 }
 
 /* Aktive Abos nach Tarif. "canceled" zaehlt nicht mehr. */
