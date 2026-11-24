@@ -1948,6 +1948,39 @@ app.post("/api/unsubscribe", async (req, res) => {
    deshalb je Geraet und je Tag eng begrenzt. Nichts wird gespeichert. */
 const HILFE_PRO_TAG = Number(process.env.HILFE_PRO_TAG || 800);
 
+/* Gratis-Kontingent fuer Dolmetscher und Foto-Uebersetzer: je Geraet und
+   Tag. Mit Plus (irgendein bezahlter Chat des Geraets) unbegrenzt. Die App
+   schickt dazu ihre Chat-Codes mit; geprueft wird nur, ob einer davon ein
+   laufendes Abo hat - die Codes werden nicht gespeichert. */
+const GRATIS_PRO_TAG = {
+  dolmetsch: Number(process.env.GRATIS_DOLMETSCH || 20),
+  foto: Number(process.env.GRATIS_FOTO || 5),
+};
+const plusMerker = new Map(); // device -> { plus, bis }
+async function hatPlus(device, raeume) {
+  const m = plusMerker.get(device);
+  if (m && m.bis > Date.now()) return m.plus;
+  let plus = false;
+  const codes = (Array.isArray(raeume) ? raeume : []).slice(0, 30).map(raumCode).filter(Boolean);
+  if (codes.some((r) => OHNE_GRENZE.has(r))) plus = true;
+  for (const r of codes) {
+    if (plus) break;
+    try { if ((await kontingent(r)).bezahlt) plus = true; } catch {}
+  }
+  if (plusMerker.size > 5000) plusMerker.clear();
+  /* Plus 10 Minuten merken, "kein Plus" nur 1 Minute - wer gerade
+     gekauft hat, soll nicht lange warten. */
+  plusMerker.set(device, { plus, bis: Date.now() + (plus ? 10 : 1) * 60 * 1000 });
+  return plus;
+}
+async function gratisErlaubt(req, art) {
+  const device = String(req.body?.device || "").slice(0, 60);
+  if (device && EIGEN.geraete.has(device)) return true;
+  if (device && await hatPlus(device, req.body?.raeume)) return true;
+  const wer = device || req.ip;
+  return take(`gratis:${art}:${wer}`, GRATIS_PRO_TAG[art], 24 * 60 * 60 * 1000);
+}
+
 /* Natuerliche Stimme (Google Cloud TTS). POST liefert eine Kennung, GET
    die MP3 dazu - so steht der Text nie in einer Adresse. */
 /* Neueste App-Version (versionCode). Die App vergleicht beim Start und
@@ -1994,6 +2027,7 @@ app.post("/api/dolmetsch", express.json({ limit: "20kb" }), async (req, res) => 
   const wer = String(req.body?.device || req.ip).slice(0, 60);
   if (!text || !von || !nach) return res.status(400).json({ error: "Angaben unvollstaendig" });
   if (!take(`dolm:${wer}`, 40, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!(await gratisErlaubt(req, "dolmetsch"))) return res.status(402).json({ error: "gratis_aus", grenze: GRATIS_PRO_TAG.dolmetsch });
   if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
   const vonName = LANG_NAMES[von] || von, nachName = LANG_NAMES[nach] || nach;
   const prompt = `Du bist ein Dolmetscher in einem Gespraech von Angesicht zu Angesicht. Der Text ist gesprochene Sprache auf ${vonName} (${von}), von einer Spracherkennung mitgeschrieben - kleine Erkennungsfehler sinnvoll ausgleichen. Uebersetze natuerlich und muendlich nach ${nachName} (${nach}). Erklaere nichts.
@@ -2048,6 +2082,7 @@ app.post("/api/foto-text", express.json({ limit: "8mb" }), async (req, res) => {
     return res.status(400).json({ error: "Angaben unvollstaendig" });
   }
   if (!take(`foto:${wer}`, 10, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!(await gratisErlaubt(req, "foto"))) return res.status(402).json({ error: "gratis_aus", grenze: GRATIS_PRO_TAG.foto });
   if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
   const ziel = LANG_NAMES[lang] || lang;
   const prompt = `Lies allen Text auf diesem Foto (z. B. Speisekarte, Brief, Schild, Beipackzettel). Uebersetze ihn vollstaendig und gut lesbar nach ${ziel} (${lang}) - Absaetze und Aufzaehlungen beibehalten.${erklaeren ? ` Schreibe ausserdem eine kurze, einfache Erklaerung auf ${ziel}: Worum geht es, was muss der Leser tun oder beachten, gibt es Fristen oder Betraege?` : ""} Ist kein Text zu sehen, gib leere Felder zurueck.

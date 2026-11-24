@@ -210,6 +210,7 @@ const TEXTE = {
     dolmTitel: "Jemand steht neben dir?",
     dolmText: "Sprecht mit einem Handy: Jeder spricht in seiner Sprache, Diralo übersetzt und liest laut vor.",
     dolmStart: "🎙 Dolmetscher starten",
+    gratisAus: "Die kostenlosen Übersetzungen für heute sind aufgebraucht. Mit Plus geht es unbegrenzt weiter – oder morgen wieder gratis.",
     fotoKnopf: "📷\nFoto übersetzen",
     dolmInfo: "Handy zwischen euch legen. Jeder tippt auf sein Mikrofon und spricht in seiner Sprache.",
     tippenSprechen: "Tippen und sprechen",
@@ -425,6 +426,7 @@ const TEXTE = {
     dolmTitel: "Alguém está ao seu lado?",
     dolmText: "Falem com um só telemóvel: cada um fala na sua língua, o Diralo traduz e lê em voz alta.",
     dolmStart: "🎙 Iniciar intérprete",
+    gratisAus: "As traduções gratuitas de hoje acabaram. Com o Plus continua sem limites – ou amanhã volta a ser grátis.",
     fotoKnopf: "📷\nTraduzir foto",
     dolmInfo: "Ponham o telemóvel entre vocês. Cada um toca no seu microfone e fala na sua língua.",
     tippenSprechen: "Tocar e falar",
@@ -640,6 +642,7 @@ const TEXTE = {
     dolmTitel: "Someone right next to you?",
     dolmText: "Talk with one phone: each person speaks their own language, Diralo translates and reads it aloud.",
     dolmStart: "🎙 Start interpreter",
+    gratisAus: "Today's free translations are used up. Continue without limits with Plus – or free again tomorrow.",
     fotoKnopf: "📷\nTranslate photo",
     dolmInfo: "Put the phone between you. Each person taps their microphone and speaks in their own language.",
     tippenSprechen: "Tap and speak",
@@ -855,6 +858,7 @@ const TEXTE = {
     dolmTitel: "¿Alguien a tu lado?",
     dolmText: "Hablad con un solo móvil: cada uno habla su idioma, Diralo traduce y lo lee en voz alta.",
     dolmStart: "🎙 Iniciar intérprete",
+    gratisAus: "Las traducciones gratis de hoy se han agotado. Con Plus sigues sin límites, o mañana de nuevo gratis.",
     fotoKnopf: "📷\nTraducir foto",
     dolmInfo: "Poned el móvil entre vosotros. Cada uno toca su micrófono y habla en su idioma.",
     tippenSprechen: "Toca y habla",
@@ -1070,6 +1074,7 @@ const TEXTE = {
     dolmTitel: "Quelqu'un à côté de toi ?",
     dolmText: "Parlez avec un seul téléphone : chacun parle sa langue, Diralo traduit et lit à voix haute.",
     dolmStart: "🎙 Lancer l'interprète",
+    gratisAus: "Les traductions gratuites d'aujourd'hui sont épuisées. Continue sans limite avec Plus – ou gratuitement demain.",
     fotoKnopf: "📷\nTraduire une photo",
     dolmInfo: "Posez le téléphone entre vous. Chacun touche son micro et parle dans sa langue.",
     tippenSprechen: "Touche et parle",
@@ -1285,6 +1290,7 @@ const TEXTE = {
     dolmTitel: "Qualcuno accanto a te?",
     dolmText: "Parlate con un solo telefono: ognuno parla la sua lingua, Diralo traduce e legge ad alta voce.",
     dolmStart: "🎙 Avvia interprete",
+    gratisAus: "Le traduzioni gratuite di oggi sono finite. Con Plus continui senza limiti, oppure di nuovo gratis domani.",
     fotoKnopf: "📷\nTraduci foto",
     dolmInfo: "Mettete il telefono tra voi. Ognuno tocca il suo microfono e parla nella sua lingua.",
     tippenSprechen: "Tocca e parla",
@@ -1500,6 +1506,7 @@ const TEXTE = {
     dolmTitel: "すぐそばに相手がいますか？",
     dolmText: "1台のスマホで会話：それぞれ自分の言葉で話すと、Diraloが翻訳して読み上げます。",
     dolmStart: "🎙 通訳を開始",
+    gratisAus: "今日の無料翻訳は使い切りました。Plusなら無制限で続けられます。明日また無料で使えます。",
     fotoKnopf: "📷\n写真を翻訳",
     dolmInfo: "スマホを2人の間に置いてください。それぞれマイクをタップして自分の言語で話します。",
     tippenSprechen: "タップして話す",
@@ -1715,6 +1722,7 @@ const TEXTE = {
     dolmTitel: "कोई आपके पास है?",
     dolmText: "एक ही फ़ोन से बात करें: हर कोई अपनी भाषा में बोले, Diralo अनुवाद करके पढ़कर सुनाता है।",
     dolmStart: "🎙 दुभाषिया शुरू करें",
+    gratisAus: "आज के मुफ़्त अनुवाद खत्म हो गए। Plus के साथ बिना सीमा जारी रखें – या कल फिर मुफ़्त।",
     fotoKnopf: "📷\nफ़ोटो का अनुवाद",
     dolmInfo: "फ़ोन को अपने बीच रखें। हर व्यक्ति अपना माइक टैप करे और अपनी भाषा में बोले।",
     tippenSprechen: "टैप करें और बोलें",
@@ -1930,6 +1938,7 @@ const TEXTE = {
     dolmTitel: "کوئی آپ کے پاس ہے؟",
     dolmText: "ایک ہی فون سے بات کریں: ہر کوئی اپنی زبان میں بولے، Diralo ترجمہ کر کے پڑھ کر سناتا ہے۔",
     dolmStart: "🎙 ترجمان شروع کریں",
+    gratisAus: "آج کے مفت ترجمے ختم ہو گئے۔ Plus کے ساتھ بغیر حد کے جاری رکھیں – یا کل پھر مفت۔",
     fotoKnopf: "📷\nتصویر کا ترجمہ",
     dolmInfo: "فون اپنے درمیان رکھیں۔ ہر شخص اپنے مائیک پر ٹیپ کرے اور اپنی زبان میں بولے۔",
     tippenSprechen: "ٹیپ کریں اور بولیں",
@@ -2145,6 +2154,7 @@ const TEXTE = {
     dolmTitel: "কেউ কি আপনার পাশে আছেন?",
     dolmText: "একটি ফোনেই কথা বলুন: প্রত্যেকে নিজের ভাষায় বলুন, Diralo অনুবাদ করে পড়ে শোনায়।",
     dolmStart: "🎙 দোভাষী চালু করুন",
+    gratisAus: "আজকের ফ্রি অনুবাদ শেষ। Plus দিয়ে সীমা ছাড়াই চালিয়ে যান – অথবা কাল আবার ফ্রি।",
     fotoKnopf: "📷\nছবি অনুবাদ",
     dolmInfo: "ফোনটি আপনাদের দুজনের মাঝে রাখুন। প্রত্যেকে নিজের মাইক্রোফোনে ট্যাপ করে নিজের ভাষায় বলুন।",
     tippenSprechen: "ট্যাপ করে বলুন",
@@ -2360,6 +2370,7 @@ const TEXTE = {
     dolmTitel: "ਕੋਈ ਤੁਹਾਡੇ ਕੋਲ ਹੈ?",
     dolmText: "ਇੱਕੋ ਫ਼ੋਨ ਨਾਲ ਗੱਲ ਕਰੋ: ਹਰ ਕੋਈ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੇ, Diralo ਅਨੁਵਾਦ ਕਰਕੇ ਪੜ੍ਹ ਕੇ ਸੁਣਾਉਂਦਾ ਹੈ।",
     dolmStart: "🎙 ਦੁਭਾਸ਼ੀਆ ਸ਼ੁਰੂ ਕਰੋ",
+    gratisAus: "ਅੱਜ ਦੇ ਮੁਫ਼ਤ ਅਨੁਵਾਦ ਖਤਮ ਹੋ ਗਏ। Plus ਨਾਲ ਬਿਨਾਂ ਹੱਦ ਜਾਰੀ ਰੱਖੋ – ਜਾਂ ਕੱਲ੍ਹ ਫਿਰ ਮੁਫ਼ਤ।",
     fotoKnopf: "📷\nਫ਼ੋਟੋ ਅਨੁਵਾਦ ਕਰੋ",
     dolmInfo: "ਫ਼ੋਨ ਨੂੰ ਆਪਣੇ ਵਿਚਕਾਰ ਰੱਖੋ। ਹਰ ਕੋਈ ਆਪਣੇ ਮਾਈਕ੍ਰੋਫ਼ੋਨ 'ਤੇ ਟੈਪ ਕਰਕੇ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੇ।",
     tippenSprechen: "ਟੈਪ ਕਰੋ ਅਤੇ ਬੋਲੋ",
@@ -2575,6 +2586,7 @@ const TEXTE = {
     dolmTitel: "कोही तपाईंको छेउमा हुनुहुन्छ?",
     dolmText: "एउटै फोनबाट कुरा गर्नुहोस्: सबैले आफ्नै भाषामा बोल्नुहोस्, Diralo अनुवाद गरेर पढेर सुनाउँछ।",
     dolmStart: "🎙 दोभाषे सुरु गर्नुहोस्",
+    gratisAus: "आजका निःशुल्क अनुवाद सकियो। Plus सँग बिना सीमा जारी राख्नुहोस् – वा भोलि फेरि निःशुल्क।",
     fotoKnopf: "📷\nफोटो अनुवाद",
     dolmInfo: "फोनलाई तपाईंहरूको बीचमा राख्नुहोस्। हरेक व्यक्तिले आफ्नो माइक्रोफोन ट्याप गरेर आफ्नै भाषामा बोल्नुहोस्।",
     tippenSprechen: "ट्याप गरेर बोल्नुहोस्",
@@ -2709,6 +2721,20 @@ async function jsonLaden(key, leer) {
 async function chatsLaden() {
   const roh = await jsonLaden(CHATS_KEY, []);
   return Array.isArray(roh) ? roh.filter((c) => c && typeof c.code === "string") : [];
+}
+/* Fuer Dolmetscher und Foto: Der Server prueft, ob einer meiner Chats
+   Plus hat - dann gibt es kein Tageslimit. */
+async function meineCodes() {
+  return (await chatsLaden()).slice(0, 30).map((c) => c.code);
+}
+/* Plus haengt an einem Chat. Wer nur den Dolmetscher nutzt, bekommt
+   seinen zuletzt benutzten Chat - oder einen neuen. */
+async function aboRaumHolen() {
+  const liste = await chatsLaden();
+  if (liste[0]) return liste[0].code;
+  const code = neuerCode();
+  await chatMerken(code);
+  return code;
 }
 /* Zuletzt benutzter nach oben. */
 async function chatMerken(code) {
@@ -3458,6 +3484,7 @@ function EmojiAuswahl({ zuletzt, onWahl, lang, onGif }) {
    spricht; die Uebersetzung erscheint bei der anderen Haelfte und wird
    in deren Sprache vorgelesen. */
 function Dolmetscher({ lang, device, unten, onBack }) {
+  const [aboRaum, setAboRaum] = useState(null); // Plus-Kauf, wenn das Gratis-Kontingent aus ist
   const [andere, setAndere] = useState(lang.startsWith("pt") ? "de" : "pt-PT");
   const [wahl, setWahl] = useState(false);
   const [aktiv, setAktiv] = useState(null);        // "ich" | "du" | null
@@ -3490,15 +3517,17 @@ function Dolmetscher({ lang, device, unten, onBack }) {
     try {
       const r = await fetch(`${SERVER_URL}/api/dolmetsch`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: gesagt, von, nach, device }),
+        body: JSON.stringify({ text: gesagt, von, nach, device, raeume: await meineCodes() }),
       });
+      if (r.status === 402) throw new Error("gratis");
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.uebersetzt) throw new Error();
       if (sd === "ich") setDu((a) => ({ ...a, fuerMich: j.uebersetzt }));
       else setIch((a) => ({ ...a, fuerMich: j.uebersetzt }));
       vorlesen(j.uebersetzt, nach);
-    } catch {
-      setFehler(t("hilfeFehler"));
+    } catch (e) {
+      if (e?.message === "gratis") { setFehler(t("gratisAus")); setAboRaum(await aboRaumHolen()); }
+      else setFehler(t("hilfeFehler"));
     } finally {
       setLaedt(false);
     }
@@ -3549,6 +3578,7 @@ function Dolmetscher({ lang, device, unten, onBack }) {
       <View style={{ flex: 1, paddingBottom: unten }}>
         <Haelfte sd="ich" daten={ich} />
       </View>
+      <AboFenster offen={Boolean(aboRaum)} raum={aboRaum} onZu={() => setAboRaum(null)} onHinweis={setFehler} />
       <Sprachauswahl
         offen={wahl} aktuell={andere}
         onWahl={(c) => { setAndere(c); setWahl(false); setDu({ gesagt: "", fuerMich: "" }); setIch({ gesagt: "", fuerMich: "" }); }}
@@ -3596,6 +3626,7 @@ function LinkTeilen({ daten, unten, onBack, onWahl }) {
 }
 
 function Geteilt({ daten, lang, device, unten, onBack }) {
+  const [aboRaum, setAboRaum] = useState(null); // Plus-Kauf, wenn das Gratis-Kontingent aus ist
   const [laedt, setLaedt] = useState(true);
   const [ergebnis, setErgebnis] = useState(null);
   const [fehler, setFehler] = useState(null);
@@ -3612,8 +3643,9 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
           });
           r = await fetch(`${SERVER_URL}/api/foto-text`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bild: klein.base64, lang, erklaeren: true, device }),
+            body: JSON.stringify({ bild: klein.base64, lang, erklaeren: true, device, raeume: await meineCodes() }),
           });
+          if (r.status === 402) throw new Error("gratis");
         } else {
           r = await fetch(`${SERVER_URL}/api/text-erklaeren`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -3623,8 +3655,10 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error();
         if (!weg) setErgebnis({ ...j, original: j.original || daten.text });
-      } catch {
-        if (!weg) setFehler(t("hilfeFehler"));
+      } catch (e) {
+        if (weg) return;
+        if (e?.message === "gratis") { setFehler(t("gratisAus")); setAboRaum(await aboRaumHolen()); }
+        else setFehler(t("hilfeFehler"));
       } finally {
         if (!weg) setLaedt(false);
       }
@@ -3646,6 +3680,7 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
           </View>
         )}
         {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
+        <AboFenster offen={Boolean(aboRaum)} raum={aboRaum} onZu={() => setAboRaum(null)} onHinweis={setFehler} />
         {ergebnis && !ergebnis.uebersetzt && <Text style={s.leer}>{t("keinText")}</Text>}
         {ergebnis?.uebersetzt ? (
           <View style={s.fotoKarte}>
@@ -3680,6 +3715,7 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
 
 /* -------------------------- Foto uebersetzen -------------------------- */
 function FotoUebersetzen({ lang, device, unten, onBack }) {
+  const [aboRaum, setAboRaum] = useState(null); // Plus-Kauf, wenn das Gratis-Kontingent aus ist
   const [erklaeren, setErklaeren] = useState(true);
   const [laedt, setLaedt] = useState(false);
   const [ergebnis, setErgebnis] = useState(null);
@@ -3702,13 +3738,15 @@ function FotoUebersetzen({ lang, device, unten, onBack }) {
       const klein = await manipulateAsync(a.uri, resize, { compress: 0.8, format: SaveFormat.JPEG, base64: true });
       const r = await fetch(`${SERVER_URL}/api/foto-text`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bild: klein.base64, lang, erklaeren, device }),
+        body: JSON.stringify({ bild: klein.base64, lang, erklaeren, device, raeume: await meineCodes() }),
       });
+      if (r.status === 402) throw new Error("gratis");
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error();
       setErgebnis(j);
-    } catch {
-      setFehler(t("hilfeFehler"));
+    } catch (e) {
+      if (e?.message === "gratis") { setFehler(t("gratisAus")); setAboRaum(await aboRaumHolen()); }
+      else setFehler(t("hilfeFehler"));
     } finally {
       setLaedt(false);
     }
@@ -3741,6 +3779,7 @@ function FotoUebersetzen({ lang, device, unten, onBack }) {
           </View>
         )}
         {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
+        <AboFenster offen={Boolean(aboRaum)} raum={aboRaum} onZu={() => setAboRaum(null)} onHinweis={setFehler} />
         {ergebnis && !ergebnis.uebersetzt && <Text style={s.leer}>{t("keinText")}</Text>}
         {ergebnis?.erklaerung ? (
           <View style={s.fotoKarte}>
