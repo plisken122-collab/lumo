@@ -212,6 +212,11 @@ const TEXTE = {
     dolmStart: "🎙 Dolmetscher starten",
     gratisAus: "Die kostenlosen Übersetzungen für heute sind aufgebraucht. Mit Plus geht es unbegrenzt weiter – oder morgen wieder gratis.",
     fotoKnopf: "📷\nFoto übersetzen",
+    textKnopf: "📝\nText übersetzen",
+    textInfo: "Text einfügen oder schreiben – Diralo übersetzt ihn und erklärt auf Wunsch, was gemeint ist.",
+    textFeld: "Text hier einfügen …",
+    textLos: "Übersetzen",
+    textNach: "Übersetzen nach:",
     dolmInfo: "Handy zwischen euch legen. Jeder tippt auf sein Mikrofon und spricht in seiner Sprache.",
     tippenSprechen: "Tippen und sprechen",
     hoere: "Ich höre zu …",
@@ -428,6 +433,11 @@ const TEXTE = {
     dolmStart: "🎙 Iniciar intérprete",
     gratisAus: "As traduções gratuitas de hoje acabaram. Com o Plus continua sem limites – ou amanhã volta a ser grátis.",
     fotoKnopf: "📷\nTraduzir foto",
+    textKnopf: "📝\nTraduzir texto",
+    textInfo: "Cole ou escreva um texto – o Diralo traduz e, se quiser, explica o que significa.",
+    textFeld: "Cole o texto aqui …",
+    textLos: "Traduzir",
+    textNach: "Traduzir para:",
     dolmInfo: "Ponham o telemóvel entre vocês. Cada um toca no seu microfone e fala na sua língua.",
     tippenSprechen: "Tocar e falar",
     hoere: "Estou a ouvir …",
@@ -644,6 +654,11 @@ const TEXTE = {
     dolmStart: "🎙 Start interpreter",
     gratisAus: "Today's free translations are used up. Continue without limits with Plus – or free again tomorrow.",
     fotoKnopf: "📷\nTranslate photo",
+    textKnopf: "📝\nTranslate text",
+    textInfo: "Paste or write a text – Diralo translates it and, if you like, explains what it means.",
+    textFeld: "Paste text here …",
+    textLos: "Translate",
+    textNach: "Translate into:",
     dolmInfo: "Put the phone between you. Each person taps their microphone and speaks in their own language.",
     tippenSprechen: "Tap and speak",
     hoere: "Listening …",
@@ -860,6 +875,11 @@ const TEXTE = {
     dolmStart: "🎙 Iniciar intérprete",
     gratisAus: "Las traducciones gratis de hoy se han agotado. Con Plus sigues sin límites, o mañana de nuevo gratis.",
     fotoKnopf: "📷\nTraducir foto",
+    textKnopf: "📝\nTraducir texto",
+    textInfo: "Pega o escribe un texto: Diralo lo traduce y, si quieres, explica lo que significa.",
+    textFeld: "Pega el texto aquí …",
+    textLos: "Traducir",
+    textNach: "Traducir a:",
     dolmInfo: "Poned el móvil entre vosotros. Cada uno toca su micrófono y habla en su idioma.",
     tippenSprechen: "Toca y habla",
     hoere: "Escuchando …",
@@ -1076,6 +1096,11 @@ const TEXTE = {
     dolmStart: "🎙 Lancer l'interprète",
     gratisAus: "Les traductions gratuites d'aujourd'hui sont épuisées. Continue sans limite avec Plus – ou gratuitement demain.",
     fotoKnopf: "📷\nTraduire une photo",
+    textKnopf: "📝\nTraduire un texte",
+    textInfo: "Colle ou écris un texte – Diralo le traduit et, si tu veux, explique ce qu'il signifie.",
+    textFeld: "Colle le texte ici …",
+    textLos: "Traduire",
+    textNach: "Traduire en :",
     dolmInfo: "Posez le téléphone entre vous. Chacun touche son micro et parle dans sa langue.",
     tippenSprechen: "Touche et parle",
     hoere: "J'écoute …",
@@ -1292,6 +1317,11 @@ const TEXTE = {
     dolmStart: "🎙 Avvia interprete",
     gratisAus: "Le traduzioni gratuite di oggi sono finite. Con Plus continui senza limiti, oppure di nuovo gratis domani.",
     fotoKnopf: "📷\nTraduci foto",
+    textKnopf: "📝\nTraduci testo",
+    textInfo: "Incolla o scrivi un testo: Diralo lo traduce e, se vuoi, spiega cosa significa.",
+    textFeld: "Incolla il testo qui …",
+    textLos: "Traduci",
+    textNach: "Traduci in:",
     dolmInfo: "Mettete il telefono tra voi. Ognuno tocca il suo microfono e parla nella sua lingua.",
     tippenSprechen: "Tocca e parla",
     hoere: "Sto ascoltando …",
@@ -1508,6 +1538,11 @@ const TEXTE = {
     dolmStart: "🎙 通訳を開始",
     gratisAus: "今日の無料翻訳は使い切りました。Plusなら無制限で続けられます。明日また無料で使えます。",
     fotoKnopf: "📷\n写真を翻訳",
+    textKnopf: "📝\nテキストを翻訳",
+    textInfo: "テキストを貼り付けるか入力してください。Diraloが翻訳し、必要なら意味も説明します。",
+    textFeld: "ここにテキストを貼り付け…",
+    textLos: "翻訳する",
+    textNach: "翻訳先:",
     dolmInfo: "スマホを2人の間に置いてください。それぞれマイクをタップして自分の言語で話します。",
     tippenSprechen: "タップして話す",
     hoere: "聞き取り中…",
@@ -1724,6 +1759,11 @@ const TEXTE = {
     dolmStart: "🎙 दुभाषिया शुरू करें",
     gratisAus: "आज के मुफ़्त अनुवाद खत्म हो गए। Plus के साथ बिना सीमा जारी रखें – या कल फिर मुफ़्त।",
     fotoKnopf: "📷\nफ़ोटो का अनुवाद",
+    textKnopf: "📝\nटेक्स्ट का अनुवाद",
+    textInfo: "टेक्स्ट चिपकाएँ या लिखें – Diralo अनुवाद करता है और चाहें तो मतलब भी समझाता है।",
+    textFeld: "टेक्स्ट यहाँ चिपकाएँ …",
+    textLos: "अनुवाद करें",
+    textNach: "किस भाषा में:",
     dolmInfo: "फ़ोन को अपने बीच रखें। हर व्यक्ति अपना माइक टैप करे और अपनी भाषा में बोले।",
     tippenSprechen: "टैप करें और बोलें",
     hoere: "सुन रहा है …",
@@ -1940,6 +1980,11 @@ const TEXTE = {
     dolmStart: "🎙 ترجمان شروع کریں",
     gratisAus: "آج کے مفت ترجمے ختم ہو گئے۔ Plus کے ساتھ بغیر حد کے جاری رکھیں – یا کل پھر مفت۔",
     fotoKnopf: "📷\nتصویر کا ترجمہ",
+    textKnopf: "📝\nمتن کا ترجمہ",
+    textInfo: "متن چسپاں کریں یا لکھیں – Diralo ترجمہ کرتا ہے اور چاہیں تو مطلب بھی سمجھاتا ہے۔",
+    textFeld: "متن یہاں چسپاں کریں …",
+    textLos: "ترجمہ کریں",
+    textNach: "کس زبان میں:",
     dolmInfo: "فون اپنے درمیان رکھیں۔ ہر شخص اپنے مائیک پر ٹیپ کرے اور اپنی زبان میں بولے۔",
     tippenSprechen: "ٹیپ کریں اور بولیں",
     hoere: "سن رہا ہے …",
@@ -2156,6 +2201,11 @@ const TEXTE = {
     dolmStart: "🎙 দোভাষী চালু করুন",
     gratisAus: "আজকের ফ্রি অনুবাদ শেষ। Plus দিয়ে সীমা ছাড়াই চালিয়ে যান – অথবা কাল আবার ফ্রি।",
     fotoKnopf: "📷\nছবি অনুবাদ",
+    textKnopf: "📝\nলেখা অনুবাদ",
+    textInfo: "লেখা পেস্ট করুন বা লিখুন – Diralo অনুবাদ করে, চাইলে মানেও বুঝিয়ে দেয়।",
+    textFeld: "এখানে লেখা পেস্ট করুন …",
+    textLos: "অনুবাদ করুন",
+    textNach: "কোন ভাষায়:",
     dolmInfo: "ফোনটি আপনাদের দুজনের মাঝে রাখুন। প্রত্যেকে নিজের মাইক্রোফোনে ট্যাপ করে নিজের ভাষায় বলুন।",
     tippenSprechen: "ট্যাপ করে বলুন",
     hoere: "শুনছি …",
@@ -2372,6 +2422,11 @@ const TEXTE = {
     dolmStart: "🎙 ਦੁਭਾਸ਼ੀਆ ਸ਼ੁਰੂ ਕਰੋ",
     gratisAus: "ਅੱਜ ਦੇ ਮੁਫ਼ਤ ਅਨੁਵਾਦ ਖਤਮ ਹੋ ਗਏ। Plus ਨਾਲ ਬਿਨਾਂ ਹੱਦ ਜਾਰੀ ਰੱਖੋ – ਜਾਂ ਕੱਲ੍ਹ ਫਿਰ ਮੁਫ਼ਤ।",
     fotoKnopf: "📷\nਫ਼ੋਟੋ ਅਨੁਵਾਦ ਕਰੋ",
+    textKnopf: "📝\nਲਿਖਤ ਦਾ ਅਨੁਵਾਦ",
+    textInfo: "ਲਿਖਤ ਪੇਸਟ ਕਰੋ ਜਾਂ ਲਿਖੋ – Diralo ਅਨੁਵਾਦ ਕਰਦਾ ਹੈ ਅਤੇ ਚਾਹੋ ਤਾਂ ਮਤਲਬ ਵੀ ਸਮਝਾਉਂਦਾ ਹੈ।",
+    textFeld: "ਲਿਖਤ ਇੱਥੇ ਪੇਸਟ ਕਰੋ …",
+    textLos: "ਅਨੁਵਾਦ ਕਰੋ",
+    textNach: "ਕਿਸ ਭਾਸ਼ਾ ਵਿੱਚ:",
     dolmInfo: "ਫ਼ੋਨ ਨੂੰ ਆਪਣੇ ਵਿਚਕਾਰ ਰੱਖੋ। ਹਰ ਕੋਈ ਆਪਣੇ ਮਾਈਕ੍ਰੋਫ਼ੋਨ 'ਤੇ ਟੈਪ ਕਰਕੇ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੇ।",
     tippenSprechen: "ਟੈਪ ਕਰੋ ਅਤੇ ਬੋਲੋ",
     hoere: "ਸੁਣ ਰਿਹਾ ਹੈ …",
@@ -2588,6 +2643,11 @@ const TEXTE = {
     dolmStart: "🎙 दोभाषे सुरु गर्नुहोस्",
     gratisAus: "आजका निःशुल्क अनुवाद सकियो। Plus सँग बिना सीमा जारी राख्नुहोस् – वा भोलि फेरि निःशुल्क।",
     fotoKnopf: "📷\nफोटो अनुवाद",
+    textKnopf: "📝\nपाठ अनुवाद",
+    textInfo: "पाठ टाँस्नुहोस् वा लेख्नुहोस् – Diralo अनुवाद गर्छ र चाहे अर्थ पनि बुझाउँछ।",
+    textFeld: "पाठ यहाँ टाँस्नुहोस् …",
+    textLos: "अनुवाद गर्नुहोस्",
+    textNach: "कुन भाषामा:",
     dolmInfo: "फोनलाई तपाईंहरूको बीचमा राख्नुहोस्। हरेक व्यक्तिले आफ्नो माइक्रोफोन ट्याप गरेर आफ्नै भाषामा बोल्नुहोस्।",
     tippenSprechen: "ट्याप गरेर बोल्नुहोस्",
     hoere: "सुन्दैछ …",
@@ -2929,17 +2989,18 @@ async function geheimLaden() {
 }
 
 /* Bewertung im Play Store - ueber Googles eigenes Fenster (In-App Review).
-   Gefragt wird nur, wer Diralo wirklich benutzt: mindestens 20 Nachrichten
-   von anderen bekommen, die App seit 2 Tagen, und hoechstens alle 90 Tage.
+   Gefragt wird nur, wer Diralo wirklich benutzt: 20 Punkte (je Nachricht
+   von anderen 1, je gelungene Dolmetscher-, Foto- oder Text-Uebersetzung 4),
+   die App seit einem Tag, und hoechstens alle 90 Tage.
    Ob das Fenster dann erscheint, entscheidet Google selbst (es hat eigene
    Grenzen); nie mit Belohnung, nie nur an Zufriedene - so will es Google. */
-async function vielleichtBewerten() {
+async function vielleichtBewerten(gewicht = 1) {
   try {
     const d = await jsonLaden("diralo_bewertung", {});
-    d.n = (d.n || 0) + 1;
+    d.n = (d.n || 0) + gewicht;
     d.erst = d.erst || Date.now();
     const tag = 24 * 60 * 60 * 1000;
-    let fragen = d.n >= 20 && Date.now() - d.erst >= 2 * tag && (!d.zuletzt || Date.now() - d.zuletzt >= 90 * tag);
+    let fragen = d.n >= 20 && Date.now() - d.erst >= 1 * tag && (!d.zuletzt || Date.now() - d.zuletzt >= 90 * tag);
     if (fragen && !(await StoreReview.hasAction())) fragen = false;
     if (fragen) d.zuletzt = Date.now();
     await AsyncStorage.setItem("diralo_bewertung", JSON.stringify(d));
@@ -3126,6 +3187,8 @@ function Haupt() {
           <Dolmetscher lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
         ) : ansicht === "foto" ? (
           <FotoUebersetzen lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
+        ) : ansicht === "text" ? (
+          <TextUebersetzen lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
         ) : raum ? (
           <Chat
             raum={raum} name={name.trim()} lang={lang} device={device}
@@ -3341,6 +3404,9 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
         <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("foto")}>
           <Text style={s.hilfeKnopfTxt}>{t("fotoKnopf")}</Text>
         </Pressable>
+        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("text")}>
+          <Text style={s.hilfeKnopfTxt}>{t("textKnopf")}</Text>
+        </Pressable>
       </View>
 
       <Modal visible={Boolean(benennen)} transparent animationType="fade" onRequestClose={() => setBenennen(null)}>
@@ -3525,6 +3591,7 @@ function Dolmetscher({ lang, device, unten, onBack }) {
       if (sd === "ich") setDu((a) => ({ ...a, fuerMich: j.uebersetzt }));
       else setIch((a) => ({ ...a, fuerMich: j.uebersetzt }));
       vorlesen(j.uebersetzt, nach);
+      vielleichtBewerten(4);
     } catch (e) {
       if (e?.message === "gratis") { setFehler(t("gratisAus")); setAboRaum(await aboRaumHolen()); }
       else setFehler(t("hilfeFehler"));
@@ -3744,6 +3811,7 @@ function FotoUebersetzen({ lang, device, unten, onBack }) {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error();
       setErgebnis(j);
+      if (j.uebersetzt) vielleichtBewerten(4);
     } catch (e) {
       if (e?.message === "gratis") { setFehler(t("gratisAus")); setAboRaum(await aboRaumHolen()); }
       else setFehler(t("hilfeFehler"));
@@ -3803,6 +3871,89 @@ function FotoUebersetzen({ lang, device, unten, onBack }) {
           </Pressable>
         ) : null}
       </ScrollView>
+    </View>
+  );
+}
+
+/* ------------------------- Text uebersetzen --------------------------
+   Einfacher Uebersetzer ohne Chat: Text einfuegen, Zielsprache waehlen
+   (Standard: meine Sprache), auf Wunsch kurz erklaeren lassen.
+   Gleiches Gratis-Kontingent wie Foto und Dolmetscher. */
+function TextUebersetzen({ lang, device, unten, onBack }) {
+  const [aboRaum, setAboRaum] = useState(null);
+  const [text, setText] = useState("");
+  const [ziel, setZiel] = useState(lang);
+  const [wahl, setWahl] = useState(false);
+  const [erklaeren, setErklaeren] = useState(false);
+  const [laedt, setLaedt] = useState(false);
+  const [ergebnis, setErgebnis] = useState(null);
+  const [fehler, setFehler] = useState(null);
+
+  const los = async () => {
+    if (!text.trim()) return;
+    Keyboard.dismiss();
+    setFehler(null); setLaedt(true); setErgebnis(null);
+    try {
+      const r = await fetch(`${SERVER_URL}/api/text-erklaeren`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text.trim(), lang: ziel, erklaeren, device, raeume: await meineCodes() }),
+      });
+      if (r.status === 402) throw new Error("gratis");
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uebersetzt) throw new Error();
+      setErgebnis(j);
+      vielleichtBewerten(4);
+    } catch (e) {
+      if (e?.message === "gratis") { setFehler(t("gratisAus")); setAboRaum(await aboRaumHolen()); }
+      else setFehler(t("hilfeFehler"));
+    } finally {
+      setLaedt(false);
+    }
+  };
+
+  return (
+    <View style={[s.full, { backgroundColor: FARBE.hell }]}>
+      <View style={s.chatHead}>
+        <Pressable onPress={onBack} hitSlop={12}><Text style={s.back}>‹</Text></Pressable>
+        <Text style={[s.chatTitel, { flex: 1 }]}>{t("textKnopf").replace("\n", " ")}</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 + unten }} keyboardShouldPersistTaps="handled">
+        <Text style={s.claim}>{t("textInfo")}</Text>
+        <TextInput
+          style={[s.input, { minHeight: 120, textAlignVertical: "top", marginTop: 6 }]}
+          value={text} onChangeText={setText} multiline maxLength={4000}
+          placeholder={t("textFeld")} placeholderTextColor={FARBE.grau}
+        />
+        <Pressable style={s.schalterZeile} onPress={() => setWahl(true)}>
+          <Text style={s.schalterTxt}>{t("textNach")} <Text style={{ fontWeight: "800", color: FARBE.navy }}>{sprachName(ziel)} ▾</Text></Text>
+        </Pressable>
+        <Pressable style={s.schalterZeile} onPress={() => setErklaeren(!erklaeren)}>
+          <Text style={s.schalterBox}>{erklaeren ? "☑" : "☐"}</Text>
+          <Text style={s.schalterTxt}>{t("erklaeren")}</Text>
+        </Pressable>
+        <Pressable style={[s.btnPrimary, (laedt || !text.trim()) && s.btnAus]} disabled={laedt || !text.trim()} onPress={los}>
+          <Text style={s.btnPrimaryTxt}>{t("textLos")}</Text>
+        </Pressable>
+        {laedt && <ActivityIndicator size="large" color={FARBE.navy} style={{ marginTop: 20 }} />}
+        {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
+        <AboFenster offen={Boolean(aboRaum)} raum={aboRaum} onZu={() => setAboRaum(null)} onHinweis={setFehler} />
+        {ergebnis?.uebersetzt ? (
+          <View style={s.fotoKarte}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={[s.fotoKarteTitel, { flex: 1 }]}>{sprachName(ziel)}</Text>
+              <Pressable onPress={() => vorlesen(ergebnis.uebersetzt, ziel)} hitSlop={8}><Text style={s.vorschauKnopf}>🔊</Text></Pressable>
+            </View>
+            <Text style={s.fotoKarteTxt} selectable>{ergebnis.uebersetzt}</Text>
+          </View>
+        ) : null}
+        {ergebnis?.erklaerung ? (
+          <View style={s.fotoKarte}>
+            <Text style={s.fotoKarteTitel}>{t("erklaerung")}</Text>
+            <Text style={s.fotoKarteTxt}>{ergebnis.erklaerung}</Text>
+          </View>
+        ) : null}
+      </ScrollView>
+      <Sprachauswahl offen={wahl} aktuell={ziel} onWahl={(c) => { setZiel(c); setWahl(false); setErgebnis(null); }} onZu={() => setWahl(false)} />
     </View>
   );
 }

@@ -1955,6 +1955,7 @@ const HILFE_PRO_TAG = Number(process.env.HILFE_PRO_TAG || 800);
 const GRATIS_PRO_TAG = {
   dolmetsch: Number(process.env.GRATIS_DOLMETSCH || 20),
   foto: Number(process.env.GRATIS_FOTO || 5),
+  text: Number(process.env.GRATIS_TEXT || 10),
 };
 const plusMerker = new Map(); // device -> { plus, bis }
 async function hatPlus(device, raeume) {
@@ -2053,6 +2054,7 @@ app.post("/api/text-erklaeren", express.json({ limit: "40kb" }), async (req, res
   const wer = String(req.body?.device || req.ip).slice(0, 60);
   if (!text || !lang) return res.status(400).json({ error: "Angaben unvollstaendig" });
   if (!take(`teilen:${wer}`, 20, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!(await gratisErlaubt(req, "text"))) return res.status(402).json({ error: "gratis_aus", grenze: GRATIS_PRO_TAG.text });
   if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
   const ziel = LANG_NAMES[lang] || lang;
   const prompt = `Der folgende Text wurde aus einer anderen App geteilt (z. B. eine Chatnachricht, ein Post oder eine E-Mail). Erkenne die Sprache und uebersetze ihn natuerlich nach ${ziel} (${lang}).${erklaeren ? ` Schreibe ausserdem eine kurze Erklaerung auf ${ziel}: Was ist gemeint, welcher Tonfall (freundlich, ironisch, foermlich, veraergert ...), gibt es Redewendungen oder kulturelle Anspielungen? Hoechstens 3 kurze Saetze. Ist alles eindeutig, reicht ein Satz.` : ""}
