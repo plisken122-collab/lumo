@@ -784,7 +784,22 @@ app.post("/api/stripe", async (req, res) => {
    nur "an diesem Tag ist das n-mal passiert". Daraus laesst sich nicht
    zurueckrechnen, wer es war.
 -------------------------------------------------------------------- */
-const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link"]);
+const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link", "uebersetzt"]);
+
+/* Nachrichten, die mindestens einmal uebersetzt wurden - je Nachricht nur
+   einmal, egal in wie viele Sprachen. "Nachricht" minus "uebersetzt" sind
+   die Nachrichten ohne Uebersetzung (gleiche Sprache, nur Smileys, oder
+   noch von niemandem in einer anderen Sprache gelesen). Eigene Geraete
+   und Demo zaehlen nicht mit. */
+const schonUebersetztGezaehlt = new Set();
+function zaehleUebersetzt(msg) {
+  if (!msg?.id || schonUebersetztGezaehlt.has(msg.id)) return;
+  if (EIGEN.geraete.has(msg.device) || String(msg.room).startsWith("demo-")) return;
+  if (schonUebersetztGezaehlt.size > 5000) schonUebersetztGezaehlt.clear();
+  schonUebersetztGezaehlt.add(msg.id);
+  if (Object.keys(msg.tr || {}).length) return;
+  zaehle("uebersetzt");
+}
 
 /* Zaehlen darf nie etwas kaputtmachen: Faellt die Datenbank aus, laeuft
    der Chat weiter und die Zahl ist eben verloren. */
@@ -1434,6 +1449,7 @@ async function ensure(room, msgId, target) {
         io.to(room).emit("lang", { id: msgId, lang: out.detected });
       }
       if (msg.lang === target) return msg.text;
+      zaehleUebersetzt(msg);
       await store.setTranslation(msgId, target, out.translation);
       io.to(room).emit("translated", { id: msgId, lang: target, text: out.translation });
       return out.translation;

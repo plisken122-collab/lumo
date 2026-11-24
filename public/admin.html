@@ -202,6 +202,11 @@ function zeichneTrichter(summe) {
       const q = Math.round(((summe.nachricht || 0) / summe.eingetreten) * 100);
       html += `<div class="quote">${q}% schreiben etwas</div>`;
     }
+    /* Seit 24.11. gezaehlt: wie viele Nachrichten eine Uebersetzung brauchten. */
+    if (i === 2 && (summe.uebersetzt || 0) > 0) {
+      const mit = summe.uebersetzt, ohne = Math.max(0, (summe.nachricht || 0) - mit);
+      html += `<div class="quote">${nf.format(mit)} mit Übersetzung · ${nf.format(ohne)} ohne (Zählung ab 24.11.)</div>`;
+    }
   });
   $("trichter").innerHTML = html;
 }
