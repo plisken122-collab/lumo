@@ -207,6 +207,9 @@ const TEXTE = {
     linkWelcher: "In welchen Chat?",
     linkKeinChat: "Du hast noch keinen Chat. Starte zuerst einen Chat und lade deine Person ein.",
     dolmetscher: "🎙\nDolmetscher",
+    dolmTitel: "Jemand steht neben dir?",
+    dolmText: "Sprecht mit einem Handy: Jeder spricht in seiner Sprache, Diralo übersetzt und liest laut vor.",
+    dolmStart: "🎙 Dolmetscher starten",
     fotoKnopf: "📷\nFoto übersetzen",
     dolmInfo: "Handy zwischen euch legen. Jeder tippt auf sein Mikrofon und spricht in seiner Sprache.",
     tippenSprechen: "Tippen und sprechen",
@@ -419,6 +422,9 @@ const TEXTE = {
     linkWelcher: "Em que conversa?",
     linkKeinChat: "Ainda não tens nenhuma conversa. Começa primeiro uma conversa e convida a tua pessoa.",
     dolmetscher: "🎙\nIntérprete",
+    dolmTitel: "Alguém está ao seu lado?",
+    dolmText: "Falem com um só telemóvel: cada um fala na sua língua, o Diralo traduz e lê em voz alta.",
+    dolmStart: "🎙 Iniciar intérprete",
     fotoKnopf: "📷\nTraduzir foto",
     dolmInfo: "Ponham o telemóvel entre vocês. Cada um toca no seu microfone e fala na sua língua.",
     tippenSprechen: "Tocar e falar",
@@ -631,6 +637,9 @@ const TEXTE = {
     linkWelcher: "Which chat?",
     linkKeinChat: "You don't have a chat yet. Start a chat first and invite your person.",
     dolmetscher: "🎙\nInterpreter",
+    dolmTitel: "Someone right next to you?",
+    dolmText: "Talk with one phone: each person speaks their own language, Diralo translates and reads it aloud.",
+    dolmStart: "🎙 Start interpreter",
     fotoKnopf: "📷\nTranslate photo",
     dolmInfo: "Put the phone between you. Each person taps their microphone and speaks in their own language.",
     tippenSprechen: "Tap and speak",
@@ -843,6 +852,9 @@ const TEXTE = {
     linkWelcher: "¿En qué chat?",
     linkKeinChat: "Todavía no tienes ningún chat. Primero inicia un chat e invita a tu persona.",
     dolmetscher: "🎙\nIntérprete",
+    dolmTitel: "¿Alguien a tu lado?",
+    dolmText: "Hablad con un solo móvil: cada uno habla su idioma, Diralo traduce y lo lee en voz alta.",
+    dolmStart: "🎙 Iniciar intérprete",
     fotoKnopf: "📷\nTraducir foto",
     dolmInfo: "Poned el móvil entre vosotros. Cada uno toca su micrófono y habla en su idioma.",
     tippenSprechen: "Toca y habla",
@@ -1055,6 +1067,9 @@ const TEXTE = {
     linkWelcher: "Dans quel chat ?",
     linkKeinChat: "Tu n'as pas encore de chat. Commence d'abord un chat et invite ta personne.",
     dolmetscher: "🎙\nInterprète",
+    dolmTitel: "Quelqu'un à côté de toi ?",
+    dolmText: "Parlez avec un seul téléphone : chacun parle sa langue, Diralo traduit et lit à voix haute.",
+    dolmStart: "🎙 Lancer l'interprète",
     fotoKnopf: "📷\nTraduire une photo",
     dolmInfo: "Posez le téléphone entre vous. Chacun touche son micro et parle dans sa langue.",
     tippenSprechen: "Touche et parle",
@@ -1267,6 +1282,9 @@ const TEXTE = {
     linkWelcher: "In quale chat?",
     linkKeinChat: "Non hai ancora nessuna chat. Inizia prima una chat e invita la tua persona.",
     dolmetscher: "🎙\nInterprete",
+    dolmTitel: "Qualcuno accanto a te?",
+    dolmText: "Parlate con un solo telefono: ognuno parla la sua lingua, Diralo traduce e legge ad alta voce.",
+    dolmStart: "🎙 Avvia interprete",
     fotoKnopf: "📷\nTraduci foto",
     dolmInfo: "Mettete il telefono tra voi. Ognuno tocca il suo microfono e parla nella sua lingua.",
     tippenSprechen: "Tocca e parla",
@@ -1479,6 +1497,9 @@ const TEXTE = {
     linkWelcher: "どのチャット？",
     linkKeinChat: "まだチャットがありません。チャットを始めて相手を招待してください。",
     dolmetscher: "🎙\n通訳",
+    dolmTitel: "すぐそばに相手がいますか？",
+    dolmText: "1台のスマホで会話：それぞれ自分の言葉で話すと、Diraloが翻訳して読み上げます。",
+    dolmStart: "🎙 通訳を開始",
     fotoKnopf: "📷\n写真を翻訳",
     dolmInfo: "スマホを2人の間に置いてください。それぞれマイクをタップして自分の言語で話します。",
     tippenSprechen: "タップして話す",
@@ -1691,6 +1712,9 @@ const TEXTE = {
     linkWelcher: "कौन-सी चैट?",
     linkKeinChat: "आपकी अभी कोई चैट नहीं है। पहले चैट शुरू करें और अपने साथी को बुलाएँ।",
     dolmetscher: "🎙\nदुभाषिया",
+    dolmTitel: "कोई आपके पास है?",
+    dolmText: "एक ही फ़ोन से बात करें: हर कोई अपनी भाषा में बोले, Diralo अनुवाद करके पढ़कर सुनाता है।",
+    dolmStart: "🎙 दुभाषिया शुरू करें",
     fotoKnopf: "📷\nफ़ोटो का अनुवाद",
     dolmInfo: "फ़ोन को अपने बीच रखें। हर व्यक्ति अपना माइक टैप करे और अपनी भाषा में बोले।",
     tippenSprechen: "टैप करें और बोलें",
@@ -1903,6 +1927,9 @@ const TEXTE = {
     linkWelcher: "کون سی چیٹ؟",
     linkKeinChat: "آپ کی ابھی کوئی چیٹ نہیں ہے۔ پہلے چیٹ شروع کریں اور اپنے ساتھی کو دعوت دیں۔",
     dolmetscher: "🎙\nترجمان",
+    dolmTitel: "کوئی آپ کے پاس ہے؟",
+    dolmText: "ایک ہی فون سے بات کریں: ہر کوئی اپنی زبان میں بولے، Diralo ترجمہ کر کے پڑھ کر سناتا ہے۔",
+    dolmStart: "🎙 ترجمان شروع کریں",
     fotoKnopf: "📷\nتصویر کا ترجمہ",
     dolmInfo: "فون اپنے درمیان رکھیں۔ ہر شخص اپنے مائیک پر ٹیپ کرے اور اپنی زبان میں بولے۔",
     tippenSprechen: "ٹیپ کریں اور بولیں",
@@ -2115,6 +2142,9 @@ const TEXTE = {
     linkWelcher: "কোন চ্যাট?",
     linkKeinChat: "আপনার এখনো কোনো চ্যাট নেই। আগে একটি চ্যাট শুরু করে আপনার মানুষটিকে আমন্ত্রণ জানান।",
     dolmetscher: "🎙\nদোভাষী",
+    dolmTitel: "কেউ কি আপনার পাশে আছেন?",
+    dolmText: "একটি ফোনেই কথা বলুন: প্রত্যেকে নিজের ভাষায় বলুন, Diralo অনুবাদ করে পড়ে শোনায়।",
+    dolmStart: "🎙 দোভাষী চালু করুন",
     fotoKnopf: "📷\nছবি অনুবাদ",
     dolmInfo: "ফোনটি আপনাদের দুজনের মাঝে রাখুন। প্রত্যেকে নিজের মাইক্রোফোনে ট্যাপ করে নিজের ভাষায় বলুন।",
     tippenSprechen: "ট্যাপ করে বলুন",
@@ -2327,6 +2357,9 @@ const TEXTE = {
     linkWelcher: "ਕਿਹੜੀ ਚੈਟ?",
     linkKeinChat: "ਤੁਹਾਡੀ ਹਾਲੇ ਕੋਈ ਚੈਟ ਨਹੀਂ ਹੈ। ਪਹਿਲਾਂ ਚੈਟ ਸ਼ੁਰੂ ਕਰੋ ਅਤੇ ਆਪਣੇ ਸਾਥੀ ਨੂੰ ਸੱਦਾ ਦਿਓ।",
     dolmetscher: "🎙\nਦੁਭਾਸ਼ੀਆ",
+    dolmTitel: "ਕੋਈ ਤੁਹਾਡੇ ਕੋਲ ਹੈ?",
+    dolmText: "ਇੱਕੋ ਫ਼ੋਨ ਨਾਲ ਗੱਲ ਕਰੋ: ਹਰ ਕੋਈ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੇ, Diralo ਅਨੁਵਾਦ ਕਰਕੇ ਪੜ੍ਹ ਕੇ ਸੁਣਾਉਂਦਾ ਹੈ।",
+    dolmStart: "🎙 ਦੁਭਾਸ਼ੀਆ ਸ਼ੁਰੂ ਕਰੋ",
     fotoKnopf: "📷\nਫ਼ੋਟੋ ਅਨੁਵਾਦ ਕਰੋ",
     dolmInfo: "ਫ਼ੋਨ ਨੂੰ ਆਪਣੇ ਵਿਚਕਾਰ ਰੱਖੋ। ਹਰ ਕੋਈ ਆਪਣੇ ਮਾਈਕ੍ਰੋਫ਼ੋਨ 'ਤੇ ਟੈਪ ਕਰਕੇ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੇ।",
     tippenSprechen: "ਟੈਪ ਕਰੋ ਅਤੇ ਬੋਲੋ",
@@ -2539,6 +2572,9 @@ const TEXTE = {
     linkWelcher: "कुन च्याट?",
     linkKeinChat: "तपाईंसँग अहिलेसम्म कुनै च्याट छैन। पहिले च्याट सुरु गरेर आफ्नो व्यक्तिलाई निम्त्याउनुहोस्।",
     dolmetscher: "🎙\nदोभाषे",
+    dolmTitel: "कोही तपाईंको छेउमा हुनुहुन्छ?",
+    dolmText: "एउटै फोनबाट कुरा गर्नुहोस्: सबैले आफ्नै भाषामा बोल्नुहोस्, Diralo अनुवाद गरेर पढेर सुनाउँछ।",
+    dolmStart: "🎙 दोभाषे सुरु गर्नुहोस्",
     fotoKnopf: "📷\nफोटो अनुवाद",
     dolmInfo: "फोनलाई तपाईंहरूको बीचमा राख्नुहोस्। हरेक व्यक्तिले आफ्नो माइक्रोफोन ट्याप गरेर आफ्नै भाषामा बोल्नुहोस्।",
     tippenSprechen: "ट्याप गरेर बोल्नुहोस्",
@@ -3235,6 +3271,16 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
         </Pressable>
       </View>
 
+      {/* Sofort-Nutzen ohne zweite App: zwei Menschen, ein Handy. Wer
+          (noch) niemanden zum Einladen hat, kann Diralo so gleich nutzen. */}
+      <View style={[s.wegKarte, s.dolmKarte]}>
+        <Text style={s.wegTitel}>{t("dolmTitel")}</Text>
+        <Text style={s.wegText}>{t("dolmText")}</Text>
+        <Pressable style={[s.btnGold, s.dolmKnopf]} onPress={() => onHilfe("dolmetsch")}>
+          <Text style={s.btnGoldTxt}>{t("dolmStart")}</Text>
+        </Pressable>
+      </View>
+
       {chats.length > 0 && (
         <View style={s.meineChats}>
           <Text style={s.label}>{t("meineChats")}</Text>
@@ -3266,9 +3312,6 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
       )}
 
       <View style={s.hilfeRow}>
-        <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("dolmetsch")}>
-          <Text style={s.hilfeKnopfTxt}>{t("dolmetscher")}</Text>
-        </Pressable>
         <Pressable style={s.hilfeKnopf} onPress={() => onHilfe("foto")}>
           <Text style={s.hilfeKnopfTxt}>{t("fotoKnopf")}</Text>
         </Pressable>
@@ -5675,6 +5718,8 @@ const s = StyleSheet.create({
   fotoKarte: { backgroundColor: FARBE.weiss, borderRadius: 14, padding: 14, marginTop: 14, borderWidth: 1, borderColor: FARBE.grauHell },
   fotoKarteTitel: { fontSize: 12.5, color: FARBE.grau, fontWeight: "800", marginBottom: 6 },
   fotoKarteTxt: { fontSize: 16, color: FARBE.text, lineHeight: 23 },
+  dolmKarte: { borderColor: FARBE.gold, borderWidth: 2 },
+  dolmKnopf: { paddingVertical: 14, marginTop: 4 },
   wegKarte: { backgroundColor: FARBE.weiss, borderRadius: 16, padding: 16, marginTop: 14, borderWidth: 1, borderColor: FARBE.grauHell },
   wegTitel: { fontSize: 16.5, fontWeight: "800", color: FARBE.navy },
   wegText: { fontSize: 13.5, color: FARBE.grau, marginTop: 4, marginBottom: 12, lineHeight: 19 },
