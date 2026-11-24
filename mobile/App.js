@@ -66,7 +66,22 @@ const sprachName = (code) => SPRACHEN.find((x) => x.code === code)?.label || cod
 
 /* Einladung wie in der Web-App: Link mit dem Code hinter #c=. */
 const WEB_URL = "https://diralo.app";
-const einladungsLink = (code) => `${WEB_URL}/#c=${encodeURIComponent(code)}`;
+const einladungsLink = (code, ziel = "", von = "") => {
+  let l = `${WEB_URL}/#c=${encodeURIComponent(code)}`;
+  if (ziel) l += `&l=${encodeURIComponent(ziel)}`;
+  if (ziel && von && von !== "Gast") l += `&v=${encodeURIComponent(von.slice(0, 30))}`;
+  return l;
+};
+/* Einladungstext in der Sprache der EINGELADENEN Person (wie die Web-App,
+   public/i18n.js inviteText) - plus Englisch, falls sie kein Englisch ist. */
+const EINL_TEXT = {"de": "Schreib mit mir in Diralo — jeder in seiner Sprache:", "en": "Write with me in Diralo — everyone in their own language:", "pt-PT": "Fala comigo no Diralo — cada um na sua língua:", "pt-BR": "Fale comigo no Diralo — cada um no seu idioma:", "es": "Escribe conmigo en Diralo — cada uno en su idioma:", "fr": "Écris avec moi sur Diralo — chacun dans sa langue :", "it": "Scrivi con me su Diralo — ognuno nella propria lingua:", "nl": "Schrijf met mij in Diralo — iedereen in zijn eigen taal:", "pl": "Pisz ze mną w Diralo — każdy w swoim języku:", "ru": "Пишите со мной в Diralo — каждый на своём языке:", "uk": "Пишіть зі мною в Diralo — кожен своєю мовою:", "tr": "Diralo'da benimle yaz — herkes kendi dilinde:", "ar": "اكتب معي في Diralo — كل شخص بلغته:", "ja": "Diraloで一緒にチャットしよう。それぞれ自分の言語で話せます：", "hi": "Diralo में मेरे साथ लिखें — हर कोई अपनी भाषा में:", "ur": "Diralo میں میرے ساتھ لکھیں — ہر کوئی اپنی زبان میں:", "bn": "Diralo-তে আমার সাথে লিখুন — সবাই নিজের ভাষায়:", "pa": "ਮੇਰੇ ਨਾਲ Diralo ਵਿੱਚ ਲਿਖੋ — ਹਰ ਕੋਈ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ:", "ne": "Diralo मा मसँग लेख्नुहोस् — सबैले आफ्नै भाषामा:"};
+const einlTextFuer = (ziel) => {
+  const z = String(ziel || "");
+  const t = EINL_TEXT[z] || EINL_TEXT[z.slice(0, 2)] || (z.startsWith("pt") ? EINL_TEXT["pt-PT"] : "");
+  if (!t || z.startsWith("en")) return EINL_TEXT.en;
+  return `${t}\n${EINL_TEXT.en}`;
+};
+const EINL_SCHNELL = ["pt-PT", "pt-BR", "en", "es", "fr", "de", "ne", "hi", "bn", "pa", "ur", "uk", "ro"];
 /* Umgekehrt: Code aus einem Einladungs-Link (diralo.app/#c=...) lesen. */
 const codeAusLink = (url) => {
   const m = /[#&?]c=([^&#]+)/.exec(String(url || ""));
@@ -250,6 +265,9 @@ const TEXTE = {
     kamera: "Kamera",
     standort: "Standort",
     einladen: "Einladen",
+    einlJetzt: "Fast geschafft! Diralo funktioniert zu zweit – lade jetzt die Person ein, mit der du schreiben willst.",
+    einlSpracheFrage: "In welcher Sprache spricht deine Person?",
+    einlAndere: "Andere Sprache …",
     verbunden: "verbunden",
     verbinde: "verbinde ...",
     du: "du",
@@ -459,6 +477,9 @@ const TEXTE = {
     kamera: "Câmara",
     standort: "Localização",
     einladen: "Convidar",
+    einlJetzt: "Quase pronto! O Diralo funciona a dois – convide agora a pessoa com quem quer escrever.",
+    einlSpracheFrage: "Em que língua fala a sua pessoa?",
+    einlAndere: "Outra língua …",
     verbunden: "ligado",
     verbinde: "a ligar ...",
     du: "tu",
@@ -668,6 +689,9 @@ const TEXTE = {
     kamera: "Camera",
     standort: "Location",
     einladen: "Invite",
+    einlJetzt: "Almost there! Diralo works with two people – invite the person you want to write with now.",
+    einlSpracheFrage: "Which language does your person speak?",
+    einlAndere: "Other language …",
     verbunden: "connected",
     verbinde: "connecting ...",
     du: "you",
@@ -877,6 +901,9 @@ const TEXTE = {
     kamera: "Cámara",
     standort: "Ubicación",
     einladen: "Invitar",
+    einlJetzt: "¡Casi listo! Diralo funciona entre dos: invita ahora a la persona con la que quieres escribir.",
+    einlSpracheFrage: "¿Qué idioma habla tu persona?",
+    einlAndere: "Otro idioma …",
     verbunden: "conectado",
     verbinde: "conectando ...",
     du: "tú",
@@ -1086,6 +1113,9 @@ const TEXTE = {
     kamera: "Appareil photo",
     standort: "Position",
     einladen: "Inviter",
+    einlJetzt: "Presque fini ! Diralo se fait à deux – invite maintenant la personne avec qui tu veux écrire.",
+    einlSpracheFrage: "Quelle langue parle ta personne ?",
+    einlAndere: "Autre langue …",
     verbunden: "connecté",
     verbinde: "connexion ...",
     du: "toi",
@@ -1295,6 +1325,9 @@ const TEXTE = {
     kamera: "Fotocamera",
     standort: "Posizione",
     einladen: "Invita",
+    einlJetzt: "Quasi fatto! Diralo funziona in due: invita ora la persona con cui vuoi scrivere.",
+    einlSpracheFrage: "Che lingua parla la tua persona?",
+    einlAndere: "Altra lingua …",
     verbunden: "connesso",
     verbinde: "connessione ...",
     du: "tu",
@@ -1504,6 +1537,9 @@ const TEXTE = {
     kamera: "カメラ",
     standort: "位置情報",
     einladen: "招待",
+    einlJetzt: "あと少し！Diraloは2人で使います。話したい相手を今すぐ招待しましょう。",
+    einlSpracheFrage: "相手は何語を話しますか？",
+    einlAndere: "その他の言語…",
     verbunden: "接続済み",
     verbinde: "接続中...",
     du: "あなた",
@@ -1713,6 +1749,9 @@ const TEXTE = {
     kamera: "कैमरा",
     standort: "लोकेशन",
     einladen: "बुलाएँ",
+    einlJetzt: "बस हो गया! Diralo दो लोगों के साथ चलता है – जिससे बात करनी है, उसे अभी बुलाएँ।",
+    einlSpracheFrage: "आपका साथी कौन-सी भाषा बोलता है?",
+    einlAndere: "दूसरी भाषा …",
     verbunden: "कनेक्टेड",
     verbinde: "कनेक्ट हो रहा है ...",
     du: "आप",
@@ -1922,6 +1961,9 @@ const TEXTE = {
     kamera: "کیمرا",
     standort: "لوکیشن",
     einladen: "دعوت دیں",
+    einlJetzt: "تقریباً تیار! Diralo دو لوگوں کے ساتھ چلتا ہے – جس سے بات کرنی ہے، اسے ابھی دعوت دیں۔",
+    einlSpracheFrage: "آپ کا ساتھی کون سی زبان بولتا ہے؟",
+    einlAndere: "دوسری زبان …",
     verbunden: "منسلک",
     verbinde: "منسلک ہو رہا ہے ...",
     du: "آپ",
@@ -2131,6 +2173,9 @@ const TEXTE = {
     kamera: "ক্যামেরা",
     standort: "লোকেশন",
     einladen: "আমন্ত্রণ",
+    einlJetzt: "প্রায় হয়ে গেছে! Diralo দুজনে মিলে চলে – যার সাথে লিখতে চান, তাকে এখনই আমন্ত্রণ জানান।",
+    einlSpracheFrage: "আপনার মানুষটি কোন ভাষায় কথা বলে?",
+    einlAndere: "অন্য ভাষা …",
     verbunden: "সংযুক্ত",
     verbinde: "সংযোগ হচ্ছে ...",
     du: "আপনি",
@@ -2340,6 +2385,9 @@ const TEXTE = {
     kamera: "ਕੈਮਰਾ",
     standort: "ਟਿਕਾਣਾ",
     einladen: "ਸੱਦਾ ਦਿਓ",
+    einlJetzt: "ਬੱਸ ਹੋ ਗਿਆ! Diralo ਦੋ ਜਣਿਆਂ ਨਾਲ ਚੱਲਦਾ ਹੈ – ਜਿਸ ਨਾਲ ਗੱਲ ਕਰਨੀ ਹੈ, ਉਸਨੂੰ ਹੁਣੇ ਸੱਦਾ ਦਿਓ।",
+    einlSpracheFrage: "ਤੁਹਾਡਾ ਸਾਥੀ ਕਿਹੜੀ ਭਾਸ਼ਾ ਬੋਲਦਾ ਹੈ?",
+    einlAndere: "ਹੋਰ ਭਾਸ਼ਾ …",
     verbunden: "ਕਨੈਕਟ ਹੈ",
     verbinde: "ਕਨੈਕਟ ਹੋ ਰਿਹਾ ਹੈ ...",
     du: "ਤੁਸੀਂ",
@@ -2549,6 +2597,9 @@ const TEXTE = {
     kamera: "क्यामेरा",
     standort: "लोकेसन",
     einladen: "निम्त्याउनुहोस्",
+    einlJetzt: "लगभग भयो! Diralo दुई जनासँग चल्छ – जोसँग लेख्न चाहनुहुन्छ, उहाँलाई अहिले नै निम्त्याउनुहोस्।",
+    einlSpracheFrage: "तपाईंको मान्छे कुन भाषा बोल्छ?",
+    einlAndere: "अर्को भाषा …",
     verbunden: "जोडियो",
     verbinde: "जोडिँदैछ ...",
     du: "तपाईं",
@@ -2870,6 +2921,8 @@ function Haupt() {
   const [lang, setLang] = useState(geraeteSprache);
   const [raum, setRaum] = useState(null);     // null = Startseite, sonst Chat
   const [gruppeNeu, setGruppeNeu] = useState(false);   // neuer Chat soll gleich als Gruppe benannt werden
+  /* "Neuer Chat": im leeren Chat gleich die Einladung oeffnen. */
+  const [neuStart, setNeuStart] = useState(false);
   const [ansicht, setAnsicht] = useState(null); // "dolmetsch" | "foto" | "geteilt" | null
   /* Teilen-Menue von Android: Text oder Bild aus einer anderen App. */
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent({ resetOnBackground: true });
@@ -3017,8 +3070,9 @@ function Haupt() {
             unten={insets.bottom} oben={insets.top}
             entwurf={entwurf} onEntwurfWeg={() => setEntwurf("")}
             dateiEntwurf={dateiEntwurf} onDateiWeg={() => setDateiEntwurf(null)}
-            onBack={() => { setGruppeNeu(false); verlassen(); }}
+            onBack={() => { setGruppeNeu(false); setNeuStart(false); verlassen(); }}
             gruppeStart={gruppeNeu} onGruppeStartWeg={() => setGruppeNeu(false)}
+            neuStart={neuStart} onNeuStartWeg={() => setNeuStart(false)}
           />
         ) : (
           <Home
@@ -3026,7 +3080,7 @@ function Haupt() {
             lang={lang} setLang={setLang}
             device={device}
             unten={insets.bottom}
-            onStart={() => betreten(neuerCode())}
+            onStart={() => { setNeuStart(true); betreten(neuerCode()); }}
             onGruppe={() => { setGruppeNeu(true); betreten(neuerCode()); }}
             onJoin={betreten}
             vorCode={linkCode}
@@ -4091,7 +4145,7 @@ function AboFenster({ offen, raum, onZu, onHinweis, art = "privat" }) {
 }
 
 /* ------------------------------- Chat ----------------------------- */
-function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwurfWeg, dateiEntwurf = null, onDateiWeg, onBack, gruppeStart = false, onGruppeStartWeg }) {
+function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwurfWeg, dateiEntwurf = null, onDateiWeg, onBack, gruppeStart = false, onGruppeStartWeg, neuStart = false, onNeuStartWeg }) {
   /* Offene Tastatur deckt die Navigationsleiste ab - dann braucht die
      Eingabezeile unten keinen eigenen Abstand mehr. */
   const tastatur = useTastaturOffen();
@@ -4236,7 +4290,22 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     setHinweis(neu ? t("autoAn") : t("autoAus"));
   };
   /* Erst nach dem Verlauf wissen wir, ob der Chat wirklich leer ist. */
-  const [geladen, setGeladen] = useState(false);   // Namen der anderen, die gerade im Chat sind
+  const [geladen, setGeladen] = useState(false);
+  /* Einladen: erst die Sprache der anderen Person waehlen (Text + Link in
+     IHRER Sprache), dann das Teilen-Menue. Nach "Neuer Chat" oeffnet sich
+     das von selbst - allein im leeren Chat gehen die meisten wieder. */
+  const [einlWahl, setEinlWahl] = useState(null);   // null | "knopf" | "auto"
+  const [einlAlle, setEinlAlle] = useState(false);
+  const [einlZuletzt, setEinlZuletzt] = useState("");
+  useEffect(() => { AsyncStorage.getItem("diralo_einl_ziel").then((z) => setEinlZuletzt(z || "")).catch(() => {}); }, []);
+  useEffect(() => {
+    if (!neuStart || !geladen) return;
+    onNeuStartWeg?.();
+    if (nachrichten.length === 0) {
+      const u = setTimeout(() => setEinlWahl("auto"), 400);
+      return () => clearTimeout(u);
+    }
+  }, [neuStart, geladen]);   // Namen der anderen, die gerade im Chat sind
   const [chatName, setChatName] = useState("");
   useEffect(() => { chatsLaden().then((l) => setChatName(l.find((c) => c.code === raum)?.name || "")); }, [raum]);
 
@@ -4478,13 +4547,23 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
     }
   };
 
-  const einladen = () => {
+  const einladen = () => { setEinlAlle(false); setEinlWahl("knopf"); };
+  const einladenMit = (ziel) => {
+    setEinlWahl(null);
+    setEinlZuletzt(ziel);
+    AsyncStorage.setItem("diralo_einl_ziel", ziel).catch(() => {});
     /* Solange noch niemand anderes geschrieben hat: an den Bonus erinnern. */
     if (!nachrichten.some((m) => m.device !== device)) setHinweis(t("bonusHinweis"));
+    /* Zaehlt wie in der Web-App (Admin: "Einladungen"). */
+    fetch(`${SERVER_URL}/api/zaehl`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ereignis: "einladung" }),
+    }).catch(() => {});
     Share.share({
-      message: `${t("einladung")} ${einladungsLink(raum)}`,
+      message: `${einlTextFuer(ziel)}\n${einladungsLink(raum, ziel, name)}`,
     }).catch(() => {});
   };
+  const einlListe = [...new Set([einlZuletzt, ...EINL_SCHNELL].filter(Boolean))].filter((c) => c !== lang && SPRACHEN.some((x) => x.code === c));
 
   /* Nur die eigene Nachricht; der Server prueft das ohnehin am Geraet. */
   const loeschen = (m) => {
@@ -5030,6 +5109,30 @@ function Chat({ raum, name, lang, device, unten, oben = 0, entwurf = "", onEntwu
         onAbo={() => { setAboArt("privat"); setAboOffen(true); }}
         onAusblenden={() => lernAusSetzen(true)}
       />
+      <Modal visible={Boolean(einlWahl)} transparent animationType="slide" onRequestClose={() => setEinlWahl(null)}>
+        <Pressable style={s.modalHinten} onPress={() => setEinlWahl(null)} />
+        <View style={[s.modalBox, { paddingBottom: 16 + unten, maxHeight: "85%" }]}>
+          {einlWahl === "auto" && (
+            <Text style={[s.leerText, { textAlign: "left", marginBottom: 8 }]}>👋 {t("einlJetzt")}</Text>
+          )}
+          <Text style={s.modalTitel}>{t("einlSpracheFrage")}</Text>
+          <ScrollView>
+            {(einlAlle ? SPRACHEN.filter((x) => x.code !== lang).map((x) => x.code) : einlListe).map((c) => (
+              <Pressable key={c} style={s.sprachZeile} onPress={() => einladenMit(c)}>
+                <Text style={[s.sprachZeileTxt, c === einlZuletzt && { fontWeight: "800" }]}>{sprachName(c)}</Text>
+              </Pressable>
+            ))}
+            {!einlAlle && (
+              <Pressable style={s.sprachZeile} onPress={() => setEinlAlle(true)}>
+                <Text style={[s.sprachZeileTxt, { color: FARBE.navy }]}>{t("einlAndere")}</Text>
+              </Pressable>
+            )}
+          </ScrollView>
+          <Pressable style={s.sprachZeile} onPress={() => setEinlWahl(null)}>
+            <Text style={[s.sprachZeileTxt, { color: FARBE.grau }]}>{t("abbrechen2")}</Text>
+          </Pressable>
+        </View>
+      </Modal>
       <Modal visible={menueAuf} transparent animationType="slide" onRequestClose={() => setMenueAuf(false)}>
         <Pressable style={s.modalHinten} onPress={() => setMenueAuf(false)} />
         <View style={[s.modalBox, { paddingBottom: 16 + unten }]}>

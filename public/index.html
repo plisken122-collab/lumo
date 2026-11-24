@@ -1017,9 +1017,14 @@ function zeigeStartListe() {
   feld.classList.remove("hide");
 }
 
+/* Nach "Neuer Chat" oeffnet sich die Einladung von selbst: Diralo
+   funktioniert nur zu zweit, und allein im leeren Chat gehen die meisten
+   wieder (Zahlen Nov. 2026: tausende Eintritte, kaum Einladungen). */
+let nachNeuEinladen = false;
 $("newChat").onclick = () => {
   /* Direkt in einen frischen Chat - "einen neuen starten" soll genau das
      tun, nicht nur das Feld fuellen. */
+  nachNeuEinladen = true;
   $("room").value = neuerCode();
   $("enter").click();
 };
@@ -1028,7 +1033,7 @@ let socket, me = {};
 /* Kennung dieser Fassung. Muss mit der Zahl in sw.js mitwandern, sonst
    laesst sich nicht mehr erkennen, welche Seite ein Geraet wirklich
    geladen hat. */
-const BUILD = "v99";
+const BUILD = "v100";
 
 let deviceId = localStorage.getItem("diralo-device");
 if (!deviceId) {
@@ -1341,6 +1346,10 @@ function start() {
 
   socket.on("history", (list) => {
     list.forEach((m) => add(m, false)); aktualisiereLeer(); gelesenMelden();
+    if (nachNeuEinladen) {
+      nachNeuEinladen = false;
+      if (msgs.size === 0 && !demoAktiv) setTimeout(() => einladen(true), 350);
+    }
     if (window.DiraloLernen) DiraloLernen.knopfAktualisieren();
   });
   socket.on("message", (m) => {
@@ -3262,12 +3271,18 @@ function einladungsTextFuer(ziel) {
 /* Vor dem Teilen: In welcher Sprache spricht deine Person? Die Wahl geht
    in den Link (&l=) - dort ist die Sprache dann schon eingestellt. */
 const EINL_SCHNELL = ["pt-PT", "pt-BR", "en", "es", "fr", "de", "ne", "hi", "bn", "pa", "ur", "uk", "ro"];
-function frageZielSprache(weiter) {
+function frageZielSprache(weiter, auto = false) {
   schliesseSheet();
   sheet = document.createElement("div");
   sheet.className = "sheet";
   const box = document.createElement("div");
   box.className = "sheet-inner";
+  if (auto) {
+    const jetzt = document.createElement("p");
+    jetzt.style.cssText = "margin:6px 6px 10px;font-size:14.5px;line-height:1.45;color:var(--muted)";
+    jetzt.textContent = "👋 " + T("einlJetzt");
+    box.appendChild(jetzt);
+  }
   const titel = document.createElement("p");
   titel.style.cssText = "font-weight:800;font-size:16px;margin:6px 6px 2px";
   titel.textContent = T("einlSpracheFrage");
@@ -3332,9 +3347,9 @@ function einladenWhatsApp() {
   });
 }
 
-function einladen() {
+function einladen(auto = false) {
   if (demoAktiv) { demoAus(); aktualisiereLeer(); }
-  frageZielSprache((ziel) => einladenTeilen(ziel));
+  frageZielSprache((ziel) => einladenTeilen(ziel), auto === true);
 }
 
 async function einladenTeilen(ziel) {
