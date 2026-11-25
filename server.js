@@ -784,7 +784,30 @@ app.post("/api/stripe", async (req, res) => {
    nur "an diesem Tag ist das n-mal passiert". Daraus laesst sich nicht
    zurueckrechnen, wer es war.
 -------------------------------------------------------------------- */
-const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link", "uebersetzt"]);
+const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link", "uebersetzt",
+  "app_start", "dolmetsch", "foto", "text", "hilfe_person"]);
+
+/* Einmal pro Tag und Geraet (bzw. Adresse) zaehlen - fuer "App geoeffnet"
+   und "hat eine Hilfe benutzt". Gemerkt wird nur ein gekuerzter Hash bis
+   Mitternacht, danach ist die Liste leer. */
+const tagesMerker = { tag: "", gesehen: new Set() };
+function einmalHeute(art, wer) {
+  const heute = new Date().toISOString().slice(0, 10);
+  if (tagesMerker.tag !== heute) { tagesMerker.tag = heute; tagesMerker.gesehen.clear(); }
+  const k = art + ":" + crypto.createHash("sha256").update(String(wer)).digest("hex").slice(0, 16);
+  if (tagesMerker.gesehen.has(k) || tagesMerker.gesehen.size > 50000) return false;
+  tagesMerker.gesehen.add(k);
+  return true;
+}
+
+/* Dolmetscher, Foto und Text: jede gelungene Nutzung zaehlen, dazu
+   einmal pro Tag die Person. Eigene Geraete zaehlen nicht. */
+function zaehleHilfe(art, req) {
+  const device = String(req.body?.device || "");
+  if (EIGEN.geraete.has(device) || istIntern(req)) return;
+  zaehle(art);
+  if (einmalHeute("hilfe", device || req.ip)) zaehle("hilfe_person");
+}
 
 /* Nachrichten, die mindestens einmal uebersetzt wurden - je Nachricht nur
    einmal, egal in wie viele Sprachen. "Nachricht" minus "uebersetzt" sind
@@ -1987,7 +2010,10 @@ async function gratisErlaubt(req, art) {
 /* Neueste App-Version (versionCode). Die App vergleicht beim Start und
    bietet das Update an; unter "minimum" ist es Pflicht. Ueber die
    Umgebung einstellbar, ohne neuen Server-Code. */
-app.get("/api/app-version", (_req, res) => {
+app.get("/api/app-version", (req, res) => {
+  /* Die Android-App fragt das bei jedem Start - so sehen wir, wie viele
+     Installierte die App wirklich oeffnen (einmal pro Tag und Adresse). */
+  if (!istIntern(req) && einmalHeute("start", req.ip)) zaehle("app_start");
   res.json({
     aktuell: Number(process.env.APP_VERSION_AKTUELL || 6),
     minimum: Number(process.env.APP_VERSION_MINIMUM || 0),
@@ -2038,6 +2064,7 @@ Antworte NUR mit JSON, ohne Markdown: {"uebersetzt":"<Text auf ${nach}>"}`;
     const { result: out, usage } = await claude(prompt);
     store.logUsage({ room: "__dolmetsch__", target: nach, chars: text.length,
       inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+    zaehleHilfe("dolmetsch", req);
     res.json({ uebersetzt: String(out.uebersetzt || "").slice(0, 1500) });
   } catch (err) {
     console.error("Dolmetscher fehlgeschlagen:", err.message);
@@ -2064,6 +2091,7 @@ Antworte NUR mit JSON, ohne Markdown: {"sprache":"<Sprachcode des Originals>","u
     const { result: out, usage } = await claude(prompt);
     store.logUsage({ room: "__teilen__", target: lang, chars: text.length,
       inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+    zaehleHilfe("text", req);
     res.json({
       sprache: clean(out.sprache) || "",
       uebersetzt: String(out.uebersetzt || "").slice(0, 6000),
@@ -2093,6 +2121,7 @@ Antworte NUR mit JSON, ohne Markdown: {"original":"<gelesener Text>","uebersetzt
     const { result: out, usage } = await claudeBild(bild, "image/jpeg", prompt);
     store.logUsage({ room: "__foto__", target: lang, chars: Math.max(1, String(out.original || "").length),
       inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+    zaehleHilfe("foto", req);
     res.json({
       original: String(out.original || "").slice(0, 6000),
       uebersetzt: String(out.uebersetzt || "").slice(0, 6000),
