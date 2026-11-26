@@ -79,6 +79,13 @@
     </label>
     <div class="kacheln" id="kacheln"></div>
 
+    <div class="card hide" id="eigeneCard">
+      <h2>Eigene Geräte – zuletzt aktiv (Beta-Test)</h2>
+      <div id="eigeneGeraete" class="small"></div>
+      <p class="small" style="margin-top:10px">Nur Zeitpunkt und Art, keine Inhalte. „Chat“ und Hilfen
+      merkt sich der Server bis zum nächsten Neustart, Nachrichten kommen aus der Datenbank.</p>
+    </div>
+
     <div class="card hide" id="gespraecheCard">
       <h2>Gespräche (7 Tage)</h2>
       <div id="gespraeche"></div>
@@ -305,6 +312,17 @@ async function playLaden() {
   }
 }
 
+function zeichneEigene(liste) {
+  $("eigeneCard").classList.toggle("hide", !liste.length);
+  const WAS = { chat: "Chat geöffnet", nachricht: "Nachricht", dolmetsch: "🎙️ Dolmetscher", foto: "📷 Foto", text: "📝 Text" };
+  const zeit = (t) => t ? new Date(t).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "–";
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  $("eigeneGeraete").innerHTML = liste.map((g) =>
+    `<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #eee">` +
+    `<span><b>${esc(g.name || "ohne Namen")}</b> <span style="color:#999">#${esc(g.kennung)}</span></span>` +
+    `<span>${zeit(g.zuletzt)} · ${WAS[g.was] || "–"} · ${g.nachrichten7} Nachr./7 T</span></div>`).join("");
+}
+
 async function laden() {
   playLaden();
   trichterLaden();
@@ -316,6 +334,7 @@ async function laden() {
       ? `– ${d.eigen.chats} Chats, ${d.eigen.geraete} Geräte ausgeblendet; Besuche/Nachrichten ab 23.11. ohne euch`
       : "– aus: alle Zahlen inklusive euch";
 
+    zeichneEigene(d.eigeneGeraete || []);
     const demo = d.demo || { monat: 0, kostenUsd: 0 };
     const g = d.chats.gruppen7;
     zeichneGespraeche(g);

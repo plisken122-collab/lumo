@@ -1284,6 +1284,30 @@ export async function eigeneRaeumeUndGeraete(basis = []) {
   return { geraete, raeume: r.rows.map((x) => x.room) };
 }
 
+/* Eigene Geraete (Betreiber + Familie): letzter Name, letzte Nachricht
+   und Zahl der Nachrichten in 7 Tagen - keine Inhalte. */
+export async function eigeneGeraeteAktiv(geraete = []) {
+  if (!geraete.length) return [];
+  const seit = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  if (!usingDatabase) {
+    const je = new Map();
+    for (const m of mem.messages.values()) {
+      if (!geraete.includes(m.device)) continue;
+      const e = je.get(m.device) || { device: m.device, name: m.name, lang: m.lang, zuletzt: 0, woche: 0 };
+      if (m.at > e.zuletzt) { e.zuletzt = m.at; e.name = m.name; e.lang = m.lang; }
+      if (m.at >= seit) e.woche++;
+      je.set(m.device, e);
+    }
+    return [...je.values()];
+  }
+  const r = await pool.query(
+    `SELECT DISTINCT ON (device) device, name, lang, at AS zuletzt,
+       (SELECT count(*) FROM messages m2 WHERE m2.device = m.device AND m2.at >= $2)::int AS woche
+     FROM messages m WHERE device = ANY($1::text[]) ORDER BY device, at DESC`, [geraete, seit]
+  );
+  return r.rows.map((x) => ({ ...x, zuletzt: Number(x.zuletzt) }));
+}
+
 /* Aktive Abos nach Tarif. "canceled" zaehlt nicht mehr. */
 export async function aboZaehlung() {
   const laeuft = ["active", "trialing", "past_due", "gekuendigt"];

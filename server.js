@@ -804,6 +804,7 @@ function einmalHeute(art, wer) {
    einmal pro Tag die Person. Eigene Geraete zaehlen nicht. */
 function zaehleHilfe(art, req) {
   const device = String(req.body?.device || "");
+  if (EIGEN.geraete.has(device)) eigenAktiv(device, art);
   if (EIGEN.geraete.has(device) || istIntern(req)) return;
   zaehle(art);
   if (einmalHeute("hilfe", device || req.ip)) zaehle("hilfe_person");
@@ -1053,6 +1054,7 @@ app.get("/api/admin/daten", async (req, res) => {
       trichter,
       chats: { aktiv7, aktiv30, gruppen7: gespraeche7 },
       eigen: { ausgeblendet: !mitEigenen, chats: EIGEN.raeume.size, geraete: EIGEN.geraete.size },
+      eigeneGeraete: await eigeneGeraeteListe().catch(() => []),
       google,
       abos,
       push,
@@ -1346,6 +1348,34 @@ async function eigeneLaden() {
 }
 setTimeout(eigeneLaden, 5000);
 setInterval(eigeneLaden, 15 * 60 * 1000);
+
+/* Beta-Test: Wann war welches eigene Geraet (Betreiber + Familie, mit
+   deren Einverstaendnis) zuletzt aktiv? Nur Zeitpunkt und Art - keine
+   Inhalte. Chat-Oeffnen und Hilfen merkt sich der Server bis zum
+   naechsten Neustart, Nachrichten kommen aus der Datenbank. */
+const EIGEN_AKTIV = new Map();
+function eigenAktiv(device, was) {
+  if (!device) return;
+  EIGEN_AKTIV.set(device, { zuletzt: Date.now(), was });
+}
+async function eigeneGeraeteListe() {
+  const geraete = [...EIGEN.geraete];
+  if (!geraete.length) return [];
+  const db = await store.eigeneGeraeteAktiv(geraete).catch(() => []);
+  const je = new Map(db.map((x) => [x.device, x]));
+  return geraete.map((d) => {
+    const m = je.get(d) || {}, a = EIGEN_AKTIV.get(d);
+    const nachricht = Number(m.zuletzt || 0);
+    const neuer = a && a.zuletzt > nachricht;
+    return {
+      kennung: String(d).slice(0, 6),
+      name: m.name || "",
+      zuletzt: neuer ? a.zuletzt : nachricht || null,
+      was: neuer ? a.was : nachricht ? "nachricht" : "",
+      nachrichten7: Number(m.woche || 0),
+    };
+  }).sort((x, y) => (y.zuletzt || 0) - (x.zuletzt || 0));
+}
 
 /* Welcher Tarif und welche Grenze zuletzt fuer einen Chat galten - damit
    die Meldung "aufgebraucht" dem Nutzer das Richtige sagt. */
@@ -2718,7 +2748,7 @@ io.on("connection", (socket) => {
       device: String(device || socket.id).slice(0, 60),
     };
     socket.join(room);
-    if (EIGEN.geraete.has(me.device)) socket.emit("eigen");
+    if (EIGEN.geraete.has(me.device)) { socket.emit("eigen"); eigenAktiv(me.device, "chat"); }
     try {
       socket.emit("history", await store.getHistory(room));
       /* Dauerhafte Lese-Haken: dem Beitretenden sagen, wie weit die anderen
