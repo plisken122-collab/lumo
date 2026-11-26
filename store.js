@@ -66,6 +66,7 @@ export async function init() {
       at        BIGINT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS messages_room_at ON messages (room, at);
+    CREATE INDEX IF NOT EXISTS messages_device_at ON messages (device, at);
 
     CREATE TABLE IF NOT EXISTS translations (
       message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
@@ -1301,9 +1302,9 @@ export async function eigeneGeraeteAktiv(geraete = []) {
     return [...je.values()];
   }
   const r = await pool.query(
-    `SELECT DISTINCT ON (device) device, name, lang, at AS zuletzt,
-       (SELECT count(*) FROM messages m2 WHERE m2.device = m.device AND m2.at >= $2)::int AS woche
-     FROM messages m WHERE device = ANY($1::text[]) ORDER BY device, at DESC`, [geraete, seit]
+    `SELECT device, max(at) AS zuletzt, count(*) FILTER (WHERE at >= $2)::int AS woche,
+       (array_agg(name ORDER BY at DESC))[1] AS name
+     FROM messages WHERE device = ANY($1::text[]) GROUP BY device`, [geraete, seit]
   );
   return r.rows.map((x) => ({ ...x, zuletzt: Number(x.zuletzt) }));
 }
