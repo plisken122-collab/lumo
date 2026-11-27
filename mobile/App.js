@@ -3008,6 +3008,20 @@ async function vielleichtBewerten(gewicht = 1) {
   } catch {}
 }
 
+/* Schritte fuer die Statistik: Wo hoeren neue Nutzer auf? Gesendet wird
+   nur der Name des Schritts (z. B. "a_foto") und die Geraete-Kennung,
+   damit der Server je Geraet und Tag nur einmal zaehlt - keine Inhalte.
+   Je App-Start jeder Schritt hoechstens einmal. */
+const schritteGesendet = new Set();
+function schritt(art, device) {
+  if (schritteGesendet.has(art)) return;
+  schritteGesendet.add(art);
+  fetch(`${SERVER_URL}/api/schritt`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ schritt: art, device: device || "" }),
+  }).catch(() => {});
+}
+
 /* Dauerhafte Geraete-Kennung (fuer "meine" Nachrichten + Server-Limits). */
 async function geraeteId() {
   try {
@@ -3145,6 +3159,33 @@ function Haupt() {
   useEffect(() => {
     if (bereit && device && name.trim()) pushAnmelden({ device, name: name.trim(), lang });
   }, [bereit, device]);
+
+  /* Statistik-Schritte (siehe schritt()): Start, Name, welcher Bereich,
+     und wie lange der erste Besuch dauerte. */
+  const ohneNameRef = useRef(false);
+  useEffect(() => {
+    if (!bereit || !device) return;
+    schritt("a_start", device);
+    if (!name.trim()) { ohneNameRef.current = true; schritt("a_ohne_name", device); }
+    let seit = Date.now(), fertig = false;
+    const sub = AppState.addEventListener("change", (st) => {
+      if (fertig) return;
+      if (st === "active") { seit = Date.now(); return; }
+      if (st !== "background") return;
+      fertig = true;
+      const sek = (Date.now() - seit) / 1000;
+      schritt(sek < 20 ? "a_kurz" : sek < 120 ? "a_mittel" : "a_lang", device);
+    });
+    return () => sub.remove();
+  }, [bereit, device]);
+  useEffect(() => {
+    if (bereit && device && ohneNameRef.current && name.trim().length >= 2) schritt("a_name", device);
+  }, [bereit, device, name]);
+  useEffect(() => {
+    if (!bereit || !device) return;
+    if (raum) schritt("a_chat", device);
+    else if (ansicht === "dolmetsch" || ansicht === "foto" || ansicht === "text") schritt("a_" + ansicht, device);
+  }, [bereit, device, raum, ansicht]);
 
   /* Beim Verlassen gilt der Chat als gelesen - sonst zaehlte die
      Startseite eigene, gerade gesehene Nachrichten als neu. */

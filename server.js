@@ -784,8 +784,13 @@ app.post("/api/stripe", async (req, res) => {
    nur "an diesem Tag ist das n-mal passiert". Daraus laesst sich nicht
    zurueckrechnen, wer es war.
 -------------------------------------------------------------------- */
+/* Schritte in der Android-App (ab Version 19): Wo hoeren neue Nutzer
+   auf? Je Geraet und Tag hoechstens einmal - nur "ist passiert", keine
+   Inhalte, keine Kennung in der Datenbank. */
+const SCHRITTE = ["a_start", "a_ohne_name", "a_name", "a_chat", "a_dolmetsch", "a_foto", "a_text",
+  "a_kurz", "a_mittel", "a_lang"];
 const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link", "uebersetzt",
-  "app_start", "dolmetsch", "foto", "text", "hilfe_person"]);
+  "app_start", "dolmetsch", "foto", "text", "hilfe_person", ...SCHRITTE]);
 
 /* Einmal pro Tag und Geraet (bzw. Adresse) zaehlen - fuer "App geoeffnet"
    und "hat eine Hilfe benutzt". Gemerkt wird nur ein gekuerzter Hash bis
@@ -940,6 +945,17 @@ app.post("/api/zaehl", (req, res) => {
   if (!take(`zaehl:${req.ip}`, 60, 60 * 1000)) return res.status(429).end();
   const e = String(req.body?.ereignis || "");
   if (!istIntern(req) && (e === "einladung" || e === "ueber_link")) zaehle(e);
+  res.status(204).end();
+});
+
+/* Schritte aus der Android-App (siehe SCHRITTE). Eigene Geraete und
+   interne Aufrufe zaehlen nicht. */
+app.post("/api/schritt", (req, res) => {
+  if (!take(`schritt:${req.ip}`, 60, 60 * 1000)) return res.status(429).end();
+  const art = String(req.body?.schritt || "");
+  const device = String(req.body?.device || "").slice(0, 60);
+  if (SCHRITTE.includes(art) && !istIntern(req) && !EIGEN.geraete.has(device)
+      && einmalHeute(art, device || req.ip)) zaehle(art);
   res.status(204).end();
 });
 

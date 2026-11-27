@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "app.diralo.twa",
-      "versionCode": 18,
+      "versionCode": 19,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",

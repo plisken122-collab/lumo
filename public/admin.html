@@ -222,6 +222,15 @@ function zeichneTrichter(summe) {
       `Hilfen genutzt von ${nf.format(summe.hilfe_person || 0)} Personen ` +
       `(🎙️ ${nf.format(summe.dolmetsch || 0)} · 📷 ${nf.format(summe.foto || 0)} · 📝 ${nf.format(summe.text || 0)}) – Zählung ab 25.11.</div>`;
   }
+  /* Ab App-Version 19: Was neue Nutzer in der App tun - je Geraet und Tag
+     einmal. Zeigt, an welcher Stelle sie aufhoeren. */
+  if ((summe.a_start || 0) > 0) {
+    const a = (k) => nf.format(summe[k] || 0);
+    html += `<div class="quote" style="margin-top:10px"><b>In der App (ab v19)</b><br>` +
+      `Geöffnet ${a("a_start")} · davon ohne Namen ${a("a_ohne_name")} → Namen eingetragen ${a("a_name")}<br>` +
+      `Chat ${a("a_chat")} · 🎙️ Dolmetscher ${a("a_dolmetsch")} · 📷 Foto ${a("a_foto")} · 📝 Text ${a("a_text")}<br>` +
+      `Erster Besuch des Tages: unter 20 s ${a("a_kurz")} · 20 s–2 min ${a("a_mittel")} · länger ${a("a_lang")}</div>`;
+  }
   $("trichter").innerHTML = html;
 }
 
