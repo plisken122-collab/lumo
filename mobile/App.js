@@ -100,6 +100,12 @@ const TEXTE = {
     anrufMinutenLeer: "Die Live-Untertitel-Minuten für diesen Monat sind aufgebraucht. Der Anruf läuft ohne Untertitel weiter – mit Diralo Plus gibt es mehr.",
     anrufMinutenRest: "Live-Untertitel: noch {n} Min. diesen Monat.",
     anrufen: "Anrufen",
+    pdfLesen: "Lese das PDF …",
+    pdfZuGross: "Das PDF ist zu groß (höchstens 8 MB und 10 Seiten).",
+    pdfFehler: "Das PDF konnte nicht gelesen werden.",
+    inChatSenden: "📎 Stattdessen in einen Chat senden",
+    tippTeilen: "💡 Tipp: In jeder App (Chat, E-Mail, Galerie) einen Brief, ein Foto oder PDF teilen → Diralo wählen. Du bekommst sofort Übersetzung und Erklärung.",
+    tippOk: "Verstanden",
     anrufSprache: "📞 Sprachanruf",
     anrufVideo: "🎥 Videoanruf",
     anrufKommt: "ruft dich an …",
@@ -321,6 +327,12 @@ const TEXTE = {
     anrufMinutenLeer: "Os minutos de legendas ao vivo deste mês esgotaram-se. A chamada continua sem legendas – com o Diralo Plus tem mais.",
     anrufMinutenRest: "Legendas ao vivo: ainda {n} min este mês.",
     anrufen: "Ligar",
+    pdfLesen: "A ler o PDF …",
+    pdfZuGross: "O PDF é demasiado grande (máx. 8 MB e 10 páginas).",
+    pdfFehler: "Não foi possível ler o PDF.",
+    inChatSenden: "📎 Enviar antes para um chat",
+    tippTeilen: "💡 Dica: em qualquer app (chat, e-mail, galeria) partilhe uma carta, foto ou PDF → escolha o Diralo. Recebe logo a tradução e a explicação.",
+    tippOk: "Percebi",
     anrufSprache: "📞 Chamada de voz",
     anrufVideo: "🎥 Videochamada",
     anrufKommt: "está a ligar …",
@@ -542,6 +554,12 @@ const TEXTE = {
     anrufMinutenLeer: "This month's live subtitle minutes are used up. The call continues without subtitles – Diralo Plus gives you more.",
     anrufMinutenRest: "Live subtitles: {n} min left this month.",
     anrufen: "Call",
+    pdfLesen: "Reading the PDF …",
+    pdfZuGross: "The PDF is too large (max. 8 MB and 10 pages).",
+    pdfFehler: "The PDF couldn't be read.",
+    inChatSenden: "📎 Send to a chat instead",
+    tippTeilen: "💡 Tip: In any app (chat, email, gallery), share a letter, photo or PDF → pick Diralo. You get the translation and an explanation right away.",
+    tippOk: "Got it",
     anrufSprache: "📞 Voice call",
     anrufVideo: "🎥 Video call",
     anrufKommt: "is calling …",
@@ -763,6 +781,12 @@ const TEXTE = {
     anrufMinutenLeer: "Se han agotado los minutos de subtítulos en directo de este mes. La llamada sigue sin subtítulos; con Diralo Plus tienes más.",
     anrufMinutenRest: "Subtítulos en directo: quedan {n} min este mes.",
     anrufen: "Llamar",
+    pdfLesen: "Leyendo el PDF …",
+    pdfZuGross: "El PDF es demasiado grande (máx. 8 MB y 10 páginas).",
+    pdfFehler: "No se pudo leer el PDF.",
+    inChatSenden: "📎 Enviar a un chat en su lugar",
+    tippTeilen: "💡 Consejo: en cualquier app (chat, correo, galería) comparte una carta, foto o PDF → elige Diralo. Recibes la traducción y la explicación al instante.",
+    tippOk: "Entendido",
     anrufSprache: "📞 Llamada de voz",
     anrufVideo: "🎥 Videollamada",
     anrufKommt: "te está llamando …",
@@ -984,6 +1008,12 @@ const TEXTE = {
     anrufMinutenLeer: "Les minutes de sous-titres en direct de ce mois sont épuisées. L'appel continue sans sous-titres – Diralo Plus t'en donne plus.",
     anrufMinutenRest: "Sous-titres en direct : encore {n} min ce mois-ci.",
     anrufen: "Appeler",
+    pdfLesen: "Lecture du PDF …",
+    pdfZuGross: "Le PDF est trop volumineux (max. 8 Mo et 10 pages).",
+    pdfFehler: "Impossible de lire le PDF.",
+    inChatSenden: "📎 Envoyer plutôt dans un chat",
+    tippTeilen: "💡 Astuce : dans n'importe quelle app (chat, e-mail, galerie), partage une lettre, une photo ou un PDF → choisis Diralo. Tu obtiens tout de suite la traduction et l'explication.",
+    tippOk: "Compris",
     anrufSprache: "📞 Appel vocal",
     anrufVideo: "🎥 Appel vidéo",
     anrufKommt: "t'appelle …",
@@ -1205,6 +1235,12 @@ const TEXTE = {
     anrufMinutenLeer: "I minuti di sottotitoli dal vivo di questo mese sono esauriti. La chiamata continua senza sottotitoli: con Diralo Plus ne hai di più.",
     anrufMinutenRest: "Sottotitoli dal vivo: ancora {n} min questo mese.",
     anrufen: "Chiama",
+    pdfLesen: "Leggo il PDF …",
+    pdfZuGross: "Il PDF è troppo grande (max. 8 MB e 10 pagine).",
+    pdfFehler: "Impossibile leggere il PDF.",
+    inChatSenden: "📎 Invia invece in una chat",
+    tippTeilen: "💡 Suggerimento: in qualsiasi app (chat, e-mail, galleria) condividi una lettera, una foto o un PDF → scegli Diralo. Ricevi subito traduzione e spiegazione.",
+    tippOk: "Capito",
     anrufSprache: "📞 Chiamata vocale",
     anrufVideo: "🎥 Videochiamata",
     anrufKommt: "ti sta chiamando …",
@@ -1426,6 +1462,12 @@ const TEXTE = {
     anrufMinutenLeer: "今月のライブ字幕の時間を使い切りました。通話は字幕なしで続きます。Diralo Plusならもっと使えます。",
     anrufMinutenRest: "ライブ字幕：今月の残り{n}分",
     anrufen: "通話",
+    pdfLesen: "PDFを読み込み中…",
+    pdfZuGross: "PDFが大きすぎます（最大8MB・10ページ）。",
+    pdfFehler: "PDFを読み込めませんでした。",
+    inChatSenden: "📎 代わりにチャットに送る",
+    tippTeilen: "💡 ヒント：どのアプリ（チャット・メール・ギャラリー）でも、手紙・写真・PDFを共有 → Diraloを選択。すぐに翻訳と説明が表示されます。",
+    tippOk: "了解",
     anrufSprache: "📞 音声通話",
     anrufVideo: "🎥 ビデオ通話",
     anrufKommt: "から着信中…",
@@ -1647,6 +1689,12 @@ const TEXTE = {
     anrufMinutenLeer: "इस महीने के लाइव सबटाइटल मिनट खत्म हो गए। कॉल बिना सबटाइटल के जारी रहेगी – Diralo Plus में ज़्यादा मिनट मिलते हैं।",
     anrufMinutenRest: "लाइव सबटाइटल: इस महीने {n} मिनट बाकी।",
     anrufen: "कॉल करें",
+    pdfLesen: "PDF पढ़ रहे हैं …",
+    pdfZuGross: "PDF बहुत बड़ा है (अधिकतम 8 MB और 10 पेज)।",
+    pdfFehler: "PDF पढ़ा नहीं जा सका।",
+    inChatSenden: "📎 इसके बजाय चैट में भेजें",
+    tippTeilen: "💡 टिप: किसी भी ऐप (चैट, ईमेल, गैलरी) में चिट्ठी, फ़ोटो या PDF शेयर करें → Diralo चुनें। आपको तुरंत अनुवाद और मतलब मिलेगा।",
+    tippOk: "समझ गया",
     anrufSprache: "📞 वॉइस कॉल",
     anrufVideo: "🎥 वीडियो कॉल",
     anrufKommt: "कॉल कर रहे हैं …",
@@ -1868,6 +1916,12 @@ const TEXTE = {
     anrufMinutenLeer: "اس مہینے کے لائیو سب ٹائٹل منٹ ختم ہو گئے ہیں۔ کال سب ٹائٹل کے بغیر جاری رہے گی – Diralo Plus میں زیادہ منٹ ملتے ہیں۔",
     anrufMinutenRest: "لائیو سب ٹائٹل: اس مہینے {n} منٹ باقی۔",
     anrufen: "کال",
+    pdfLesen: "PDF پڑھ رہے ہیں …",
+    pdfZuGross: "PDF بہت بڑا ہے (زیادہ سے زیادہ 8 MB اور 10 صفحات)۔",
+    pdfFehler: "PDF پڑھا نہیں جا سکا۔",
+    inChatSenden: "📎 اس کے بجائے چیٹ میں بھیجیں",
+    tippTeilen: "💡 مشورہ: کسی بھی ایپ (چیٹ، ای میل، گیلری) میں خط، تصویر یا PDF شیئر کریں → Diralo منتخب کریں۔ آپ کو فوراً ترجمہ اور وضاحت ملے گی۔",
+    tippOk: "سمجھ گیا",
     anrufSprache: "📞 وائس کال",
     anrufVideo: "🎥 ویڈیو کال",
     anrufKommt: "کال کر رہے ہیں …",
@@ -2089,6 +2143,12 @@ const TEXTE = {
     anrufMinutenLeer: "এই মাসের লাইভ সাবটাইটেল মিনিট শেষ। কলটি সাবটাইটেল ছাড়াই চলবে – Diralo Plus-এ আরও বেশি পাবেন।",
     anrufMinutenRest: "লাইভ সাবটাইটেল: এই মাসে আর {n} মিনিট বাকি।",
     anrufen: "কল",
+    pdfLesen: "PDF পড়া হচ্ছে …",
+    pdfZuGross: "PDF খুব বড় (সর্বোচ্চ 8 MB ও 10 পৃষ্ঠা)।",
+    pdfFehler: "PDF পড়া যায়নি।",
+    inChatSenden: "📎 এর বদলে চ্যাটে পাঠান",
+    tippTeilen: "💡 টিপ: যেকোনো অ্যাপে (চ্যাট, ইমেইল, গ্যালারি) চিঠি, ছবি বা PDF শেয়ার করুন → Diralo বেছে নিন। সঙ্গে সঙ্গে অনুবাদ ও ব্যাখ্যা পাবেন।",
+    tippOk: "বুঝেছি",
     anrufSprache: "📞 ভয়েস কল",
     anrufVideo: "🎥 ভিডিও কল",
     anrufKommt: "কল করছেন …",
@@ -2310,6 +2370,12 @@ const TEXTE = {
     anrufMinutenLeer: "ਇਸ ਮਹੀਨੇ ਦੇ ਲਾਈਵ ਸਬਟਾਈਟਲ ਮਿੰਟ ਖ਼ਤਮ ਹੋ ਗਏ ਹਨ। ਕਾਲ ਸਬਟਾਈਟਲ ਤੋਂ ਬਿਨਾਂ ਜਾਰੀ ਰਹੇਗੀ – Diralo Plus ਨਾਲ ਤੁਹਾਨੂੰ ਹੋਰ ਮਿਲਦੇ ਹਨ।",
     anrufMinutenRest: "ਲਾਈਵ ਸਬਟਾਈਟਲ: ਇਸ ਮਹੀਨੇ {n} ਮਿੰਟ ਬਾਕੀ।",
     anrufen: "ਕਾਲ ਕਰੋ",
+    pdfLesen: "PDF ਪੜ੍ਹ ਰਹੇ ਹਾਂ …",
+    pdfZuGross: "PDF ਬਹੁਤ ਵੱਡਾ ਹੈ (ਵੱਧ ਤੋਂ ਵੱਧ 8 MB ਅਤੇ 10 ਪੰਨੇ)।",
+    pdfFehler: "PDF ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।",
+    inChatSenden: "📎 ਇਸ ਦੀ ਬਜਾਏ ਚੈਟ ਵਿੱਚ ਭੇਜੋ",
+    tippTeilen: "💡 ਸੁਝਾਅ: ਕਿਸੇ ਵੀ ਐਪ (ਚੈਟ, ਈਮੇਲ, ਗੈਲਰੀ) ਵਿੱਚ ਚਿੱਠੀ, ਫ਼ੋਟੋ ਜਾਂ PDF ਸ਼ੇਅਰ ਕਰੋ → Diralo ਚੁਣੋ। ਤੁਹਾਨੂੰ ਤੁਰੰਤ ਅਨੁਵਾਦ ਅਤੇ ਵਿਆਖਿਆ ਮਿਲੇਗੀ।",
+    tippOk: "ਸਮਝ ਗਿਆ",
     anrufSprache: "📞 ਵੌਇਸ ਕਾਲ",
     anrufVideo: "🎥 ਵੀਡੀਓ ਕਾਲ",
     anrufKommt: "ਕਾਲ ਕਰ ਰਹੇ ਹਨ …",
@@ -2531,6 +2597,12 @@ const TEXTE = {
     anrufMinutenLeer: "यस महिनाको लाइभ सबटाइटल मिनेट सकियो। कल सबटाइटलबिना जारी रहन्छ – Diralo Plus ले तपाईंलाई थप दिन्छ।",
     anrufMinutenRest: "लाइभ सबटाइटल: यस महिना {n} मिनेट बाँकी।",
     anrufen: "कल",
+    pdfLesen: "PDF पढ्दैछ …",
+    pdfZuGross: "PDF धेरै ठूलो छ (बढीमा 8 MB र 10 पृष्ठ)।",
+    pdfFehler: "PDF पढ्न सकिएन।",
+    inChatSenden: "📎 बरु च्याटमा पठाउनुहोस्",
+    tippTeilen: "💡 सुझाव: कुनै पनि एप (च्याट, इमेल, ग्यालरी) मा चिठी, फोटो वा PDF सेयर गर्नुहोस् → Diralo छान्नुहोस्। तुरुन्तै अनुवाद र व्याख्या पाउनुहुन्छ।",
+    tippOk: "बुझेँ",
     anrufSprache: "📞 भ्वाइस कल",
     anrufVideo: "🎥 भिडियो कल",
     anrufKommt: "कल गर्दै हुनुहुन्छ …",
@@ -3071,7 +3143,17 @@ function Haupt() {
     if (!hasShareIntent) return;
     const bild = (shareIntent.files || []).find((f) => String(f.mimeType || "").startsWith("image/"));
     const text = shareIntent.text || shareIntent.webUrl || "";
-    /* Videos, PDFs usw.: unveraendert in einen Chat schicken. */
+    /* PDF (Brief, Rechnung ...): lesen, uebersetzen, erklaeren. Wer es
+       nur weiterschicken will, hat dort einen Knopf "in einen Chat". */
+    const pdf = (shareIntent.files || []).find((f) =>
+      String(f.mimeType || "") === "application/pdf" || /\.pdf$/i.test(String(f.fileName || "")));
+    if (!bild && pdf) {
+      setGeteilt({ pdf: { uri: pdf.path, name: pdf.fileName || "Dokument.pdf", mime: "application/pdf", groesse: pdf.size || 0 }, nr: Date.now() });
+      setAnsicht("geteilt");
+      resetShareIntent();
+      return;
+    }
+    /* Videos, andere Dateien: unveraendert in einen Chat schicken. */
     const andere = (shareIntent.files || []).find((f) => !String(f.mimeType || "").startsWith("image/"));
     if (!bild && andere) {
       setLinkTeilen({
@@ -3223,7 +3305,8 @@ function Haupt() {
             }}
           />
         ) : ansicht === "geteilt" && geteilt ? (
-          <Geteilt daten={geteilt} lang={lang} device={device} unten={insets.bottom} onBack={() => { setAnsicht(null); setGeteilt(null); }} />
+          <Geteilt daten={geteilt} lang={lang} device={device} unten={insets.bottom} onBack={() => { setAnsicht(null); setGeteilt(null); }}
+            onInChat={geteilt.pdf ? () => { setLinkTeilen({ datei: geteilt.pdf, nr: Date.now() }); setGeteilt(null); setAnsicht("link"); } : null} />
         ) : ansicht === "dolmetsch" ? (
           <Dolmetscher lang={lang} device={device} unten={insets.bottom} onBack={() => setAnsicht(null)} />
         ) : ansicht === "foto" ? (
@@ -3317,6 +3400,12 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
   const [sprachWahl, setSprachWahl] = useState(false);
   const [benennen, setBenennen] = useState(null);   // { code, name }
   const kannLos = name.trim().length > 0;
+  /* Einmaliger Tipp: Diralo steht im Teilen-Menue anderer Apps. */
+  const [tippTeilen, setTippTeilen] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem("diralo_tipp_teilen").then((v) => setTippTeilen(!v)).catch(() => {});
+  }, []);
+  const tippWeg = () => { setTippTeilen(false); AsyncStorage.setItem("diralo_tipp_teilen", "1").catch(() => {}); };
 
   const laden = useCallback(async () => {
     const liste = await chatsLaden();
@@ -3449,6 +3538,12 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
           <Text style={s.hilfeKnopfTxt}>{t("textKnopf")}</Text>
         </Pressable>
       </View>
+      {tippTeilen && (
+        <View style={[s.wegKarte, { backgroundColor: "#FFF6DD", borderColor: FARBE.gold }]}>
+          <Text style={[s.wegText, { color: FARBE.text, marginBottom: 8 }]}>{t("tippTeilen")}</Text>
+          <Pressable onPress={tippWeg} hitSlop={8}><Text style={[s.vorschauKnopf, { textAlign: "right" }]}>{t("tippOk")}</Text></Pressable>
+        </View>
+      )}
 
       <Modal visible={Boolean(benennen)} transparent animationType="fade" onRequestClose={() => setBenennen(null)}>
         <Pressable style={s.modalHinten} onPress={() => setBenennen(null)} />
@@ -3733,7 +3828,7 @@ function LinkTeilen({ daten, unten, onBack, onWahl }) {
   );
 }
 
-function Geteilt({ daten, lang, device, unten, onBack }) {
+function Geteilt({ daten, lang, device, unten, onBack, onInChat }) {
   const [aboRaum, setAboRaum] = useState(null); // Plus-Kauf, wenn das Gratis-Kontingent aus ist
   const [laedt, setLaedt] = useState(true);
   const [ergebnis, setErgebnis] = useState(null);
@@ -3754,6 +3849,15 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
             body: JSON.stringify({ bild: klein.base64, lang, erklaeren: true, device, raeume: await meineCodes() }),
           });
           if (r.status === 402) throw new Error("gratis");
+        } else if (daten.pdf) {
+          if (daten.pdf.groesse > 8 * 1024 * 1024) throw new Error("zugross");
+          const pdf = await new File(daten.pdf.uri).base64();
+          r = await fetch(`${SERVER_URL}/api/pdf-text`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pdf, lang, device, raeume: await meineCodes() }),
+          });
+          if (r.status === 402) throw new Error("gratis");
+          if (r.status === 413) throw new Error("zugross");
         } else {
           r = await fetch(`${SERVER_URL}/api/text-erklaeren`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -3766,7 +3870,8 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
       } catch (e) {
         if (weg) return;
         if (e?.message === "gratis") { setFehler(t("gratisAus")); setAboRaum(await aboRaumHolen()); }
-        else setFehler(t("hilfeFehler"));
+        else if (e?.message === "zugross") setFehler(t("pdfZuGross"));
+        else setFehler(daten.pdf ? t("pdfFehler") : t("hilfeFehler"));
       } finally {
         if (!weg) setLaedt(false);
       }
@@ -3784,7 +3889,7 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
         {laedt && (
           <View style={{ alignItems: "center", marginTop: 24 }}>
             <ActivityIndicator size="large" color={FARBE.navy} />
-            <Text style={s.leer}>{daten.bild ? t("fotoLesen") : t("geteiltLaedt")}</Text>
+            <Text style={s.leer}>{daten.bild ? t("fotoLesen") : daten.pdf ? t("pdfLesen") : t("geteiltLaedt")}</Text>
           </View>
         )}
         {fehler && <Text style={s.aboFehler}>{fehler}</Text>}
@@ -3813,8 +3918,13 @@ function Geteilt({ daten, lang, device, unten, onBack }) {
                 <Pressable onPress={() => vorlesen(ergebnis.original, ergebnis.sprache)} hitSlop={8}><Text style={s.vorschauKnopf}>🔊</Text></Pressable>
               ) : null}
             </View>
-            <Text style={[s.fotoKarteTxt, { color: FARBE.grau }]} selectable>{ergebnis.original}</Text>
+            <Text style={[s.fotoKarteTxt, { color: FARBE.grau }]} selectable>{ergebnis.original}{daten.pdf && ergebnis.original.length >= 590 ? " …" : ""}</Text>
           </View>
+        ) : null}
+        {onInChat && !laedt ? (
+          <Pressable style={[s.hilfeKnopf, { marginTop: 14 }]} onPress={onInChat}>
+            <Text style={s.hilfeKnopfTxt}>{t("inChatSenden")}</Text>
+          </Pressable>
         ) : null}
       </ScrollView>
     </View>

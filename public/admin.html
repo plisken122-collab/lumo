@@ -220,7 +220,7 @@ function zeichneTrichter(summe) {
   if ((summe.app_start || 0) + (summe.hilfe_person || 0) > 0) {
     html += `<div class="quote" style="margin-top:10px">📱 App geöffnet: ${nf.format(summe.app_start || 0)} · ` +
       `Hilfen genutzt von ${nf.format(summe.hilfe_person || 0)} Personen ` +
-      `(🎙️ ${nf.format(summe.dolmetsch || 0)} · 📷 ${nf.format(summe.foto || 0)} · 📝 ${nf.format(summe.text || 0)}) – Zählung ab 25.11.</div>`;
+      `(🎙️ ${nf.format(summe.dolmetsch || 0)} · 📷 ${nf.format(summe.foto || 0)} · 📝 ${nf.format(summe.text || 0)} · 📄 ${nf.format(summe.pdf || 0)}) – Zählung ab 25.11.</div>`;
   }
   /* Ab App-Version 19: Was neue Nutzer in der App tun - je Geraet und Tag
      einmal. Zeigt, an welcher Stelle sie aufhoeren. */

@@ -791,7 +791,7 @@ app.post("/api/stripe", async (req, res) => {
 const SCHRITTE = ["a_start", "a_ohne_name", "a_name", "a_chat", "a_dolmetsch", "a_foto", "a_text",
   "a_kurz", "a_mittel", "a_lang"];
 const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link", "uebersetzt",
-  "app_start", "dolmetsch", "foto", "text", "hilfe_person", ...SCHRITTE]);
+  "app_start", "dolmetsch", "foto", "text", "pdf", "hilfe_person", ...SCHRITTE]);
 
 /* Einmal pro Tag und Geraet (bzw. Adresse) zaehlen - fuer "App geoeffnet"
    und "hat eine Hilfe benutzt". Gemerkt wird nur ein gekuerzter Hash bis
@@ -1338,7 +1338,7 @@ async function claude(prompt) {
 
 /* Wie claude(), aber mit einem Bild davor: dasselbe Modell kann sehen,
    liest also Text aus einem Foto und uebersetzt ihn in einem Zug. */
-async function claudeBild(daten, mime, prompt) {
+async function claudeBild(daten, mime, prompt, maxTokens = 1500) {
   if (!API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -1349,9 +1349,12 @@ async function claudeBild(daten, mime, prompt) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1500,
+      max_tokens: maxTokens,
       messages: [{ role: "user", content: [
-        { type: "image", source: { type: "base64", media_type: mime, data: daten } },
+        /* PDFs (auch eingescannte) liest die KI direkt als Dokument. */
+        mime === "application/pdf"
+          ? { type: "document", source: { type: "base64", media_type: mime, data: daten } }
+          : { type: "image", source: { type: "base64", media_type: mime, data: daten } },
         { type: "text", text: prompt },
       ] }],
     }),
@@ -2237,6 +2240,46 @@ Antworte NUR mit JSON, ohne Markdown: {"original":"<gelesener Text>","uebersetzt
   } catch (err) {
     console.error("Foto-Text fehlgeschlagen:", err.message);
     res.status(502).json({ error: "Foto konnte nicht gelesen werden" });
+  }
+});
+
+/* PDF aus dem Teilen-Menue (Brief, Rechnung, Vertrag ...): lesen,
+   uebersetzen, erklaeren - wie ein Foto, aber als Dokument. Hoechstens
+   8 MB und 10 Seiten, damit Kosten und Wartezeit im Rahmen bleiben.
+   Zaehlt aufs Foto-Kontingent. */
+const PDF_MAX_SEITEN = 10;
+app.post("/api/pdf-text", express.json({ limit: "12mb" }), async (req, res) => {
+  const pdf = String(req.body?.pdf || "");
+  const lang = clean(req.body?.lang);
+  const wer = String(req.body?.device || req.ip).slice(0, 60);
+  if (!pdf || !lang || !/^[A-Za-z0-9+/=]+$/.test(pdf)) return res.status(400).json({ error: "Angaben unvollstaendig" });
+  if (pdf.length > 11_000_000) return res.status(413).json({ error: "zu_gross" });
+  const roh = Buffer.from(pdf, "base64");
+  if (roh.subarray(0, 5).toString("latin1") !== "%PDF-") return res.status(400).json({ error: "kein_pdf" });
+  /* Seiten grob zaehlen ("/Type /Page", nicht "/Pages") - reicht als Bremse. */
+  const seiten = (roh.toString("latin1").match(/\/Type\s*\/Page(?![s\w])/g) || []).length;
+  if (seiten > PDF_MAX_SEITEN) return res.status(413).json({ error: "zu_viele_seiten", seiten });
+  if (!take(`foto:${wer}`, 10, 10 * 60 * 1000)) return res.status(429).json({ error: "Zu schnell" });
+  if (!(await gratisErlaubt(req, "foto"))) return res.status(402).json({ error: "gratis_aus", grenze: GRATIS_PRO_TAG.foto });
+  if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
+  const ziel = LANG_NAMES[lang] || lang;
+  const prompt = `Dieses PDF wurde aus einer anderen App geteilt (z. B. ein Brief vom Amt, eine Rechnung, ein Vertrag oder ein Formular). Lies den Text und uebersetze ihn vollstaendig und gut lesbar nach ${ziel} (${lang}) - Absaetze und Aufzaehlungen beibehalten, Kopf- und Fusszeilen, die sich auf jeder Seite wiederholen, nur einmal. Schreibe ausserdem eine kurze, einfache Erklaerung auf ${ziel}: Worum geht es, was muss der Leser tun oder beachten? Nenne Fristen und Betraege ausdruecklich. Wenn eine Zahl, ein Datum oder ein Betrag schlecht lesbar ist, schreibe das dazu.
+Antworte NUR mit JSON, ohne Markdown: {"sprache":"<Sprachcode des Originals>","original":"<die ersten rund 600 Zeichen des Originaltexts>","uebersetzt":"<vollstaendiger Text auf ${lang}>","erklaerung":"<kurze Erklaerung auf ${lang}>"}`;
+  try {
+    const { result: out, usage } = await claudeBild(pdf, "application/pdf", prompt, 6000);
+    store.logUsage({ room: "__pdf__", target: lang, chars: Math.max(1, String(out.uebersetzt || "").length),
+      inTokens: usage.inTokens, outTokens: usage.outTokens }).catch(() => {});
+    zaehleHilfe("pdf", req);
+    res.json({
+      sprache: clean(out.sprache) || "",
+      original: String(out.original || "").slice(0, 1500),
+      uebersetzt: String(out.uebersetzt || "").slice(0, 20000),
+      erklaerung: String(out.erklaerung || "").slice(0, 2500),
+      seiten,
+    });
+  } catch (err) {
+    console.error("PDF-Text fehlgeschlagen:", err.message);
+    res.status(502).json({ error: "PDF konnte nicht gelesen werden" });
   }
 });
 
