@@ -16,14 +16,14 @@
 <meta property="og:url" content="https://diralo.app/">
 <meta property="og:title" content="Diralo – Free Interpreter, Photo and Chat Translator">
 <meta property="og:description" content="Talk to anyone in your own language: a live interpreter for conversations, translate photos and texts, and chat with automatic translation. Free Android app and web app.">
-<meta property="og:image" content="https://diralo.app/og-image.png">
+<meta property="og:image" content="https://diralo.app/og-image-v2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Diralo — chat in your language, they read in theirs">
+<meta property="og:image:alt" content="Diralo – your interpreter in your pocket: interpreter, photo, text, chat and calls with live subtitles">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Diralo – Free Interpreter, Photo and Chat Translator">
 <meta name="twitter:description" content="Talk to anyone in your own language: a live interpreter for conversations, translate photos and texts, and chat with automatic translation. Free Android app and web app.">
-<meta name="twitter:image" content="https://diralo.app/og-image.png">
+<meta name="twitter:image" content="https://diralo.app/og-image-v2.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-192-v2.png">
@@ -81,6 +81,29 @@
     font-size:15px; font-weight:500;
   }
 
+  /* Oberer Teil im App-Stil */
+  .hero { background:linear-gradient(160deg,#122036 0%,#1b2f4d 100%); color:#fff; border-radius:22px;
+    padding:20px 18px 0; overflow:hidden; text-align:center; }
+  .hero .brandline { justify-content:center; }
+  .hero .brandline .wort { color:#fff; }
+  .hero-titel { margin:14px 0 0; font-size:29px; line-height:1.15; font-weight:600; color:#E3B23C; letter-spacing:-.01em; }
+  .hero-text { margin:10px auto 0; max-width:400px; font-size:15px; line-height:1.4; color:#D5DCEA; }
+  .hero .playbadge { margin:16px auto 0; background:#000; border:1px solid rgba(255,255,255,.25); }
+  .hero-handy { margin:20px auto 0; width:252px; max-width:100%; background:#F4F6FB; border:9px solid #0b1324; border-bottom:none;
+    border-radius:30px 30px 0 0; padding:12px 12px 16px; box-shadow:0 -6px 30px rgba(0,0,0,.35); color:#1B2535; }
+  .hh-kopf { display:flex; align-items:center; gap:7px; font-weight:600; font-size:15px; margin-bottom:10px; }
+  .hh-kopf img { height:20px; }
+  .hh-gold { background:#E3B23C; color:#122036; border-radius:12px; padding:11px; font-weight:600; font-size:14px; }
+  .hh-reihe { display:flex; gap:7px; margin-top:7px; }
+  .hh-knopf { flex:1; min-width:0; background:#fff; border:1px solid #E7EBF2; border-radius:11px; padding:9px 3px; font-size:12px; font-weight:500;
+    letter-spacing:-.01em; overflow-wrap:anywhere; }
+  .feat-titel { margin:22px 0 8px; font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .feat-liste { display:flex; flex-direction:column; gap:8px; }
+  .feat { display:flex; gap:12px; align-items:flex-start; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; }
+  .feat .fi { font-size:22px; line-height:1.2; }
+  .feat b { display:block; font-size:15px; font-weight:600; color:var(--ink); }
+  .feat span:not(.fi) { display:block; font-size:13.5px; line-height:1.35; color:var(--muted); margin-top:2px; }
+  .web-titel { margin:24px 0 0; font-size:15px; font-weight:600; color:var(--ink); }
   .freebadge {
     display:inline-block; margin:12px 0 0; padding:4px 12px;
     background:#E7F0E4; color:#3E6B33; border-radius:999px;
@@ -644,20 +667,34 @@
         <button id="einlMehr" class="einl-mehr" type="button"></button>
       </div>
     </div>
-    <div class="brandline"><img src="/brand/logo-mark.svg" alt=""><span class="wort">Diralo</span></div>
-    <p class="sub" id="t-tagline"></p>
+    <!-- Oberer Teil im Stil der App (dunkelblau/gold): was Diralo kann,
+         Handy-Bild, Play-Store-Knopf. Der Web-Chat folgt darunter. -->
+    <div class="hero">
+      <div class="brandline hell"><img src="/brand/logo-mark.svg" alt=""><span class="wort">Diralo</span></div>
+      <h1 class="hero-titel" data-t="heroTitel"></h1>
+      <p class="hero-text" data-t="heroText"></p>
+      <a id="playTop" class="playbadge hide" target="_blank" rel="noopener" href="https://play.google.com/store/apps/details?id=app.diralo.twa">
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M4 2.5v19l10-9.5L4 2.5zm11.4 10.8 2.6 2.5-11 6.2 8.4-8.7zm0-2.6L7 2l11 6.2-2.6 2.5zM19.3 9l2.7 1.5c.8.5.8 1.6 0 2.1L19.3 15l-2.9-3 2.9-3z"/></svg>
+        <span class="pb-text"><small id="t-playKlein"></small><b>Google Play</b></span>
+      </a>
+      <div class="hero-handy" aria-hidden="true">
+        <div class="hh-kopf"><img src="/brand/logo-mark.svg" alt=""><span>Diralo</span></div>
+        <div class="hh-gold">🎙️ <span data-t="fDolm"></span></div>
+        <div class="hh-reihe"><div class="hh-knopf">📷 <span data-t="fFoto"></span></div><div class="hh-knopf">📝 <span data-t="fText"></span></div></div>
+        <div class="hh-reihe"><div class="hh-knopf">💬 <span data-t="fChat"></span></div><div class="hh-knopf">📞 <span data-t="fAnruf"></span></div></div>
+      </div>
+    </div>
 
-    <!-- Nimmt gleich oben den Zweifel "kostet das was?" - ohne eine
-         Preistabelle vor die Nase zu setzen. Der Preis kommt spaeter, wenn
-         das Kontingent erreicht ist. -->
-    <p class="freebadge" id="t-freeStart"></p>
+    <p class="feat-titel" data-t="featTitel"></p>
+    <div class="feat-liste">
+      <div class="feat"><span class="fi">🎙️</span><div><b data-t="fDolm"></b><span data-t="fDolmT"></span></div></div>
+      <div class="feat"><span class="fi">📷</span><div><b data-t="fFoto"></b><span data-t="fFotoT"></span></div></div>
+      <div class="feat"><span class="fi">📝</span><div><b data-t="fText"></b><span data-t="fTextT"></span></div></div>
+      <div class="feat"><span class="fi">💬</span><div><b data-t="fChat"></b><span data-t="fChatT"></span></div></div>
+      <div class="feat"><span class="fi">📞</span><div><b data-t="fAnruf"></b><span data-t="fAnrufT"></span></div></div>
+    </div>
 
-    <!-- Auffaelliger Play-Store-Knopf oben (nur Android, nicht in der
-         installierten Web-App) - wie das offizielle Abzeichen. -->
-    <a id="playTop" class="playbadge hide" target="_blank" rel="noopener" href="https://play.google.com/store/apps/details?id=app.diralo.twa">
-      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M4 2.5v19l10-9.5L4 2.5zm11.4 10.8 2.6 2.5-11 6.2 8.4-8.7zm0-2.6L7 2l11 6.2-2.6 2.5zM19.3 9l2.7 1.5c.8.5.8 1.6 0 2.1L19.3 15l-2.9-3 2.9-3z"/></svg>
-      <span class="pb-text"><small id="t-playKlein"></small><b>Google Play</b></span>
-    </a>
+    <p class="web-titel" data-t="webTitel"></p>
 
     <!-- Kleines Beispiel, das die Uebersetzung sofort zeigt - bewusst auf
          Englisch, weil der meiste Zulauf ueber englische Videos kommt. So
@@ -1096,6 +1133,7 @@ function applyLanguage(code) {
     const el = $("t-" + key);
     if (el) el.textContent = L.t(key);
   }
+  for (const el of document.querySelectorAll("[data-t]")) el.textContent = L.t(el.dataset.t);
   $("name").placeholder = L.t("namePlaceholder");
   $("room").placeholder = L.t("roomPlaceholder");
   $("enter").textContent = L.t("enter");
