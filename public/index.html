@@ -1,28 +1,28 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#E4E5E9" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14161B" media="(prefers-color-scheme: dark)">
 <meta name="robots" content="index, follow">
-<title>Diralo — Chat in your language, they read in theirs</title>
-<meta name="description" content="Free translation chat: everyone writes in their own language and reads in theirs. No account, nothing to install. Made for international couples, families and friends across a language barrier.">
+<title>Diralo – Free Interpreter, Photo and Chat Translator</title>
+<meta name="description" content="Talk to anyone in your own language: a live interpreter for conversations, translate photos and texts, and chat with automatic translation. Free Android app and web app.">
 <link rel="canonical" href="https://diralo.app/">
 <!-- Social-Vorschau: sorgt dafuer, dass ein geteilter Link (WhatsApp,
      TikTok-Bio, Facebook, X ...) mit Titel, Text und Bild erscheint. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Diralo">
 <meta property="og:url" content="https://diralo.app/">
-<meta property="og:title" content="Diralo — Chat in your language, they read in theirs">
-<meta property="og:description" content="Free translation chat: everyone writes in their own language and reads in theirs. No account, nothing to install.">
+<meta property="og:title" content="Diralo – Free Interpreter, Photo and Chat Translator">
+<meta property="og:description" content="Talk to anyone in your own language: a live interpreter for conversations, translate photos and texts, and chat with automatic translation. Free Android app and web app.">
 <meta property="og:image" content="https://diralo.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Diralo — chat in your language, they read in theirs">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Diralo — Chat in your language, they read in theirs">
-<meta name="twitter:description" content="Free translation chat: everyone writes in their own language and reads in theirs. No account, nothing to install.">
+<meta name="twitter:title" content="Diralo – Free Interpreter, Photo and Chat Translator">
+<meta name="twitter:description" content="Talk to anyone in your own language: a live interpreter for conversations, translate photos and texts, and chat with automatic translation. Free Android app and web app.">
 <meta name="twitter:image" content="https://diralo.app/og-image.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
@@ -933,7 +933,10 @@ const langAusLink = (() => {
     return l && LANGS.some(([c]) => c === l) ? l : "";
   } catch { return ""; }
 })();
-$("lang").value = langAusLink || saved.lang || guessLang();
+/* Sprachseite (diralo.app/pt/ ...): der Server setzt SEITEN_SPRACHE.
+   Eine schon gewaehlte Sprache geht vor - nur Neue und Google sehen die
+   Seite in der Sprache der Adresse. */
+$("lang").value = langAusLink || saved.lang || window.SEITEN_SPRACHE || guessLang();
 
 /* Ueber einen Einladungslink gekommen? Dann steht der Chat schon fest.
    Das Feld bleibt sichtbar, damit man sieht, wo man landet - aber es

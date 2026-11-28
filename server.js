@@ -4,6 +4,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { readFileSync } from "fs";
 import os from "os";
 import crypto from "crypto";
 import webpush from "web-push";
@@ -936,8 +937,68 @@ app.get("/", (req, res) => {
     }
   }
   if (!istIntern(req)) zaehle("besuch");
-  res.sendFile(join(__dirname, "public", "index.html"));
+  res.type("html").send(startseite(""));
 });
+
+/* --------------------------------------------------------------------
+   Sprachseiten fuer Google
+
+   diralo.app/pt/, /es/, /de/ sind dieselbe Startseite, aber mit Titel,
+   Beschreibung und Sprache im Kopf - so findet Google Diralo auch auf
+   Portugiesisch, Spanisch und Deutsch. Die Fassungen verweisen
+   gegenseitig aufeinander (hreflang); Englisch ist die Hauptadresse.
+-------------------------------------------------------------------- */
+const SEITEN = {
+  "": { html: "en", app: "", pfad: "/",
+    titel: "Diralo – Free Interpreter, Photo and Chat Translator",
+    text: "Talk to anyone in your own language: a live interpreter for conversations, translate photos and texts, and chat with automatic translation. Free Android app and web app." },
+  pt: { html: "pt-PT", app: "pt-PT", pfad: "/pt/",
+    titel: "Diralo – Intérprete, Tradutor de Fotos e Chat Grátis",
+    text: "Fale com qualquer pessoa na sua língua: intérprete ao vivo para conversas, tradução de fotos e textos e chat com tradução automática. App Android grátis e na web." },
+  es: { html: "es", app: "es", pfad: "/es/",
+    titel: "Diralo – Intérprete, Traductor de Fotos y Chat Gratis",
+    text: "Habla con cualquiera en tu idioma: intérprete en vivo para conversaciones, traduce fotos y textos y chatea con traducción automática. App Android gratis y en la web." },
+  de: { html: "de", app: "de", pfad: "/de/",
+    titel: "Diralo – Kostenloser Dolmetscher, Foto- und Chat-Übersetzer",
+    text: "Sprich mit jedem in deiner Sprache: Live-Dolmetscher für Gespräche, Fotos und Texte übersetzen und Chat mit automatischer Übersetzung. Kostenlose Android-App und im Browser." },
+};
+const SEITE_BASIS = "https://diralo.app";
+let indexVorlage = null;
+const seitenCache = new Map();
+function startseite(k) {
+  if (seitenCache.has(k)) return seitenCache.get(k);
+  if (!indexVorlage) indexVorlage = readFileSync(join(__dirname, "public", "index.html"), "utf8");
+  const s = SEITEN[k], en = SEITEN[""];
+  const url = SEITE_BASIS + s.pfad;
+  const attr = (x) => String(x).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  const alternativen = Object.values(SEITEN).map((x) =>
+    `<link rel="alternate" hreflang="${x.html === "en" ? "en" : x.html.slice(0, 2)}" href="${SEITE_BASIS}${x.pfad}">`).join("\n") +
+    `\n<link rel="alternate" hreflang="x-default" href="${SEITE_BASIS}/">`;
+  const app = {
+    "@context": "https://schema.org", "@type": "SoftwareApplication",
+    name: "Diralo", description: s.text, url, inLanguage: s.html,
+    operatingSystem: "Android, Web", applicationCategory: "CommunicationApplication",
+    installUrl: "https://play.google.com/store/apps/details?id=app.diralo.twa",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+  };
+  let h = indexVorlage
+    .replace('<html lang="en">', `<html lang="${s.html}">`)
+    .split(en.titel).join(attr(s.titel))
+    .split(en.text).join(attr(s.text))
+    .replace('<link rel="canonical" href="https://diralo.app/">', `<link rel="canonical" href="${url}">`)
+    .replace('<meta property="og:url" content="https://diralo.app/">', `<meta property="og:url" content="${url}">`)
+    .replace("</head>", alternativen + "\n" +
+      `<script type="application/ld+json">${JSON.stringify(app).replace(/</g, "\\u003c")}</script>\n` +
+      (s.app ? `<script>window.SEITEN_SPRACHE = ${JSON.stringify(s.app)};</script>\n` : "") + "</head>");
+  seitenCache.set(k, h);
+  return h;
+}
+app.get(/^\/(pt|es|de)\/?$/, (req, res) => {
+  if (!req.path.endsWith("/")) return res.redirect(301, req.path + "/");
+  if (!istIntern(req)) zaehle("besuch");
+  res.type("html").send(startseite(req.params[0]));
+});
+app.get(/^\/en\/?$/, (_req, res) => res.redirect(301, "/"));
 
 /* Zwei Dinge weiss nur der Browser: ob jemand ueber einen Einladungslink
    kam und ob er auf Einladen gedrueckt hat. */
