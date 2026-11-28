@@ -788,10 +788,13 @@ app.post("/api/stripe", async (req, res) => {
 /* Schritte in der Android-App (ab Version 19): Wo hoeren neue Nutzer
    auf? Je Geraet und Tag hoechstens einmal - nur "ist passiert", keine
    Inhalte, keine Kennung in der Datenbank. */
-const SCHRITTE = ["a_start", "a_ohne_name", "a_name", "a_chat", "a_dolmetsch", "a_foto", "a_text",
+const SCHRITTE = ["a_start", "a_ohne_name", "a_name", "a_name_frage", "a_chat", "a_dolmetsch", "a_foto", "a_text",
   "a_kurz", "a_mittel", "a_lang"];
 const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link", "uebersetzt",
   "app_start", "dolmetsch", "foto", "text", "pdf", "hilfe_person", ...SCHRITTE,
+  /* Gratis-Grenze erreicht (Kaufangebot erscheint): je Art jedes Mal,
+     dazu einmal pro Tag die Person. */
+  "grenze_dolmetsch", "grenze_foto", "grenze_text", "grenze_person",
   /* A/B-Test der Startseiten-Botschaft (siehe index.html abVariante). */
   ...["a", "b"].flatMap((v) => ["besuch", "play", "chat", "demo"].map((x) => `ab:${v}:${x}`))]);
 
@@ -2114,7 +2117,12 @@ async function gratisErlaubt(req, art) {
   if (device && EIGEN.geraete.has(device)) return true;
   if (device && await hatPlus(device, req.body?.raeume)) return true;
   const wer = device || req.ip;
-  return take(`gratis:${art}:${wer}`, GRATIS_PRO_TAG[art], 24 * 60 * 60 * 1000);
+  const ok = take(`gratis:${art}:${wer}`, GRATIS_PRO_TAG[art], 24 * 60 * 60 * 1000);
+  if (!ok && !istIntern(req)) {
+    zaehle(`grenze_${art}`);
+    if (einmalHeute("grenze", wer)) zaehle("grenze_person");
+  }
+  return ok;
 }
 
 /* Natuerliche Stimme (Google Cloud TTS). POST liefert eine Kennung, GET

@@ -106,6 +106,9 @@ const TEXTE = {
     inChatSenden: "📎 Stattdessen in einen Chat senden",
     tippTeilen: "💡 Tipp: In jeder App (Chat, E-Mail, Galerie) einen Brief, ein Foto oder PDF teilen → Diralo wählen. Du bekommst sofort Übersetzung und Erklärung.",
     tippOk: "Verstanden",
+    nameFrage: "Wie heißt du?",
+    nameFrageText: "So sehen dich die anderen im Chat.",
+    weiterKnopf: "Weiter",
     anrufSprache: "📞 Sprachanruf",
     anrufVideo: "🎥 Videoanruf",
     anrufKommt: "ruft dich an …",
@@ -333,6 +336,9 @@ const TEXTE = {
     inChatSenden: "📎 Enviar antes para um chat",
     tippTeilen: "💡 Dica: em qualquer app (chat, e-mail, galeria) partilhe uma carta, foto ou PDF → escolha o Diralo. Recebe logo a tradução e a explicação.",
     tippOk: "Percebi",
+    nameFrage: "Como se chama?",
+    nameFrageText: "É assim que os outros o veem no chat.",
+    weiterKnopf: "Continuar",
     anrufSprache: "📞 Chamada de voz",
     anrufVideo: "🎥 Videochamada",
     anrufKommt: "está a ligar …",
@@ -560,6 +566,9 @@ const TEXTE = {
     inChatSenden: "📎 Send to a chat instead",
     tippTeilen: "💡 Tip: In any app (chat, email, gallery), share a letter, photo or PDF → pick Diralo. You get the translation and an explanation right away.",
     tippOk: "Got it",
+    nameFrage: "What's your name?",
+    nameFrageText: "This is how others see you in the chat.",
+    weiterKnopf: "Continue",
     anrufSprache: "📞 Voice call",
     anrufVideo: "🎥 Video call",
     anrufKommt: "is calling …",
@@ -787,6 +796,9 @@ const TEXTE = {
     inChatSenden: "📎 Enviar a un chat en su lugar",
     tippTeilen: "💡 Consejo: en cualquier app (chat, correo, galería) comparte una carta, foto o PDF → elige Diralo. Recibes la traducción y la explicación al instante.",
     tippOk: "Entendido",
+    nameFrage: "¿Cómo te llamas?",
+    nameFrageText: "Así te verán los demás en el chat.",
+    weiterKnopf: "Continuar",
     anrufSprache: "📞 Llamada de voz",
     anrufVideo: "🎥 Videollamada",
     anrufKommt: "te está llamando …",
@@ -1014,6 +1026,9 @@ const TEXTE = {
     inChatSenden: "📎 Envoyer plutôt dans un chat",
     tippTeilen: "💡 Astuce : dans n'importe quelle app (chat, e-mail, galerie), partage une lettre, une photo ou un PDF → choisis Diralo. Tu obtiens tout de suite la traduction et l'explication.",
     tippOk: "Compris",
+    nameFrage: "Comment t'appelles-tu ?",
+    nameFrageText: "C'est ainsi que les autres te verront dans le chat.",
+    weiterKnopf: "Continuer",
     anrufSprache: "📞 Appel vocal",
     anrufVideo: "🎥 Appel vidéo",
     anrufKommt: "t'appelle …",
@@ -1241,6 +1256,9 @@ const TEXTE = {
     inChatSenden: "📎 Invia invece in una chat",
     tippTeilen: "💡 Suggerimento: in qualsiasi app (chat, e-mail, galleria) condividi una lettera, una foto o un PDF → scegli Diralo. Ricevi subito traduzione e spiegazione.",
     tippOk: "Capito",
+    nameFrage: "Come ti chiami?",
+    nameFrageText: "Così ti vedranno gli altri nella chat.",
+    weiterKnopf: "Continua",
     anrufSprache: "📞 Chiamata vocale",
     anrufVideo: "🎥 Videochiamata",
     anrufKommt: "ti sta chiamando …",
@@ -1468,6 +1486,9 @@ const TEXTE = {
     inChatSenden: "📎 代わりにチャットに送る",
     tippTeilen: "💡 ヒント：どのアプリ（チャット・メール・ギャラリー）でも、手紙・写真・PDFを共有 → Diraloを選択。すぐに翻訳と説明が表示されます。",
     tippOk: "了解",
+    nameFrage: "お名前は？",
+    nameFrageText: "チャットで相手に表示される名前です。",
+    weiterKnopf: "次へ",
     anrufSprache: "📞 音声通話",
     anrufVideo: "🎥 ビデオ通話",
     anrufKommt: "から着信中…",
@@ -1695,6 +1716,9 @@ const TEXTE = {
     inChatSenden: "📎 इसके बजाय चैट में भेजें",
     tippTeilen: "💡 टिप: किसी भी ऐप (चैट, ईमेल, गैलरी) में चिट्ठी, फ़ोटो या PDF शेयर करें → Diralo चुनें। आपको तुरंत अनुवाद और मतलब मिलेगा।",
     tippOk: "समझ गया",
+    nameFrage: "आपका नाम क्या है?",
+    nameFrageText: "चैट में दूसरे आपको इसी नाम से देखेंगे।",
+    weiterKnopf: "आगे",
     anrufSprache: "📞 वॉइस कॉल",
     anrufVideo: "🎥 वीडियो कॉल",
     anrufKommt: "कॉल कर रहे हैं …",
@@ -1922,6 +1946,9 @@ const TEXTE = {
     inChatSenden: "📎 اس کے بجائے چیٹ میں بھیجیں",
     tippTeilen: "💡 مشورہ: کسی بھی ایپ (چیٹ، ای میل، گیلری) میں خط، تصویر یا PDF شیئر کریں → Diralo منتخب کریں۔ آپ کو فوراً ترجمہ اور وضاحت ملے گی۔",
     tippOk: "سمجھ گیا",
+    nameFrage: "آپ کا نام کیا ہے؟",
+    nameFrageText: "چیٹ میں دوسرے آپ کو اسی نام سے دیکھیں گے۔",
+    weiterKnopf: "آگے",
     anrufSprache: "📞 وائس کال",
     anrufVideo: "🎥 ویڈیو کال",
     anrufKommt: "کال کر رہے ہیں …",
@@ -2149,6 +2176,9 @@ const TEXTE = {
     inChatSenden: "📎 এর বদলে চ্যাটে পাঠান",
     tippTeilen: "💡 টিপ: যেকোনো অ্যাপে (চ্যাট, ইমেইল, গ্যালারি) চিঠি, ছবি বা PDF শেয়ার করুন → Diralo বেছে নিন। সঙ্গে সঙ্গে অনুবাদ ও ব্যাখ্যা পাবেন।",
     tippOk: "বুঝেছি",
+    nameFrage: "আপনার নাম কী?",
+    nameFrageText: "চ্যাটে অন্যরা আপনাকে এই নামে দেখবে।",
+    weiterKnopf: "এগিয়ে যান",
     anrufSprache: "📞 ভয়েস কল",
     anrufVideo: "🎥 ভিডিও কল",
     anrufKommt: "কল করছেন …",
@@ -2376,6 +2406,9 @@ const TEXTE = {
     inChatSenden: "📎 ਇਸ ਦੀ ਬਜਾਏ ਚੈਟ ਵਿੱਚ ਭੇਜੋ",
     tippTeilen: "💡 ਸੁਝਾਅ: ਕਿਸੇ ਵੀ ਐਪ (ਚੈਟ, ਈਮੇਲ, ਗੈਲਰੀ) ਵਿੱਚ ਚਿੱਠੀ, ਫ਼ੋਟੋ ਜਾਂ PDF ਸ਼ੇਅਰ ਕਰੋ → Diralo ਚੁਣੋ। ਤੁਹਾਨੂੰ ਤੁਰੰਤ ਅਨੁਵਾਦ ਅਤੇ ਵਿਆਖਿਆ ਮਿਲੇਗੀ।",
     tippOk: "ਸਮਝ ਗਿਆ",
+    nameFrage: "ਤੁਹਾਡਾ ਨਾਮ ਕੀ ਹੈ?",
+    nameFrageText: "ਚੈਟ ਵਿੱਚ ਦੂਜੇ ਤੁਹਾਨੂੰ ਇਸੇ ਨਾਮ ਨਾਲ ਦੇਖਣਗੇ।",
+    weiterKnopf: "ਅੱਗੇ",
     anrufSprache: "📞 ਵੌਇਸ ਕਾਲ",
     anrufVideo: "🎥 ਵੀਡੀਓ ਕਾਲ",
     anrufKommt: "ਕਾਲ ਕਰ ਰਹੇ ਹਨ …",
@@ -2603,6 +2636,9 @@ const TEXTE = {
     inChatSenden: "📎 बरु च्याटमा पठाउनुहोस्",
     tippTeilen: "💡 सुझाव: कुनै पनि एप (च्याट, इमेल, ग्यालरी) मा चिठी, फोटो वा PDF सेयर गर्नुहोस् → Diralo छान्नुहोस्। तुरुन्तै अनुवाद र व्याख्या पाउनुहुन्छ।",
     tippOk: "बुझेँ",
+    nameFrage: "तपाईंको नाम के हो?",
+    nameFrageText: "च्याटमा अरूले तपाईंलाई यही नामले देख्छन्।",
+    weiterKnopf: "अगाडि",
     anrufSprache: "📞 भ्वाइस कल",
     anrufVideo: "🎥 भिडियो कल",
     anrufKommt: "कल गर्दै हुनुहुन्छ …",
@@ -3400,6 +3436,35 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
   const [sprachWahl, setSprachWahl] = useState(false);
   const [benennen, setBenennen] = useState(null);   // { code, name }
   const kannLos = name.trim().length > 0;
+  /* Name erst fragen, wenn man ihn braucht (Chat starten oder beitreten).
+     Vorher waren die Chat-Knoepfe ohne Namen grau und reagierten nicht -
+     dort hoerte die Haelfte der Neuen auf. Nach der Eingabe laeuft die
+     gemerkte Aktion automatisch weiter. */
+  const [nameFrage, setNameFrage] = useState(null);   // gemerkte Aktion
+  const [nameNeu, setNameNeu] = useState("");
+  const nachName = useRef(null);
+  const mitName = (aktion) => {
+    if (kannLos) return true;
+    setNameNeu(""); setNameFrage(aktion);
+    schritt("a_name_frage", device);
+    return false;
+  };
+  useEffect(() => {
+    const a = nachName.current;
+    if (!kannLos || !a) return;
+    nachName.current = null;
+    if (a === "start") onStart();
+    else if (a === "gruppe") onGruppe();
+    else if (a === "join") onJoin(code);
+    else if (a.startsWith("c:")) onJoin(a.slice(2));
+  }, [kannLos]);
+  const nameFertig = () => {
+    const n = nameNeu.trim().slice(0, 40);
+    if (!n) return;
+    nachName.current = nameFrage;
+    setNameFrage(null);
+    setName(n);
+  };
   /* Einmaliger Tipp: Diralo steht im Teilen-Menue anderer Apps. */
   const [tippTeilen, setTippTeilen] = useState(false);
   useEffect(() => {
@@ -3463,9 +3528,9 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
             autoCapitalize="none" maxLength={60}
           />
           <Pressable
-            style={[s.btnGold, (!kannLos || !code.trim()) && s.btnAus]}
-            disabled={!kannLos || !code.trim()}
-            onPress={() => onJoin(code)}
+            style={[s.btnGold, !code.trim() && s.btnAus]}
+            disabled={!code.trim()}
+            onPress={() => mitName("join") && onJoin(code)}
           >
             <Text style={s.btnGoldTxt}>{t("beitreten")}</Text>
           </Pressable>
@@ -3476,15 +3541,15 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
         <Text style={s.wegTitel}>{t("neuTitel")}</Text>
         <Text style={s.wegText}>{t("neuText")}</Text>
         <Pressable
-          style={[s.btnPrimary, !kannLos && s.btnAus]}
-          disabled={!kannLos} onPress={onStart}
+          style={s.btnPrimary}
+          onPress={() => mitName("start") && onStart()}
         >
           <Text style={s.btnPrimaryTxt}>{t("neuerChat")}</Text>
         </Pressable>
         {/* Fuer Chefs: Gruppe anlegen, gleich benennen, dann einladen. */}
         <Pressable
-          style={[s.btnGruppe, !kannLos && s.btnAus]}
-          disabled={!kannLos} onPress={onGruppe}
+          style={s.btnGruppe}
+          onPress={() => mitName("gruppe") && onGruppe()}
         >
           <Text style={s.btnGruppeTxt}>👥 {t("gruppeErstellen")}</Text>
         </Pressable>
@@ -3508,8 +3573,8 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
             return (
               <View key={c.code} style={s.chatZeile}>
                 <Pressable
-                  style={[s.input, s.chatOffen, !kannLos && s.btnAus]}
-                  disabled={!kannLos} onPress={() => onJoin(c.code)}
+                  style={[s.input, s.chatOffen]}
+                  onPress={() => mitName("c:" + c.code) && onJoin(c.code)}
                   onLongPress={() => setBenennen({ code: c.code, name: c.name || "" })}
                 >
                   <View style={{ flex: 1 }}>
@@ -3544,6 +3609,22 @@ function Home({ name, setName, lang, setLang, device, unten, onStart, onGruppe, 
           <Pressable onPress={tippWeg} hitSlop={8}><Text style={[s.vorschauKnopf, { textAlign: "right" }]}>{t("tippOk")}</Text></Pressable>
         </View>
       )}
+
+      <Modal visible={Boolean(nameFrage)} transparent animationType="fade" onRequestClose={() => setNameFrage(null)}>
+        <Pressable style={s.modalHinten} onPress={() => setNameFrage(null)} />
+        <View style={s.benennenBox}>
+          <Text style={s.modalTitel}>{t("nameFrage")}</Text>
+          <Text style={s.chatCodeKlein}>{t("nameFrageText")}</Text>
+          <TextInput
+            style={[s.input, { marginTop: 10 }]} autoFocus maxLength={40}
+            value={nameNeu} onChangeText={setNameNeu} onSubmitEditing={nameFertig}
+            placeholder={t("nameBsp")} placeholderTextColor={FARBE.grau} returnKeyType="done"
+          />
+          <Pressable style={[s.btnPrimary, { marginTop: 12 }, !nameNeu.trim() && s.btnAus]} disabled={!nameNeu.trim()} onPress={nameFertig}>
+            <Text style={s.btnPrimaryTxt}>{t("weiterKnopf")}</Text>
+          </Pressable>
+        </View>
+      </Modal>
 
       <Modal visible={Boolean(benennen)} transparent animationType="fade" onRequestClose={() => setBenennen(null)}>
         <Pressable style={s.modalHinten} onPress={() => setBenennen(null)} />

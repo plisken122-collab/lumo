@@ -222,6 +222,15 @@ function zeichneTrichter(summe) {
       `Hilfen genutzt von ${nf.format(summe.hilfe_person || 0)} Personen ` +
       `(🎙️ ${nf.format(summe.dolmetsch || 0)} · 📷 ${nf.format(summe.foto || 0)} · 📝 ${nf.format(summe.text || 0)} · 📄 ${nf.format(summe.pdf || 0)}) – Zählung ab 25.11.</div>`;
   }
+  /* Ab 28.11.: Gratis-Grenze erreicht = Kaufangebot gesehen. */
+  if ((summe.grenze_person || 0) > 0) {
+    html += `<div class="quote" style="margin-top:10px">💶 Gratis-Grenze erreicht: ${nf.format(summe.grenze_person || 0)} Personen ` +
+      `(🎙️ ${nf.format(summe.grenze_dolmetsch || 0)} · 📷/📄 ${nf.format(summe.grenze_foto || 0)} · 📝 ${nf.format(summe.grenze_text || 0)} Mal) – Zählung ab 28.11.</div>`;
+  }
+  /* App: Namensabfrage erst beim Chat (ab v20) */
+  if ((summe.a_name_frage || 0) > 0) {
+    html += `<div class="quote">✍️ Nach Namen gefragt (beim Chat-Start, ab v20): ${nf.format(summe.a_name_frage || 0)}</div>`;
+  }
   /* A/B-Test der Startseiten-Botschaft (ab 28.11.) */
   if ((summe["ab:a:besuch"] || 0) + (summe["ab:b:besuch"] || 0) > 0) {
     const zeile = (v, name) => {
