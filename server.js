@@ -2264,7 +2264,7 @@ app.post("/api/pdf-text", express.json({ limit: "12mb" }), async (req, res) => {
   if (!take("hilfe:day", HILFE_PRO_TAG, 24 * 60 * 60 * 1000)) return res.status(429).json({ error: "Tagesgrenze" });
   const ziel = LANG_NAMES[lang] || lang;
   const prompt = `Dieses PDF wurde aus einer anderen App geteilt (z. B. ein Brief vom Amt, eine Rechnung, ein Vertrag oder ein Formular). Lies den Text und uebersetze ihn vollstaendig und gut lesbar nach ${ziel} (${lang}) - Absaetze und Aufzaehlungen beibehalten, Kopf- und Fusszeilen, die sich auf jeder Seite wiederholen, nur einmal. Schreibe ausserdem eine kurze, einfache Erklaerung auf ${ziel}: Worum geht es, was muss der Leser tun oder beachten? Nenne Fristen und Betraege ausdruecklich. Wenn eine Zahl, ein Datum oder ein Betrag schlecht lesbar ist, schreibe das dazu.
-Antworte NUR mit JSON, ohne Markdown: {"sprache":"<Sprachcode des Originals>","original":"<die ersten rund 600 Zeichen des Originaltexts>","uebersetzt":"<vollstaendiger Text auf ${lang}>","erklaerung":"<kurze Erklaerung auf ${lang}>"}`;
+Antworte NUR mit JSON, ohne Markdown: {"sprache":"<ISO-Sprachcode, in dem das PDF GESCHRIEBEN ist (z. B. pt), nicht ${lang}>","original":"<die ersten rund 600 Zeichen des Originaltexts>","uebersetzt":"<vollstaendiger Text auf ${lang}>","erklaerung":"<kurze Erklaerung auf ${lang}>"}`;
   try {
     const { result: out, usage } = await claudeBild(pdf, "application/pdf", prompt, 6000);
     store.logUsage({ room: "__pdf__", target: lang, chars: Math.max(1, String(out.uebersetzt || "").length),
