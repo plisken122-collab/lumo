@@ -1134,6 +1134,11 @@ function applyLanguage(code) {
     if (el) el.textContent = L.t(key);
   }
   for (const el of document.querySelectorAll("[data-t]")) el.textContent = L.t(el.dataset.t);
+  /* A/B-Test der ersten Botschaft (siehe abVariante). */
+  if (abVariante() === "b") {
+    document.querySelector(".hero-titel").textContent = L.t("heroTitelB");
+    document.querySelector(".hero-text").textContent = L.t("heroTextB");
+  }
   $("name").placeholder = L.t("namePlaceholder");
   $("room").placeholder = L.t("roomPlaceholder");
   $("enter").textContent = L.t("enter");
@@ -1272,6 +1277,43 @@ $("installLater").onclick = () => installBalkenWeg(true);
 if (!istIos() && !schonInstalliert()) { $("playLink").classList.remove("hide"); $("playTop").classList.remove("hide"); }
 $("playLink").href = playMitQuelle();
 $("playTop").href = playMitQuelle();
+
+/* --------------------------------------------------------------------
+   A/B-Test der ersten Botschaft: A = "Dein Dolmetscher in der Tasche",
+   B = "Du schreibst in deiner Sprache. Die anderen lesen in ihrer."
+   Jeder Browser bekommt einmal zufaellig A oder B und behaelt es.
+   Gezaehlt wird nur "Variante X: Besuch / Play-Klick / Chat / Demo" -
+   keine Kennung. ?ab=a oder ?ab=b erzwingt eine Variante (zum Pruefen).
+-------------------------------------------------------------------- */
+function abVariante() {
+  if (window.__ab) return window.__ab;
+  let v = "a";
+  try {
+    const q = new URLSearchParams(location.search).get("ab");
+    v = q === "a" || q === "b" ? q : localStorage.getItem("diralo-ab");
+    if (v !== "a" && v !== "b") v = Math.random() < 0.5 ? "a" : "b";
+    localStorage.setItem("diralo-ab", v);
+  } catch { v = "a"; }
+  return (window.__ab = v);
+}
+function abZaehl(art) {
+  try {
+    if (art === "besuch") {
+      const heute = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem("diralo-ab-tag") === heute) return;
+      localStorage.setItem("diralo-ab-tag", heute);
+    }
+    const body = JSON.stringify({ ereignis: `ab:${abVariante()}:${art}` });
+    if (navigator.sendBeacon) navigator.sendBeacon("/api/zaehl", new Blob([body], { type: "application/json" }));
+    else fetch("/api/zaehl", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
+  } catch {}
+}
+abZaehl("besuch");
+$("playTop").addEventListener("click", () => abZaehl("play"));
+$("playLink").addEventListener("click", () => abZaehl("play"));
+$("newChat").addEventListener("click", () => abZaehl("chat"));
+$("joinBtn").addEventListener("click", () => abZaehl("chat"));
+$("demoLanding").addEventListener("click", () => abZaehl("demo"));
 $("installGo").onclick = async () => {
   if (istAndroid()) {
     installBalkenWeg(true);

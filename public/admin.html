@@ -222,6 +222,16 @@ function zeichneTrichter(summe) {
       `Hilfen genutzt von ${nf.format(summe.hilfe_person || 0)} Personen ` +
       `(🎙️ ${nf.format(summe.dolmetsch || 0)} · 📷 ${nf.format(summe.foto || 0)} · 📝 ${nf.format(summe.text || 0)} · 📄 ${nf.format(summe.pdf || 0)}) – Zählung ab 25.11.</div>`;
   }
+  /* A/B-Test der Startseiten-Botschaft (ab 28.11.) */
+  if ((summe["ab:a:besuch"] || 0) + (summe["ab:b:besuch"] || 0) > 0) {
+    const zeile = (v, name) => {
+      const b = summe[`ab:${v}:besuch`] || 0, p = summe[`ab:${v}:play`] || 0;
+      const q = b ? Math.round((p / b) * 1000) / 10 : 0;
+      return `<b>${v.toUpperCase()}</b> ${name}: ${nf.format(b)} Besucher · ▶ Play ${nf.format(p)} (${q} %) · 💬 Chat ${nf.format(summe[`ab:${v}:chat`] || 0)} · Demo ${nf.format(summe[`ab:${v}:demo`] || 0)}`;
+    };
+    html += `<div class="quote" style="margin-top:10px"><b>A/B-Test Startseite (ab 28.11.)</b><br>` +
+      zeile("a", "„Dolmetscher in der Tasche“") + "<br>" + zeile("b", "„Du schreibst … die anderen lesen“") + `</div>`;
+  }
   /* Ab App-Version 19: Was neue Nutzer in der App tun - je Geraet und Tag
      einmal. Zeigt, an welcher Stelle sie aufhoeren. */
   if ((summe.a_start || 0) > 0) {

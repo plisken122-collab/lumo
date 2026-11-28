@@ -12,6 +12,8 @@ window.LUMO_T = (function () {
   const S = {
     de: {
       heroTitel: "Dein Dolmetscher in der Tasche",
+      heroTitelB: "Du schreibst in deiner Sprache. Die anderen lesen in ihrer.",
+      heroTextB: "Mit Familie, Kollegen und Nachbarn – jeder in seiner Sprache. Dazu Dolmetscher, Foto-Übersetzer und Anrufe mit Untertiteln. Kostenlos für Android, auch im Browser.",
       heroText: "Sprechen, lesen und schreiben mit jedem – jeder in seiner Sprache. Kostenlos für Android, auch im Browser.",
       featTitel: "Alles in einer App",
       fDolm: "Dolmetscher",
@@ -183,6 +185,8 @@ window.LUMO_T = (function () {
     },
     en: {
       heroTitel: "Your interpreter in your pocket",
+      heroTitelB: "You write in your language. They read in theirs.",
+      heroTextB: "With family, colleagues and neighbours – everyone in their own language. Plus interpreter, photo translation and calls with subtitles. Free on Android, also in your browser.",
       heroText: "Talk, read and chat with anyone – everyone in their own language. Free on Android, also in your browser.",
       featTitel: "Everything in one app",
       fDolm: "Interpreter",
@@ -354,6 +358,8 @@ window.LUMO_T = (function () {
     },
     "pt-PT": {
       heroTitel: "O seu intérprete no bolso",
+      heroTitelB: "Escreve na sua língua. Os outros leem na deles.",
+      heroTextB: "Com a família, colegas e vizinhos – cada um na sua língua. E ainda intérprete, tradução de fotos e chamadas com legendas. Grátis para Android, também no browser.",
       heroText: "Fale, leia e converse com qualquer pessoa – cada um na sua língua. Grátis para Android, também no browser.",
       featTitel: "Tudo numa só app",
       fDolm: "Intérprete",
@@ -525,6 +531,8 @@ window.LUMO_T = (function () {
     },
     "pt-BR": {
       heroTitel: "Seu intérprete no bolso",
+      heroTitelB: "Você escreve no seu idioma. Os outros leem no deles.",
+      heroTextB: "Com a família, colegas e vizinhos – cada um no seu idioma. E ainda intérprete, tradução de fotos e chamadas com legendas. Grátis para Android, também no navegador.",
       heroText: "Fale, leia e converse com qualquer pessoa – cada um no seu idioma. Grátis para Android, também no navegador.",
       featTitel: "Tudo em um só app",
       fDolm: "Intérprete",
@@ -696,6 +704,8 @@ window.LUMO_T = (function () {
     },
     es: {
       heroTitel: "Tu intérprete en el bolsillo",
+      heroTitelB: "Tú escribes en tu idioma. Los demás leen en el suyo.",
+      heroTextB: "Con familia, compañeros y vecinos – cada uno en su idioma. Además intérprete, traducción de fotos y llamadas con subtítulos. Gratis para Android, también en el navegador.",
       heroText: "Habla, lee y chatea con cualquiera – cada uno en su idioma. Gratis para Android, también en el navegador.",
       featTitel: "Todo en una sola app",
       fDolm: "Intérprete",
@@ -854,6 +864,8 @@ window.LUMO_T = (function () {
     },
     fr: {
       heroTitel: "Ton interprète dans la poche",
+      heroTitelB: "Tu écris dans ta langue. Les autres lisent dans la leur.",
+      heroTextB: "Avec ta famille, tes collègues et tes voisins – chacun dans sa langue. En plus : interprète, traduction de photos et appels sous-titrés. Gratuit sur Android, aussi dans le navigateur.",
       heroText: "Parle, lis et discute avec tout le monde – chacun dans sa langue. Gratuit sur Android, aussi dans le navigateur.",
       featTitel: "Tout dans une seule app",
       fDolm: "Interprète",
@@ -1012,6 +1024,8 @@ window.LUMO_T = (function () {
     },
     it: {
       heroTitel: "Il tuo interprete in tasca",
+      heroTitelB: "Tu scrivi nella tua lingua. Gli altri leggono nella loro.",
+      heroTextB: "Con famiglia, colleghi e vicini – ognuno nella sua lingua. In più interprete, traduzione di foto e chiamate con sottotitoli. Gratis su Android, anche nel browser.",
       heroText: "Parla, leggi e chatta con chiunque – ognuno nella sua lingua. Gratis su Android, anche nel browser.",
       featTitel: "Tutto in un'unica app",
       fDolm: "Interprete",
@@ -2063,6 +2077,8 @@ window.LUMO_T = (function () {
     },
     hi: {
       heroTitel: "आपकी जेब में आपका दुभाषिया",
+      heroTitelB: "आप अपनी भाषा में लिखते हैं। बाकी लोग अपनी भाषा में पढ़ते हैं।",
+      heroTextB: "परिवार, सहकर्मियों और पड़ोसियों के साथ – हर कोई अपनी भाषा में। साथ में दुभाषिया, फ़ोटो अनुवाद और सबटाइटल वाली कॉल। Android पर मुफ़्त, ब्राउज़र में भी।",
       heroText: "किसी से भी बात करें, पढ़ें और चैट करें – हर कोई अपनी भाषा में। Android पर मुफ़्त, ब्राउज़र में भी।",
       featTitel: "सब कुछ एक ही ऐप में",
       fDolm: "दुभाषिया",
@@ -2268,6 +2284,8 @@ window.LUMO_T = (function () {
     },
     ur: {
       heroTitel: "آپ کی جیب میں آپ کا ترجمان",
+      heroTitelB: "آپ اپنی زبان میں لکھتے ہیں۔ دوسرے اپنی زبان میں پڑھتے ہیں۔",
+      heroTextB: "خاندان، ساتھیوں اور پڑوسیوں کے ساتھ – ہر کوئی اپنی زبان میں۔ ساتھ میں ترجمان، تصویر کا ترجمہ اور سب ٹائٹل والی کالز۔ Android پر مفت، براؤزر میں بھی۔",
       heroText: "کسی سے بھی بات کریں، پڑھیں اور چیٹ کریں – ہر کوئی اپنی زبان میں۔ Android پر مفت، براؤزر میں بھی۔",
       featTitel: "سب کچھ ایک ہی ایپ میں",
       fDolm: "ترجمان",
@@ -2473,6 +2491,8 @@ window.LUMO_T = (function () {
     },
     bn: {
       heroTitel: "আপনার পকেটে আপনার দোভাষী",
+      heroTitelB: "আপনি নিজের ভাষায় লেখেন। অন্যরা পড়ে তাদের ভাষায়।",
+      heroTextB: "পরিবার, সহকর্মী ও প্রতিবেশীদের সাথে – প্রত্যেকে নিজের ভাষায়। সাথে দোভাষী, ছবি অনুবাদ ও সাবটাইটেলসহ কল। Android-এ বিনামূল্যে, ব্রাউজারেও।",
       heroText: "যে কারও সাথে কথা বলুন, পড়ুন ও চ্যাট করুন – প্রত্যেকে নিজের ভাষায়। Android-এ বিনামূল্যে, ব্রাউজারেও।",
       featTitel: "সবকিছু একটি অ্যাপে",
       fDolm: "দোভাষী",
@@ -2678,6 +2698,8 @@ window.LUMO_T = (function () {
     },
     pa: {
       heroTitel: "ਤੁਹਾਡੀ ਜੇਬ ਵਿੱਚ ਤੁਹਾਡਾ ਦੁਭਾਸ਼ੀਆ",
+      heroTitelB: "ਤੁਸੀਂ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਲਿਖਦੇ ਹੋ। ਦੂਜੇ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਪੜ੍ਹਦੇ ਹਨ।",
+      heroTextB: "ਪਰਿਵਾਰ, ਸਾਥੀਆਂ ਅਤੇ ਗੁਆਂਢੀਆਂ ਨਾਲ – ਹਰ ਕੋਈ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ। ਨਾਲ ਹੀ ਦੁਭਾਸ਼ੀਆ, ਫ਼ੋਟੋ ਅਨੁਵਾਦ ਅਤੇ ਸਬਟਾਈਟਲਾਂ ਵਾਲੀਆਂ ਕਾਲਾਂ। Android 'ਤੇ ਮੁਫ਼ਤ, ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਵੀ।",
       heroText: "ਕਿਸੇ ਨਾਲ ਵੀ ਗੱਲ ਕਰੋ, ਪੜ੍ਹੋ ਅਤੇ ਚੈਟ ਕਰੋ – ਹਰ ਕੋਈ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ। Android 'ਤੇ ਮੁਫ਼ਤ, ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਵੀ।",
       featTitel: "ਸਭ ਕੁਝ ਇੱਕੋ ਐਪ ਵਿੱਚ",
       fDolm: "ਦੁਭਾਸ਼ੀਆ",
@@ -2883,6 +2905,8 @@ window.LUMO_T = (function () {
     },
     ne: {
       heroTitel: "तपाईंको खल्तीमा तपाईंको दोभाषे",
+      heroTitelB: "तपाईं आफ्नो भाषामा लेख्नुहुन्छ। अरूले आफ्नो भाषामा पढ्छन्।",
+      heroTextB: "परिवार, सहकर्मी र छिमेकीसँग – सबै आफ्नै भाषामा। साथै दोभाषे, फोटो अनुवाद र सबटाइटलसहित कल। Android मा निःशुल्क, ब्राउजरमा पनि।",
       heroText: "जोसुकैसँग बोल्नुहोस्, पढ्नुहोस् र च्याट गर्नुहोस् – सबै आफ्नै भाषामा। Android मा निःशुल्क, ब्राउजरमा पनि।",
       featTitel: "सबै कुरा एउटै एपमा",
       fDolm: "दोभाषे",

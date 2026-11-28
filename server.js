@@ -791,7 +791,9 @@ app.post("/api/stripe", async (req, res) => {
 const SCHRITTE = ["a_start", "a_ohne_name", "a_name", "a_chat", "a_dolmetsch", "a_foto", "a_text",
   "a_kurz", "a_mittel", "a_lang"];
 const ZAEHLBAR = new Set(["besuch", "eingetreten", "nachricht", "einladung", "ueber_link", "uebersetzt",
-  "app_start", "dolmetsch", "foto", "text", "pdf", "hilfe_person", ...SCHRITTE]);
+  "app_start", "dolmetsch", "foto", "text", "pdf", "hilfe_person", ...SCHRITTE,
+  /* A/B-Test der Startseiten-Botschaft (siehe index.html abVariante). */
+  ...["a", "b"].flatMap((v) => ["besuch", "play", "chat", "demo"].map((x) => `ab:${v}:${x}`))]);
 
 /* Einmal pro Tag und Geraet (bzw. Adresse) zaehlen - fuer "App geoeffnet"
    und "hat eine Hilfe benutzt". Gemerkt wird nur ein gekuerzter Hash bis
@@ -1005,7 +1007,7 @@ app.get(/^\/en\/?$/, (_req, res) => res.redirect(301, "/"));
 app.post("/api/zaehl", (req, res) => {
   if (!take(`zaehl:${req.ip}`, 60, 60 * 1000)) return res.status(429).end();
   const e = String(req.body?.ereignis || "");
-  if (!istIntern(req) && (e === "einladung" || e === "ueber_link")) zaehle(e);
+  if (!istIntern(req) && (e === "einladung" || e === "ueber_link" || /^ab:[ab]:(besuch|play|chat|demo)$/.test(e))) zaehle(e);
   res.status(204).end();
 });
 
